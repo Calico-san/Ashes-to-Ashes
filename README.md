@@ -1,4 +1,4 @@
-# 2D Colony Prototype (Unity 6)
+# Prototype (Unity 6)
 
 Fresh prototype project for a simple 2D colony/resource game.
 
