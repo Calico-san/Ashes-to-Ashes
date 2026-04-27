@@ -48,7 +48,7 @@ public static class BalanceConfig
 
     public const int ClothWorksWoodCost     = 10;
     public const int ClothWorksSteelCost    = 5;
-    public const int ClothWorksClothCost    = 5;
+    public const int ClothWorksClothCost    = 0;
     public const int ClothWorksBuildHours   = 2;
 
     public const int CookhouseWoodCost      = 15;
