@@ -30,6 +30,11 @@ public class PrototypeUIController : MonoBehaviour
     private GameObject           _shipListContainer;
     private readonly List<Button> _shipRowBtns = new();
 
+    // Build slot panel
+    private GameObject      _buildSlotContainer;
+    private TMPro.TextMeshProUGUI _buildSlotTitle;
+    private readonly List<Button> _buildOptionBtns = new();
+
     // Ship detail submenu (shown inside right panel when a ship row is clicked)
     private GameObject      _shipDetailContainer;
     private TextMeshProUGUI _shipDetailTitle;
@@ -70,11 +75,11 @@ public class PrototypeUIController : MonoBehaviour
     // Refresh — called every frame by GameController
     // -------------------------------------------------------
 
-    public void Refresh(PrototypeGameController game, BuildingInstance selBuilding, ShipInstance selShip = null)
+    public void Refresh(PrototypeGameController game, BuildingInstance selBuilding, ShipInstance selShip = null, BuildSlot selSlot = null)
     {
         RefreshTopBar(game);
         RefreshBottomBar(game);
-        RefreshRightPanel(game, selBuilding, selShip);
+        RefreshRightPanel(game, selBuilding, selShip, selSlot);
         RefreshSpeedButtons(game.SpeedMultiplier);
     }
 
@@ -213,17 +218,20 @@ public class PrototypeUIController : MonoBehaviour
         svg.childForceExpandHeight= false;
         _shipListContainer.SetActive(false);
 
+        BuildBuildSlotPanel(_rightPanel.transform);
         BuildShipDetail(_rightPanel.transform);
 
         _rightPanel.SetActive(false);
     }
 
-    private void RefreshRightPanel(PrototypeGameController game, BuildingInstance sel, ShipInstance selShip)
+    private void RefreshRightPanel(PrototypeGameController game, BuildingInstance sel, ShipInstance selShip, BuildSlot selSlot = null)
     {
         bool showShipyard = sel != null && sel.IsShipyard;
-        bool showBuilding = sel != null && !sel.IsShipyard;
+        bool showTownHall = sel != null && sel.IsTownHall;
+        bool showBuilding = sel != null && !sel.IsShipyard && !sel.IsTownHall;
         bool showShip     = selShip != null;
-        bool anySelected  = showShipyard || showBuilding || showShip;
+        bool showSlot     = selSlot != null;
+        bool anySelected  = showShipyard || showTownHall || showBuilding || showShip || showSlot;
 
         _rightPanel?.SetActive(anySelected);
         if (!anySelected)
@@ -237,6 +245,7 @@ public class PrototypeUIController : MonoBehaviour
         // Always reset containers — each branch decides what to show
         _shipListContainer?.SetActive(false);
         _shipDetailContainer?.SetActive(false);
+        _buildSlotContainer?.SetActive(false);
 
         if (showShipyard)
         {
@@ -257,6 +266,21 @@ public class PrototypeUIController : MonoBehaviour
                 RefreshShipDetail(game, selShip);
             else
                 RefreshShipList(game);
+        }
+        else if (showTownHall)
+        {
+            SetTitle("Town Hall");
+            SetWorkerLine("The heart of New Haven.");
+            SetOutputLine("Population: " + game.TotalPopulation +
+                "\nChildren: " + game.Children +
+                "\nFree workers: " + game.FreeWorkers);
+            SetButtons("", null, "", null, false, false);
+            _shipListContainer?.SetActive(false);
+        }
+        else if (showSlot)
+        {
+            RefreshBuildSlotPanel(game, selSlot);
+            _buildSlotContainer?.SetActive(true);
         }
         else if (showBuilding)
         {
@@ -290,6 +314,92 @@ public class PrototypeUIController : MonoBehaviour
                        selShip.AssignedSailors > 0);
             _shipListContainer?.SetActive(false);
         }
+    }
+
+    private void BuildBuildSlotPanel(Transform parent)
+    {
+        _buildSlotContainer = new GameObject("BuildSlotPanel", typeof(RectTransform));
+        _buildSlotContainer.transform.SetParent(parent, false);
+        LE(_buildSlotContainer, prefH: 200, minH: 20);
+
+        var vg = _buildSlotContainer.AddComponent<VerticalLayoutGroup>();
+        vg.spacing                = 4;
+        vg.childControlWidth      = true;
+        vg.childControlHeight     = true;
+        vg.childForceExpandWidth  = true;
+        vg.childForceExpandHeight = false;
+
+        _buildSlotTitle = MakeText(_buildSlotContainer.transform, "SlotTitle", 10,
+            TextAlignmentOptions.TopLeft);
+        _buildSlotTitle.color = new Color(0.75f, 0.75f, 0.75f);
+        LE(_buildSlotTitle.gameObject, prefH: 30, minH: 30);
+        _buildSlotTitle.textWrappingMode = TMPro.TextWrappingModes.Normal;
+
+        // One button per buildable type (excluding TownHall)
+        var types = new BuildingType[]
+        {
+            BuildingType.Sawmill, BuildingType.Steelworks,
+            BuildingType.ClothWorks, BuildingType.Cookhouse, BuildingType.Shipyard
+        };
+        foreach (var type in types)
+        {
+            var t = type; // capture
+            var cost = BuildingCost.For(type);
+            string lbl = BuildingLabel(type, cost);
+            var btn = MakeBtn(_buildSlotContainer.transform, lbl,
+                () => _game.TryBuildOnSelectedSlot(t), 166, 26);
+            LE(btn.gameObject, prefH: 26, minH: 26);
+            _buildOptionBtns.Add(btn);
+        }
+
+        _buildSlotContainer.SetActive(false);
+    }
+
+    private void RefreshBuildSlotPanel(PrototypeGameController game, BuildSlot slot)
+    {
+        if (_buildSlotContainer == null || slot == null) return;
+
+        if (slot.State == BuildSlot.SlotState.UnderConstruction)
+        {
+            // Show construction progress
+            if (_buildSlotTitle != null)
+                _buildSlotTitle.text =
+                    $"Building {slot.QueuedType}...\n" +
+                    $"Progress: {slot.ConstructionProgress * 100f:F0}%\n" +
+                    $"Time left: {slot.ConstructionHoursRemaining:F0}h";
+            foreach (var b in _buildOptionBtns)
+                if (b != null) b.gameObject.SetActive(false);
+            return;
+        }
+
+        // Empty slot — show build options
+        if (_buildSlotTitle != null)
+            _buildSlotTitle.text = "Empty plot — choose a building:";
+
+        var types = new BuildingType[]
+        {
+            BuildingType.Sawmill, BuildingType.Steelworks,
+            BuildingType.ClothWorks, BuildingType.Cookhouse, BuildingType.Shipyard
+        };
+
+        for (int i = 0; i < _buildOptionBtns.Count && i < types.Length; i++)
+        {
+            var btn  = _buildOptionBtns[i];
+            var cost = BuildingCost.For(types[i]);
+            if (btn == null) continue;
+            btn.gameObject.SetActive(true);
+            SetBtnLabel(btn, BuildingLabel(types[i], cost));
+            btn.interactable = cost.CanAfford(game.Wood, game.Steel, game.Cloth);
+        }
+    }
+
+    private static string BuildingLabel(BuildingType type, BuildingCost cost)
+    {
+        string parts = "";
+        if (cost.Wood  > 0) parts += $"W:{cost.Wood} ";
+        if (cost.Steel > 0) parts += $"S:{cost.Steel} ";
+        if (cost.Cloth > 0) parts += $"C:{cost.Cloth} ";
+        return $"{type}  [{parts.Trim()}  {cost.Hours}h]";
     }
 
     private void BuildShipDetail(Transform parent)
@@ -428,14 +538,14 @@ public class PrototypeUIController : MonoBehaviour
         {
             SetBtnLabel(_assignBtn, assignLabel);
             _assignBtn.onClick.RemoveAllListeners();
-            _assignBtn.onClick.AddListener(assignCb);
+            if (assignCb != null) _assignBtn.onClick.AddListener(assignCb);
             _assignBtn.interactable = assignEnabled;
         }
         if (_removeBtn != null)
         {
             SetBtnLabel(_removeBtn, removeLabel);
             _removeBtn.onClick.RemoveAllListeners();
-            _removeBtn.onClick.AddListener(removeCb);
+            if (removeCb != null) _removeBtn.onClick.AddListener(removeCb);
             _removeBtn.interactable = removeEnabled;
         }
     }

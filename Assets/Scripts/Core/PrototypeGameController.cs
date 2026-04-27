@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Central game state. Owns resources, time, population, buildings and ships.
+/// Central game state. Owns resources, time, population, buildings, build slots and ships.
 /// All other systems communicate through this controller.
 /// </summary>
 public class PrototypeGameController : MonoBehaviour
@@ -13,7 +13,7 @@ public class PrototypeGameController : MonoBehaviour
 
     [Header("Starting Resources")]
     [SerializeField] private int food  = 20;
-    [SerializeField] private int wood  = 10;
+    [SerializeField] private int wood  = 30;
     [SerializeField] private int steel = 5;
     [SerializeField] private int cloth = 5;
     [SerializeField] private int ships = 0;
@@ -25,11 +25,13 @@ public class PrototypeGameController : MonoBehaviour
     private PrototypeUIController _ui;
 
     // ---- Collections ----
-    private readonly List<BuildingInstance> _buildings = new();
-    private readonly List<ShipInstance>     _ships     = new();
+    private readonly List<BuildingInstance> _buildings  = new();
+    private readonly List<BuildSlot>        _buildSlots = new();
+    private readonly List<ShipInstance>     _ships      = new();
 
     // ---- Selection ----
     private BuildingInstance _selectedBuilding;
+    private BuildSlot        _selectedSlot;
     private ShipInstance     _selectedShip;
 
     // ---- Time ----
@@ -58,7 +60,9 @@ public class PrototypeGameController : MonoBehaviour
     public Vector3 WorkerSpawnPoint { get; private set; }
     public Sprite  WorkerSprite     { get; private set; }
 
-    public IReadOnlyList<BuildingInstance> Buildings => _buildings;
+    public IReadOnlyList<BuildingInstance> Buildings  => _buildings;
+    public IReadOnlyList<BuildSlot>        BuildSlots => _buildSlots;
+    public IReadOnlyList<ShipInstance>     GetShips() => _ships;
 
     public BuildingInstance GetShipyard()
     {
@@ -66,16 +70,15 @@ public class PrototypeGameController : MonoBehaviour
             if (b != null && b.IsShipyard) return b;
         return null;
     }
-    public IReadOnlyList<ShipInstance>     GetShips() => _ships;
 
     // ---- Init ----
 
     public void Initialize(PrototypeUIController ui, Sprite workerSprite, Vector3 spawnPoint)
     {
-        _ui              = ui;
-        WorkerSprite     = workerSprite;
-        WorkerSpawnPoint = spawnPoint;
-        _freeWorkers     = AdultPopulation;
+        _ui               = ui;
+        WorkerSprite      = workerSprite;
+        WorkerSpawnPoint  = spawnPoint;
+        _freeWorkers      = AdultPopulation;
         _simulatedMinutes = 8f * 60f; // start at 08:00
         RefreshUI();
     }
@@ -110,12 +113,16 @@ public class PrototypeGameController : MonoBehaviour
     public void RegisterBuilding(BuildingInstance b)
         { if (!_buildings.Contains(b)) _buildings.Add(b); }
 
+    public void RegisterBuildSlot(BuildSlot slot)
+        { if (!_buildSlots.Contains(slot)) _buildSlots.Add(slot); }
+
     public void RegisterShip(ShipInstance s)
         { if (!_ships.Contains(s)) { _ships.Add(s); RefreshUI(); } }
 
     // ---- Selection ----
 
     public BuildingInstance GetSelectedBuilding() => _selectedBuilding;
+    public BuildSlot        GetSelectedSlot()     => _selectedSlot;
     public ShipInstance     GetSelectedShip()     => _selectedShip;
 
     public void SelectBuilding(BuildingInstance b)
@@ -124,6 +131,17 @@ public class PrototypeGameController : MonoBehaviour
         _selectedBuilding?.SetSelected(false);
         _selectedBuilding = b;
         _selectedBuilding?.SetSelected(true);
+        if (b != null) { SelectSlot(null); }
+        RefreshUI();
+    }
+
+    public void SelectSlot(BuildSlot slot)
+    {
+        if (_selectedSlot == slot) return;
+        _selectedSlot?.SetSelected(false);
+        _selectedSlot = slot;
+        _selectedSlot?.SetSelected(true);
+        if (slot != null) { SelectBuilding(null); SelectShip(null); }
         RefreshUI();
     }
 
@@ -139,7 +157,6 @@ public class PrototypeGameController : MonoBehaviour
     // ---- Worker pool ----
 
     public bool CanCreateWorkerAgent() => _freeWorkers > 0;
-
     public void OnWorkerAssigned() { _freeWorkers = Mathf.Max(0, _freeWorkers - 1); RefreshUI(); }
     public void OnWorkerRemoved()  { _freeWorkers++;                                  RefreshUI(); }
 
@@ -157,6 +174,26 @@ public class PrototypeGameController : MonoBehaviour
         bool ok = _selectedBuilding != null && _selectedBuilding.RemoveWorker();
         if (ok) RefreshUI();
         return ok;
+    }
+
+    // ---- Build slot actions ----
+
+    /// <summary>Try to start construction on the selected slot. Returns false if can't afford.</summary>
+    public bool TryBuildOnSelectedSlot(BuildingType type)
+    {
+        if (_selectedSlot == null) return false;
+        if (_selectedSlot.State != BuildSlot.SlotState.Empty) return false;
+
+        var cost = BuildingCost.For(type);
+        if (!cost.CanAfford(wood, steel, cloth)) return false;
+
+        wood  -= cost.Wood;
+        steel -= cost.Steel;
+        cloth -= cost.Cloth;
+
+        _selectedSlot.StartConstruction(type);
+        RefreshUI();
+        return true;
     }
 
     // ---- Ship actions ----
@@ -190,14 +227,14 @@ public class PrototypeGameController : MonoBehaviour
         RefreshUI();
     }
 
-    public bool HasResources(int wood, int steel, int cloth)
-        => this.wood >= wood && this.steel >= steel && this.cloth >= cloth;
+    public bool HasResources(int w, int s, int c)
+        => wood >= w && steel >= s && cloth >= c;
 
-    public void ConsumeShipResources(int wood, int steel, int cloth)
+    public void ConsumeShipResources(int w, int s, int c)
     {
-        this.wood  -= wood;
-        this.steel -= steel;
-        this.cloth -= cloth;
+        wood  -= w;
+        steel -= s;
+        cloth -= c;
         RefreshUI();
     }
 
@@ -217,14 +254,82 @@ public class PrototypeGameController : MonoBehaviour
 
     private void TickHour()
     {
-        // Population food consumption
+        // Food consumption
         int consumed = Mathf.RoundToInt(EconomyCalculator.FoodConsumptionPerHour(AdultPopulation, children));
         food = Mathf.Max(0, food - consumed);
 
         // Building production
         foreach (var b in _buildings)
             b?.ProduceHourly();
+
+        // Construction progress
+        TickConstruction();
     }
 
-    private void RefreshUI() => _ui?.Refresh(this, _selectedBuilding, _selectedShip);
+    private void TickConstruction()
+    {
+        for (int i = _buildSlots.Count - 1; i >= 0; i--)
+        {
+            var slot = _buildSlots[i];
+            if (slot == null) continue;
+            if (!slot.TickHour()) continue;
+
+            // Construction done — replace slot with real building
+            CompleteBuild(slot);
+        }
+    }
+
+    private void CompleteBuild(BuildSlot slot)
+    {
+        var type     = slot.QueuedType;
+        var position = slot.Position;
+        var size     = slot.Size;
+
+        // Deselect if this slot was selected
+        if (_selectedSlot == slot)
+        {
+            _selectedSlot = null;
+        }
+
+        _buildSlots.Remove(slot);
+        Destroy(slot.gameObject);
+
+        // Create the real building
+        var (displayName, outputType, color) = BuildingMeta(type);
+        bool isShipyard = type == BuildingType.Shipyard;
+
+        var go       = new GameObject(displayName);
+        var building = go.AddComponent<BuildingInstance>();
+        building.Initialize(this, displayName, outputType, color, position, size, isShipyard);
+        RegisterBuilding(building);
+
+        // Label
+        var lbl = new GameObject(displayName + "Label");
+        lbl.transform.SetParent(go.transform, false);
+        lbl.transform.localPosition = new Vector3(0f, 0.85f, 0f);
+        var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
+        tmp.text        = displayName;
+        tmp.fontSize    = 1.8f;
+        tmp.alignment   = TMPro.TextAlignmentOptions.Center;
+        tmp.color       = Color.white;
+        tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
+        tmp.sortingOrder = 20;
+
+        RefreshUI();
+    }
+
+    private static (string name, ResourceType type, Color color) BuildingMeta(BuildingType t)
+    {
+        switch (t)
+        {
+            case BuildingType.Sawmill:     return ("Sawmill",     ResourceType.Wood,  new Color(0.22f, 0.65f, 0.25f));
+            case BuildingType.Steelworks:  return ("Steelworks",  ResourceType.Steel, new Color(0.55f, 0.55f, 0.58f));
+            case BuildingType.ClothWorks:  return ("Cloth Works", ResourceType.Cloth, new Color(0.70f, 0.44f, 0.74f));
+            case BuildingType.Cookhouse:   return ("Cookhouse",   ResourceType.Food,  new Color(0.82f, 0.53f, 0.20f));
+            case BuildingType.Shipyard:    return ("Shipyard",    ResourceType.Ships, new Color(0.25f, 0.38f, 0.82f));
+            default:                       return ("Building",     ResourceType.Wood,  Color.white);
+        }
+    }
+
+    private void RefreshUI() => _ui?.Refresh(this, _selectedBuilding, _selectedShip, _selectedSlot);
 }

@@ -1,7 +1,7 @@
 public static class BalanceConfig
 {
     // Time
-    public const float DayLengthSeconds       = 240f;   // 1 in-game day = 4 real minutes
+    public const float DayLengthSeconds       = 240f;
 
     // Population food consumption (per day)
     public const float AdultFoodPerDay         = 1.0f;
@@ -14,17 +14,17 @@ public static class BalanceConfig
     public const float CookhouseFoodPerWorker  = 2.0f;
 
     // Shipyard
-    public const float ShipProgressPerWorker   = 12f;   // progress points per hourly tick
+    public const float ShipProgressPerWorker   = 12f;
     public const float ShipProgressRequired    = 100f;
 
     // Ship build cost (per active worker per tick)
     public const int   ShipWoodCostPerWorker   = 1;
     public const int   ShipSteelCostPerWorker  = 1;
-    public const int   ShipClothCostDivisor    = 2;     // cloth = max(1, workers / divisor)
+    public const int   ShipClothCostDivisor    = 2;
 
     // Ship capacity
     public const int   ShipMaxPassengers       = 50;
-    public const int   ShipFoodRequired        = 750;   // 15 food/passenger x 5 days
+    public const int   ShipFoodRequired        = 750;
     public const int   ShipMaxSailors          = 5;
     public const int   ShipyardMaxWorkers      = 10;
 
@@ -34,4 +34,30 @@ public static class BalanceConfig
     // Production bonuses
     public const float EngineerProductionBonus = 1.25f;
     public const float EngineerShipBonus       = 1.35f;
+
+    // Building construction costs [wood, steel, cloth] + time in hours
+    public const int SawmillWoodCost        = 15;
+    public const int SawmillSteelCost       = 0;
+    public const int SawmillClothCost       = 0;
+    public const int SawmillBuildHours      = 2;
+
+    public const int SteelworksWoodCost     = 20;
+    public const int SteelworksSteelCost    = 0;
+    public const int SteelworksClothCost    = 0;
+    public const int SteelworksBuildHours   = 3;
+
+    public const int ClothWorksWoodCost     = 10;
+    public const int ClothWorksSteelCost    = 5;
+    public const int ClothWorksClothCost    = 5;
+    public const int ClothWorksBuildHours   = 2;
+
+    public const int CookhouseWoodCost      = 15;
+    public const int CookhouseSteelCost     = 5;
+    public const int CookhouseClothCost     = 5;
+    public const int CookhouseBuildHours    = 2;
+
+    public const int ShipyardWoodCost       = 30;
+    public const int ShipyardSteelCost      = 20;
+    public const int ShipyardClothCost      = 10;
+    public const int ShipyardBuildHours     = 5;
 }

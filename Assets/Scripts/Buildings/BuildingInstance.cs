@@ -11,6 +11,7 @@ public class BuildingInstance : MonoBehaviour
     public string       DisplayName  { get; private set; }
     public ResourceType OutputType   { get; private set; }
     public bool         IsShipyard   { get; private set; }
+    public bool         IsTownHall   { get; private set; }
     public int          MaxWorkers   { get; private set; }
     public int          AssignedWorkers => _workers.Count;
     public int          WorkersInside
@@ -39,6 +40,7 @@ public class BuildingInstance : MonoBehaviour
     private readonly List<WorkerAgent>  _workers     = new();
     private readonly List<GameObject>   _shipObjects = new();
     private SpriteRenderer              _renderer;
+    private BuildingAnimator            _animator;
     private Color                       _normalColor;
     private Color                       _selectedColor;
     private PrototypeGameController     _game;
@@ -68,12 +70,17 @@ public class BuildingInstance : MonoBehaviour
 
         var col  = gameObject.AddComponent<BoxCollider2D>();
         col.size = Vector2.one;
+
+        _animator = gameObject.AddComponent<BuildingAnimator>();
+        _animator.Setup(BuildingTypeFromResource(outputType, isShipyard), color);
+        _animator.SetBuilt();
     }
 
     // ---- Worker management ----
 
     public bool TryAssignWorker()
     {
+        if (IsTownHall) return false;
         if (AssignedWorkers >= MaxWorkers || !_game.CanCreateWorkerAgent()) return false;
 
         var agent = new GameObject($"{DisplayName}_Worker_{AssignedWorkers + 1}")
@@ -98,6 +105,11 @@ public class BuildingInstance : MonoBehaviour
         return true;
     }
 
+    private void Update()
+    {
+        _animator?.SetProducing(WorkersInside > 0 && !IsTownHall);
+    }
+
     // ---- Hourly tick ----
 
     public void ProduceHourly()
@@ -113,6 +125,9 @@ public class BuildingInstance : MonoBehaviour
 
     public void SetSelected(bool selected)
         => _renderer.color = selected ? _selectedColor : _normalColor;
+
+    /// <summary>Mark as Town Hall — disables worker assignment and production.</summary>
+    public void SetTownHall(bool value) => IsTownHall = value;
 
     // ---- Private ----
 
@@ -154,6 +169,19 @@ public class BuildingInstance : MonoBehaviour
     {
         for (int i = 0; i < _workers.Count; i++)
             _workers[i]?.SetNewTarget(WorkerSlot(i));
+    }
+
+    private static BuildingType BuildingTypeFromResource(ResourceType type, bool isShipyard)
+    {
+        if (isShipyard) return BuildingType.Shipyard;
+        switch (type)
+        {
+            case ResourceType.Wood:  return BuildingType.Sawmill;
+            case ResourceType.Steel: return BuildingType.Steelworks;
+            case ResourceType.Cloth: return BuildingType.ClothWorks;
+            case ResourceType.Food:  return BuildingType.Cookhouse;
+            default:                 return BuildingType.Sawmill;
+        }
     }
 
     private Vector3 WorkerSlot(int index)

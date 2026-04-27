@@ -9,28 +9,24 @@ public class PrototypeSelectionController : MonoBehaviour
 
     public void Initialize(PrototypeGameController game, Camera cameraComponent)
     {
-        _game = game;
+        _game   = game;
         _camera = cameraComponent;
     }
 
     private void Update()
     {
         var mouse = Mouse.current;
-        if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
-        {
-            return;
-        }
+        if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
 
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-        {
-            return;
-        }
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
         Vector2 worldPoint = _camera.ScreenToWorldPoint(mouse.position.ReadValue());
-        Collider2D hit = Physics2D.OverlapPoint(worldPoint);
+        Collider2D hit     = Physics2D.OverlapPoint(worldPoint);
+
         if (hit == null)
         {
             _game.SelectBuilding(null);
+            _game.SelectSlot(null);
             return;
         }
 
@@ -38,7 +34,16 @@ public class PrototypeSelectionController : MonoBehaviour
         if (building != null)
         {
             _game.SelectShip(null);
+            _game.SelectSlot(null);
             _game.SelectBuilding(building);
+            return;
+        }
+
+        var slot = hit.GetComponent<BuildSlot>();
+        if (slot != null)
+        {
+            _game.SelectBuilding(null);
+            _game.SelectSlot(slot);
             return;
         }
 
@@ -51,6 +56,7 @@ public class PrototypeSelectionController : MonoBehaviour
         }
 
         _game.SelectBuilding(null);
+        _game.SelectSlot(null);
         _game.SelectShip(null);
     }
 }
