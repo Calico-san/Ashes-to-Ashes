@@ -29,12 +29,12 @@ public class PrototypeBootstrapper : MonoBehaviour
         uiController.Build(gameController);
 
         Sprite workerSprite = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(1f, 0.9f, 0.25f, 1f));
-        gameController.Initialize(uiController, workerSprite, new Vector3(-3.5f, -1.8f, 0f));
+        // Workers spawn from Town Hall position
+        var townHallPos = new Vector3(-3.5f, -1.8f, 0f);
+        gameController.Initialize(uiController, workerSprite, townHallPos);
 
-        CreateTownHall(gameController);
+        CreateTownHall(gameController, townHallPos);
         CreateBuildSlots(gameController);
-        CreateWorkerSpawnMarker();
-
         var selection = new GameObject("SelectionController").AddComponent<PrototypeSelectionController>();
         selection.Initialize(gameController, mainCamera);
     }
@@ -48,16 +48,14 @@ public class PrototypeBootstrapper : MonoBehaviour
         go.AddComponent<SpriteRegistry>();
     }
 
-    private void CreateTownHall(PrototypeGameController game)
+    private void CreateTownHall(PrototypeGameController game, Vector3 position)
     {
         var go = new GameObject("TownHall");
 
-        // BuildingInstance.Initialize adds SpriteRenderer, Collider and BuildingAnimator itself.
-        // Do NOT add SpriteRenderer manually before calling Initialize.
         var building = go.AddComponent<BuildingInstance>();
         building.Initialize(game, "Town Hall", ResourceType.Wood,
-            new Color(0.72f, 0.58f, 0.22f), new Vector3(0f, 0.6f, 0f),
-            new Vector2(2.0f, 2.0f), false);
+            new Color(0.72f, 0.58f, 0.22f), position,
+            new Vector2(1.4f, 1.4f), false);
         building.SetTownHall(true);
         game.RegisterBuilding(building);
 
@@ -90,7 +88,7 @@ public class PrototypeBootstrapper : MonoBehaviour
         {
             var go   = new GameObject("BuildSlot");
             var slot = go.AddComponent<BuildSlot>();
-            slot.Initialize(game, pos, new Vector2(1.6f, 1.6f));
+            slot.Initialize(game, pos, new Vector2(1.12f, 1.12f));
             game.RegisterBuildSlot(slot);
 
             // "+" label so player knows it's buildable
@@ -105,27 +103,6 @@ public class PrototypeBootstrapper : MonoBehaviour
             tmp.rectTransform.sizeDelta = new Vector2(2f, 2f);
             tmp.sortingOrder = 6;
         }
-    }
-
-    private void CreateWorkerSpawnMarker()
-    {
-        var spawn = new GameObject("WorkerSpawn");
-        spawn.transform.position   = new Vector3(-3.5f, -1.8f, 0f);
-        spawn.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
-
-        var renderer  = spawn.AddComponent<SpriteRenderer>();
-        renderer.sprite = SimpleShapeFactory.CreateFilledSquareSprite(new Color(0.15f, 0.45f, 0.85f, 1f));
-        renderer.sortingOrder = 4;
-
-        var lbl = new GameObject("SpawnLabel");
-        lbl.transform.SetParent(spawn.transform, false);
-        lbl.transform.localPosition = new Vector3(0f, 0.8f, 0f);
-        var tmp = lbl.AddComponent<TextMeshPro>();
-        tmp.text        = "Worker Entry";
-        tmp.fontSize    = 1.6f;
-        tmp.alignment   = TextAlignmentOptions.Center;
-        tmp.color       = Color.white;
-        tmp.sortingOrder = 20;
     }
 
     private void SetupCameraAndBackground(out Camera mainCamera)
