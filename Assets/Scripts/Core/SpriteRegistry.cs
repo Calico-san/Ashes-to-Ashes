@@ -21,7 +21,7 @@ public class SpriteRegistry : MonoBehaviour
     public Sprite TownHallConstruction;
     public Sprite SawmillConstruction;
     public Sprite SteelworksConstruction;
-    public Sprite ClothWorksConstruction;
+    public Sprite FiberworksConstruction;
     public Sprite CookhouseConstruction;
     public Sprite ShipyardConstruction;
 
@@ -29,14 +29,14 @@ public class SpriteRegistry : MonoBehaviour
     public Sprite TownHallBuilt;
     public Sprite SawmillBuilt;
     public Sprite SteelworksBuilt;
-    public Sprite ClothWorksBuilt;
+    public Sprite FiberworksBuilt;
     public Sprite CookhouseBuilt;
     public Sprite ShipyardBuilt;
 
     [Header("Building — Producing")]
     public Sprite SawmillProducing;
     public Sprite SteelworksProducing;
-    public Sprite ClothWorksProducing;
+    public Sprite FiberworksProducing;
     public Sprite CookhouseProducing;
     public Sprite ShipyardProducing;
 
@@ -75,7 +75,7 @@ public class SpriteRegistry : MonoBehaviour
             case BuildingType.TownHall:    return TownHallConstruction;
             case BuildingType.Sawmill:     return SawmillConstruction;
             case BuildingType.Steelworks:  return SteelworksConstruction;
-            case BuildingType.ClothWorks:  return ClothWorksConstruction;
+            case BuildingType.Fiberworks:  return FiberworksConstruction;
             case BuildingType.Cookhouse:   return CookhouseConstruction;
             case BuildingType.Shipyard:    return ShipyardConstruction;
             default:                       return null;
@@ -89,7 +89,7 @@ public class SpriteRegistry : MonoBehaviour
             case BuildingType.TownHall:    return TownHallBuilt;
             case BuildingType.Sawmill:     return SawmillBuilt;
             case BuildingType.Steelworks:  return SteelworksBuilt;
-            case BuildingType.ClothWorks:  return ClothWorksBuilt;
+            case BuildingType.Fiberworks:  return FiberworksBuilt;
             case BuildingType.Cookhouse:   return CookhouseBuilt;
             case BuildingType.Shipyard:    return ShipyardBuilt;
             default:                       return null;
@@ -102,7 +102,7 @@ public class SpriteRegistry : MonoBehaviour
         {
             case BuildingType.Sawmill:     return SawmillProducing;
             case BuildingType.Steelworks:  return SteelworksProducing;
-            case BuildingType.ClothWorks:  return ClothWorksProducing;
+            case BuildingType.Fiberworks:  return FiberworksProducing;
             case BuildingType.Cookhouse:   return CookhouseProducing;
             case BuildingType.Shipyard:    return ShipyardProducing;
             default:                       return GetBuiltSprite(type);  // fallback to built

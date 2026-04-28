@@ -20,6 +20,10 @@ public class PrototypeSelectionController : MonoBehaviour
 
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
+        // BuildPanel handles its own clicks during ghost placement
+        var buildPanel = FindFirstObjectByType<BuildPanel>();
+        if (buildPanel != null && buildPanel.IsPlacing) return;
+
         Vector2 worldPoint = _camera.ScreenToWorldPoint(mouse.position.ReadValue());
         Collider2D hit     = Physics2D.OverlapPoint(worldPoint);
 

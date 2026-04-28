@@ -10,7 +10,7 @@ public static class BalanceConfig
     // Building production (per worker per day)
     public const float SawmillWoodPerWorker    = 1.2f;
     public const float SteelworksPerWorker     = 0.6f;
-    public const float ClothWorksPerWorker     = 0.5f;
+    public const float FiberworksPerWorker     = 0.5f;
     public const float CookhouseFoodPerWorker  = 2.0f;
 
     // Shipyard
@@ -46,10 +46,10 @@ public static class BalanceConfig
     public const int SteelworksClothCost    = 0;
     public const int SteelworksBuildHours   = 3;
 
-    public const int ClothWorksWoodCost     = 10;
-    public const int ClothWorksSteelCost    = 5;
-    public const int ClothWorksClothCost    = 0;
-    public const int ClothWorksBuildHours   = 2;
+    public const int FiberworksWoodCost     = 10;
+    public const int FiberworksSteelCost    = 5;
+    public const int FiberworksClothCost    = 5;
+    public const int FiberworksBuildHours   = 2;
 
     public const int CookhouseWoodCost      = 15;
     public const int CookhouseSteelCost     = 5;
@@ -60,4 +60,7 @@ public static class BalanceConfig
     public const int ShipyardSteelCost      = 20;
     public const int ShipyardClothCost      = 10;
     public const int ShipyardBuildHours     = 5;
+
+    // Free placement building size (world units)
+    public const float BuildingPlacementSize = 1.12f;
 }

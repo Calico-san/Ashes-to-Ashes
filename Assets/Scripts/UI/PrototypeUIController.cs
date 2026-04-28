@@ -44,6 +44,7 @@ public class PrototypeUIController : MonoBehaviour
     private Button          _shipDetailRemove;
 
     private PrototypeGameController _game;
+    private BuildPanel              _buildPanel;
 
     // -------------------------------------------------------
     // Build
@@ -69,6 +70,11 @@ public class PrototypeUIController : MonoBehaviour
         BuildTopBar(canvas.transform);
         BuildBottomBar(canvas.transform);
         BuildRightPanel(canvas.transform);
+
+        // Build panel — needs camera reference
+        _buildPanel = canvasGO.AddComponent<BuildPanel>();
+        var cam = UnityEngine.Camera.main;
+        _buildPanel.Build(game, canvas.transform, cam);
     }
 
     // -------------------------------------------------------
@@ -81,6 +87,7 @@ public class PrototypeUIController : MonoBehaviour
         RefreshBottomBar(game);
         RefreshRightPanel(game, selBuilding, selShip, selSlot);
         RefreshSpeedButtons(game.SpeedMultiplier);
+        _buildPanel?.Refresh(game);
     }
 
     // -------------------------------------------------------
@@ -279,8 +286,23 @@ public class PrototypeUIController : MonoBehaviour
         }
         else if (showSlot)
         {
-            RefreshBuildSlotPanel(game, selSlot);
-            _buildSlotContainer?.SetActive(true);
+            // Show construction progress only
+            SetTitle("Under Construction");
+            if (selSlot.State == BuildSlot.SlotState.UnderConstruction)
+            {
+                SetWorkerLine(selSlot.QueuedType.ToString());
+                SetOutputLine(
+                    $"Progress: {selSlot.ConstructionProgress * 100f:F0}%\n"
+                    + $"Time left: {selSlot.ConstructionHoursRemaining:F0}h");
+            }
+            else
+            {
+                SetWorkerLine("Empty plot");
+                SetOutputLine("Use build panel (⚒) to place a building.");
+            }
+            SetButtons("", null, "", null, false, false);
+            _shipListContainer?.SetActive(false);
+            _buildSlotContainer?.SetActive(false);
         }
         else if (showBuilding)
         {
@@ -339,7 +361,7 @@ public class PrototypeUIController : MonoBehaviour
         var types = new BuildingType[]
         {
             BuildingType.Sawmill, BuildingType.Steelworks,
-            BuildingType.ClothWorks, BuildingType.Cookhouse, BuildingType.Shipyard
+            BuildingType.Fiberworks, BuildingType.Cookhouse, BuildingType.Shipyard
         };
         foreach (var type in types)
         {
@@ -379,7 +401,7 @@ public class PrototypeUIController : MonoBehaviour
         var types = new BuildingType[]
         {
             BuildingType.Sawmill, BuildingType.Steelworks,
-            BuildingType.ClothWorks, BuildingType.Cookhouse, BuildingType.Shipyard
+            BuildingType.Fiberworks, BuildingType.Cookhouse, BuildingType.Shipyard
         };
 
         for (int i = 0; i < _buildOptionBtns.Count && i < types.Length; i++)

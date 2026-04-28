@@ -4,7 +4,7 @@ public enum BuildingType
     TownHall,
     Sawmill,
     Steelworks,
-    ClothWorks,
+    Fiberworks,
     Cookhouse,
     Shipyard
 }
@@ -25,8 +25,8 @@ public struct BuildingCost
                 return new BuildingCost { Wood = BalanceConfig.SawmillWoodCost,    Steel = BalanceConfig.SawmillSteelCost,    Cloth = BalanceConfig.SawmillClothCost,    Hours = BalanceConfig.SawmillBuildHours };
             case BuildingType.Steelworks:
                 return new BuildingCost { Wood = BalanceConfig.SteelworksWoodCost, Steel = BalanceConfig.SteelworksSteelCost, Cloth = BalanceConfig.SteelworksClothCost, Hours = BalanceConfig.SteelworksBuildHours };
-            case BuildingType.ClothWorks:
-                return new BuildingCost { Wood = BalanceConfig.ClothWorksWoodCost, Steel = BalanceConfig.ClothWorksSteelCost, Cloth = BalanceConfig.ClothWorksClothCost, Hours = BalanceConfig.ClothWorksBuildHours };
+            case BuildingType.Fiberworks:
+                return new BuildingCost { Wood = BalanceConfig.FiberworksWoodCost, Steel = BalanceConfig.FiberworksSteelCost, Cloth = BalanceConfig.FiberworksClothCost, Hours = BalanceConfig.FiberworksBuildHours };
             case BuildingType.Cookhouse:
                 return new BuildingCost { Wood = BalanceConfig.CookhouseWoodCost,  Steel = BalanceConfig.CookhouseSteelCost,  Cloth = BalanceConfig.CookhouseClothCost,  Hours = BalanceConfig.CookhouseBuildHours };
             case BuildingType.Shipyard:

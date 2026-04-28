@@ -12,6 +12,7 @@ public class BuildingInstance : MonoBehaviour
     public ResourceType OutputType   { get; private set; }
     public bool         IsShipyard   { get; private set; }
     public bool         IsTownHall   { get; private set; }
+    public Vector2      Size         { get; private set; }
     public int          MaxWorkers   { get; private set; }
     public int          AssignedWorkers => _workers.Count;
     public int          WorkersInside
@@ -58,6 +59,7 @@ public class BuildingInstance : MonoBehaviour
         IsShipyard  = isShipyard;
         MaxWorkers  = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
 
+        Size                 = size;
         transform.position   = position;
         transform.localScale = new Vector3(size.x, size.y, 1f);
 
@@ -178,7 +180,7 @@ public class BuildingInstance : MonoBehaviour
         {
             case ResourceType.Wood:  return BuildingType.Sawmill;
             case ResourceType.Steel: return BuildingType.Steelworks;
-            case ResourceType.Cloth: return BuildingType.ClothWorks;
+            case ResourceType.Cloth: return BuildingType.Fiberworks;
             case ResourceType.Food:  return BuildingType.Cookhouse;
             default:                 return BuildingType.Sawmill;
         }

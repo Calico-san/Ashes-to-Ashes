@@ -20,7 +20,7 @@ public static class EconomyCalculator
             case ResourceType.Food:  return BalanceConfig.CookhouseFoodPerWorker  / 24f;
             case ResourceType.Wood:  return BalanceConfig.SawmillWoodPerWorker    / 24f;
             case ResourceType.Steel: return BalanceConfig.SteelworksPerWorker     / 24f;
-            case ResourceType.Cloth: return BalanceConfig.ClothWorksPerWorker     / 24f;
+            case ResourceType.Cloth: return BalanceConfig.FiberworksPerWorker     / 24f;
             default: return 0f;
         }
     }

@@ -22,6 +22,7 @@ public class PrototypeBootstrapper : MonoBehaviour
     {
         CreateEventSystemIfMissing();
         SetupSpriteRegistry();
+        SetupPlacementValidator();
         SetupCameraAndBackground(out Camera mainCamera);
 
         var gameController = new GameObject("GameController").AddComponent<PrototypeGameController>();
@@ -42,10 +43,13 @@ public class PrototypeBootstrapper : MonoBehaviour
     // ---- Town Hall — pre-built, no production, just visual anchor ----
     private void SetupSpriteRegistry()
     {
-        // Creates SpriteRegistry with no sprites assigned (all null = fallback to SimpleShapeFactory).
-        // Assign pixel art sprites here later via Inspector or by loading from Resources/.
         var go = new GameObject("SpriteRegistry");
         go.AddComponent<SpriteRegistry>();
+    }
+
+    private void SetupPlacementValidator()
+    {
+        new GameObject("PlacementValidator").AddComponent<PlacementValidator>();
     }
 
     private void CreateTownHall(PrototypeGameController game, Vector3 position)

@@ -111,10 +111,20 @@ public class PrototypeGameController : MonoBehaviour
     // ---- Registration ----
 
     public void RegisterBuilding(BuildingInstance b)
-        { if (!_buildings.Contains(b)) _buildings.Add(b); }
+    {
+        if (_buildings.Contains(b)) return;
+        _buildings.Add(b);
+        PlacementValidator.Instance?.Register(
+            b.transform.position, b.Size);
+    }
 
     public void RegisterBuildSlot(BuildSlot slot)
-        { if (!_buildSlots.Contains(slot)) _buildSlots.Add(slot); }
+    {
+        if (_buildSlots.Contains(slot)) return;
+        _buildSlots.Add(slot);
+        PlacementValidator.Instance?.Register(
+            slot.Position, slot.Size);
+    }
 
     public void RegisterShip(ShipInstance s)
         { if (!_ships.Contains(s)) { _ships.Add(s); RefreshUI(); } }
@@ -178,22 +188,44 @@ public class PrototypeGameController : MonoBehaviour
 
     // ---- Build slot actions ----
 
-    /// <summary>Try to start construction on the selected slot. Returns false if can't afford.</summary>
-    public bool TryBuildOnSelectedSlot(BuildingType type)
+    /// <summary>
+    /// Place a new building of given type at world position.
+    /// Validates zone, overlap and resources. Returns false if invalid.
+    /// </summary>
+    public bool TryPlaceBuilding(BuildingType type, Vector3 worldPosition)
     {
-        if (_selectedSlot == null) return false;
-        if (_selectedSlot.State != BuildSlot.SlotState.Empty) return false;
-
         var cost = BuildingCost.For(type);
         if (!cost.CanAfford(wood, steel, cloth)) return false;
+
+        var size      = new Vector2(BalanceConfig.BuildingPlacementSize,
+                                    BalanceConfig.BuildingPlacementSize);
+        bool shipyard = type == BuildingType.Shipyard;
+
+        var validator = PlacementValidator.Instance;
+        if (validator != null && !validator.IsValid(worldPosition, size, shipyard))
+            return false;
 
         wood  -= cost.Wood;
         steel -= cost.Steel;
         cloth -= cost.Cloth;
 
-        _selectedSlot.StartConstruction(type);
+        // Create BuildSlot at chosen position — construction begins immediately
+        var go   = new GameObject("BuildSlot");
+        var slot = go.AddComponent<BuildSlot>();
+        slot.Initialize(this, worldPosition, new Vector2(size.x, size.y));
+        RegisterBuildSlot(slot);
+        slot.StartConstruction(type);
+
+        SelectSlot(null);
         RefreshUI();
         return true;
+    }
+
+    /// <summary>Legacy — kept for UI back-compat, delegates to TryPlaceBuilding.</summary>
+    public bool TryBuildOnSelectedSlot(BuildingType type)
+    {
+        if (_selectedSlot == null) return false;
+        return TryPlaceBuilding(type, _selectedSlot.Position);
     }
 
     // ---- Ship actions ----
@@ -291,6 +323,7 @@ public class PrototypeGameController : MonoBehaviour
             _selectedSlot = null;
         }
 
+        PlacementValidator.Instance?.Unregister(position, size);
         _buildSlots.Remove(slot);
         Destroy(slot.gameObject);
 
@@ -324,7 +357,7 @@ public class PrototypeGameController : MonoBehaviour
         {
             case BuildingType.Sawmill:     return ("Sawmill",     ResourceType.Wood,  new Color(0.22f, 0.65f, 0.25f));
             case BuildingType.Steelworks:  return ("Steelworks",  ResourceType.Steel, new Color(0.55f, 0.55f, 0.58f));
-            case BuildingType.ClothWorks:  return ("Cloth Works", ResourceType.Cloth, new Color(0.70f, 0.44f, 0.74f));
+            case BuildingType.Fiberworks:  return ("Fiberworks", ResourceType.Cloth, new Color(0.70f, 0.44f, 0.74f));
             case BuildingType.Cookhouse:   return ("Cookhouse",   ResourceType.Food,  new Color(0.82f, 0.53f, 0.20f));
             case BuildingType.Shipyard:    return ("Shipyard",    ResourceType.Ships, new Color(0.25f, 0.38f, 0.82f));
             default:                       return ("Building",     ResourceType.Wood,  Color.white);
