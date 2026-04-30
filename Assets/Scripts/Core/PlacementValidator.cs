@@ -46,11 +46,22 @@ public class PlacementValidator : MonoBehaviour
         return true;
     }
 
-    /// <summary>Full validity check: zone + overlap.</summary>
+    /// <summary>Full validity check: tilemap zone + overlap.</summary>
     public bool IsValid(Vector2 position, Vector2 size, bool isShipyard)
     {
-        return IslandBounds.IsValidPlacement(position, size, isShipyard)
-            && IsOpen(position, size);
+        bool isShipyardType = isShipyard;
+        var  buildingType   = isShipyardType ? BuildingType.Shipyard : BuildingType.Sawmill;
+        return IsValidForType(position, size, buildingType);
+    }
+
+    /// <summary>Full validity check with explicit BuildingType (for Steelworks on IronMine).</summary>
+    public bool IsValidForType(Vector2 position, Vector2 size, BuildingType buildingType)
+    {
+        var renderer = IslandTilemapRenderer.Instance;
+        bool zoneOk  = renderer != null
+            ? renderer.IsValidPlacement(position, size, buildingType)
+            : IslandBounds.IsValidPlacement(position, size, buildingType == BuildingType.Shipyard);
+        return zoneOk && IsOpen(position, size);
     }
 
     // ---- Helpers ----

@@ -64,5 +64,5 @@ public static class BalanceConfig
     public const int ShipyardBuildHours     = 5;
 
     // Free placement building size (world units)
-    public const float BuildingPlacementSize = 1.12f;
+    public const float BuildingPlacementSize = 1.0f;   // 32x32px @ PPU=32
 }

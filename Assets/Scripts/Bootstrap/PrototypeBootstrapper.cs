@@ -1,8 +1,13 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 
+/// <summary>
+/// Initializes gameplay systems at runtime.
+/// All GameObjects (Camera, Canvas, UI) are created by the SceneBootstrapper
+/// Editor tool (Ashes → Setup Scene) and persist in the scene.
+/// This script only wires references and starts the game loop.
+/// </summary>
 public class PrototypeBootstrapper : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -15,164 +20,139 @@ public class PrototypeBootstrapper : MonoBehaviour
     private void Awake()
     {
         Application.targetFrameRate = 120;
-        SetupScene();
+        Boot();
     }
 
-    private void SetupScene()
+    private void Boot()
     {
-        CreateEventSystemIfMissing();
-        SetupSpriteRegistry();
-        SetupPlacementValidator();
-        SetupCameraAndBackground(out Camera mainCamera);
+        EnsureEventSystem();
 
-        var gameController = new GameObject("GameController").AddComponent<PrototypeGameController>();
-        var uiController   = new GameObject("UIController").AddComponent<PrototypeUIController>();
-        uiController.Build(gameController);
+        // ---- Find scene objects ----
+        var gameController = FindFirstObjectByType<PrototypeGameController>();
+        var uiController   = FindFirstObjectByType<PrototypeUIController>();
+        var selection      = FindFirstObjectByType<PrototypeSelectionController>();
+        var mainCamera     = Camera.main;
 
-        Sprite workerSprite = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(1f, 0.9f, 0.25f, 1f));
-        // Workers spawn from Town Hall position
-        var townHallPos = new Vector3(-3.5f, -1.8f, 0f);
+        if (gameController == null)
+        {
+            Debug.LogError("[Bootstrapper] GameController not found. Run Ashes → Setup Scene first.");
+            return;
+        }
+
+        // ---- Sprite Registry ----
+        var registry = Resources.Load<SpriteRegistry>("SpriteRegistry");
+        registry?.Register();
+
+        // ---- Placement Validator ----
+        if (FindFirstObjectByType<PlacementValidator>() == null)
+            new GameObject("PlacementValidator").AddComponent<PlacementValidator>();
+
+        // ---- Tilemap ----
+        SetupTilemap();
+
+        // ---- UI ----
+        if (uiController != null)
+            uiController.Build(gameController, mainCamera);
+        else
+            Debug.LogWarning("[Bootstrapper] UIController not found. Run Ashes → Setup Scene.");
+
+        // ---- Town Hall ----
+        var townHallPos = FindTownHallPosition();
+        var workerSprite = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(1f, 0.9f, 0.25f, 1f));
+
+        // Check if Town Hall already exists in scene
+        var existingTownHall = FindFirstObjectByType<BuildingInstance>();
+        bool hasTownHall = false;
+        if (existingTownHall != null)
+        {
+            foreach (var b in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
+                if (b.IsTownHall) { hasTownHall = true; break; }
+        }
+
         gameController.Initialize(uiController, workerSprite, townHallPos);
 
-        CreateTownHall(gameController, townHallPos);
-        CreateBuildSlots(gameController);
-        var selection = new GameObject("SelectionController").AddComponent<PrototypeSelectionController>();
-        selection.Initialize(gameController, mainCamera);
+        if (!hasTownHall)
+            CreateTownHall(gameController, townHallPos);
+
+        // ---- Selection Controller ----
+        if (selection != null)
+            selection.Initialize(gameController, mainCamera);
+        else
+            Debug.LogWarning("[Bootstrapper] SelectionController not found. Run Ashes → Setup Scene.");
     }
 
-    // ---- Town Hall — pre-built, no production, just visual anchor ----
-    private void SetupSpriteRegistry()
+    // ---- Tilemap ----
+
+    private void SetupTilemap()
     {
-        var go = new GameObject("SpriteRegistry");
-        go.AddComponent<SpriteRegistry>();
+        var renderer = FindFirstObjectByType<IslandTilemapRenderer>();
+        if (renderer == null)
+        {
+            Debug.LogWarning("[Bootstrapper] IslandTilemapRenderer not found. Run Ashes → Setup Scene.");
+            return;
+        }
+
+        if (renderer.Map != null) return; // already initialized
+
+        var map = Resources.Load<TilemapData>("IslandMap");
+        if (map == null)
+        {
+            map = ScriptableObject.CreateInstance<TilemapData>();
+            map.GeneratePlaceholder();
+            Debug.LogWarning("[Bootstrapper] IslandMap.asset not found in Resources/. " +
+                             "Using placeholder. Create via Assets > Create > Ashes > TilemapData.");
+        }
+        renderer.Initialize(map);
     }
 
-    private void SetupPlacementValidator()
+    // ---- Town Hall ----
+
+    private static Vector3 FindTownHallPosition()
     {
-        new GameObject("PlacementValidator").AddComponent<PlacementValidator>();
+        var renderer = IslandTilemapRenderer.Instance;
+        if (renderer == null || renderer.Map == null)
+            return new Vector3(0f, 0f, 0f);
+
+        var map = renderer.Map;
+        int cx = map.Width / 2, cy = map.Height / 2;
+        int best = int.MaxValue, bestC = cx, bestR = cy;
+
+        for (int radius = 0; radius < Mathf.Max(map.Width, map.Height); radius++)
+        for (int row = cy - radius; row <= cy + radius; row++)
+        for (int col = cx - radius; col <= cx + radius; col++)
+        {
+            if (!map.InBounds(col, row)) continue;
+            if (map.GetTile(col, row) != TileType.Land) continue;
+            int dist = (col-cx)*(col-cx) + (row-cy)*(row-cy);
+            if (dist < best) { best = dist; bestC = col; bestR = row; }
+        }
+
+        var world = map.TileToWorld(bestC, bestR);
+        return new Vector3(world.x, world.y, 0f);
     }
 
     private void CreateTownHall(PrototypeGameController game, Vector3 position)
     {
-        var go = new GameObject("TownHall");
-
+        var go       = new GameObject("TownHall");
         var building = go.AddComponent<BuildingInstance>();
         building.Initialize(game, "Town Hall", ResourceType.Wood,
-            new Color(0.72f, 0.58f, 0.22f), position,
-            new Vector2(1.4f, 1.4f), false);
+            new Color(0.72f, 0.58f, 0.22f), position, new Vector2(1f, 1f), false);
         building.SetTownHall(true);
         game.RegisterBuilding(building);
 
-        // Label
-        var lbl = new GameObject("TownHallLabel");
+        var lbl = new GameObject("Label");
         lbl.transform.SetParent(go.transform, false);
         lbl.transform.localPosition = new Vector3(0f, 0.65f, 0f);
-        var tmp = lbl.AddComponent<TextMeshPro>();
-        tmp.text        = "Town Hall";
-        tmp.fontSize    = 1.8f;
-        tmp.alignment   = TextAlignmentOptions.Center;
-        tmp.color       = Color.white;
+        var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
+        tmp.text = "Town Hall"; tmp.fontSize = 1.8f;
+        tmp.alignment = TMPro.TextAlignmentOptions.Center;
+        tmp.color = Color.white; tmp.sortingOrder = 20;
         tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
-        tmp.sortingOrder = 20;
     }
 
-    // ---- Build slots — empty plots where buildings can be constructed ----
-    private void CreateBuildSlots(PrototypeGameController game)
-    {
-        var slots = new Vector3[]
-        {
-            new Vector3(-3.8f,  2.2f, 0f),   // top left
-            new Vector3(-1.2f,  2.8f, 0f),   // top centre-left
-            new Vector3( 1.4f,  2.4f, 0f),   // top centre-right
-            new Vector3( 3.6f,  1.8f, 0f),   // top right
-            new Vector3( 0.0f, -1.8f, 0f),   // bottom — Shipyard spot
-        };
+    // ---- Helpers ----
 
-        foreach (var pos in slots)
-        {
-            var go   = new GameObject("BuildSlot");
-            var slot = go.AddComponent<BuildSlot>();
-            slot.Initialize(game, pos, new Vector2(1.12f, 1.12f));
-            game.RegisterBuildSlot(slot);
-
-            // "+" label so player knows it's buildable
-            var lbl = new GameObject("SlotLabel");
-            lbl.transform.SetParent(go.transform, false);
-            lbl.transform.localPosition = new Vector3(0f, 0f, 0f);
-            var tmp = lbl.AddComponent<TextMeshPro>();
-            tmp.text        = "+";
-            tmp.fontSize    = 2.8f;
-            tmp.alignment   = TextAlignmentOptions.Center;
-            tmp.color       = new Color(0.8f, 0.8f, 0.8f, 0.6f);
-            tmp.rectTransform.sizeDelta = new Vector2(2f, 2f);
-            tmp.sortingOrder = 6;
-        }
-    }
-
-    private void SetupCameraAndBackground(out Camera mainCamera)
-    {
-        var cameraObject = new GameObject("Main Camera");
-        mainCamera = cameraObject.AddComponent<Camera>();
-        cameraObject.tag = "MainCamera";
-        mainCamera.clearFlags       = CameraClearFlags.SolidColor;
-        mainCamera.backgroundColor  = new Color(0.09f, 0.28f, 0.52f, 1f);
-        mainCamera.orthographic     = true;
-        mainCamera.orthographicSize = 7f;
-        cameraObject.transform.position = new Vector3(0f, 0.5f, -10f);
-        cameraObject.AddComponent<AudioListener>();
-        cameraObject.AddComponent<PrototypeCameraController>();
-
-        var ocean   = new GameObject("Ocean");
-        var oceanSR = ocean.AddComponent<SpriteRenderer>();
-        oceanSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(new Color(0.09f, 0.28f, 0.52f, 1f));
-        oceanSR.sortingOrder = -20;
-        ocean.transform.localScale = new Vector3(60f, 40f, 1f);
-
-        CreateIsland();
-    }
-
-    private void CreateIsland()
-    {
-        int size = 256;
-        var tex  = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Bilinear;
-        var pixels       = new Color[size * size];
-        var islandColor  = new Color(0.15f, 0.42f, 0.18f, 1f);
-        var sandColor    = new Color(0.72f, 0.62f, 0.38f, 1f);
-        float cx = size * 0.5f, cy = size * 0.5f;
-        float r    = size * 0.46f;
-        float sand = size * 0.42f;
-
-        for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                float dx = x - cx, dy = y - cy;
-                float dist = Mathf.Sqrt(dx * dx + dy * dy);
-                pixels[y * size + x] = dist < sand ? islandColor
-                                      : dist < r   ? sandColor
-                                      : new Color(0, 0, 0, 0);
-            }
-
-        tex.SetPixels(pixels);
-        tex.Apply();
-        var sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-
-        var islandGO   = new GameObject("Island");
-        var sr         = islandGO.AddComponent<SpriteRenderer>();
-        sr.sprite      = sprite;
-        sr.sortingOrder = -10;
-        islandGO.transform.position   = new Vector3(0f, 0.5f, 0f);
-        islandGO.transform.localScale = new Vector3(13f, 10f, 1f);
-
-        var dock   = new GameObject("Dock");
-        var dockSR = dock.AddComponent<SpriteRenderer>();
-        dockSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(new Color(0.45f, 0.35f, 0.20f, 1f));
-        dockSR.sortingOrder = -9;
-        dock.transform.position   = new Vector3(0f, -2.8f, 0f);
-        dock.transform.localScale = new Vector3(3.5f, 1.2f, 1f);
-    }
-
-    private void CreateEventSystemIfMissing()
+    private void EnsureEventSystem()
     {
         if (FindFirstObjectByType<EventSystem>() != null) return;
         var es = new GameObject("EventSystem");

@@ -36,6 +36,7 @@ public class BuildPanel : MonoBehaviour
 
     private PrototypeGameController _game;
     private Camera                  _cam;
+    private Camera Cam => _cam != null ? _cam : (_cam = Camera.main);
 
     // -------------------------------------------------------
     // Init
@@ -71,17 +72,21 @@ public class BuildPanel : MonoBehaviour
         }
 
         // Update ghost position
-        Vector3 worldPos = _cam.ScreenToWorldPoint(mouse.position.ReadValue());
-        worldPos.z = 0f;
+        if (Cam == null) return;
+        Vector3 rawPos = Cam.ScreenToWorldPoint(mouse.position.ReadValue());
+        rawPos.z = 0f;
+
+        // Snap to tile centre so buildings always land inside one tile
+        Vector3 worldPos = SnapToTile(rawPos);
 
         if (_ghost != null) _ghost.transform.position = worldPos;
 
-        // Validate
-        bool isShipyard = _pendingType == BuildingType.Shipyard;
+        // Validate using explicit BuildingType (Steelworks needs proximity check)
         var  validator  = PlacementValidator.Instance;
         _ghostValid = validator != null
-            ? validator.IsValid(worldPos, new Vector2(GhostSize, GhostSize), isShipyard)
-            : IslandBounds.IsValidPlacement(worldPos, new Vector2(GhostSize, GhostSize), isShipyard);
+            ? validator.IsValidForType(worldPos, new Vector2(GhostSize, GhostSize), _pendingType.Value)
+            : IslandBounds.IsValidPlacement(worldPos, new Vector2(GhostSize, GhostSize),
+                _pendingType == BuildingType.Shipyard);
 
         if (_ghostSR != null)
             _ghostSR.color = _ghostValid ? GhostValid : GhostInvalid;
@@ -136,6 +141,19 @@ public class BuildPanel : MonoBehaviour
         _ghostSR = null;
     }
 
+    /// <summary>Snap world position to nearest tile centre.</summary>
+    private static Vector3 SnapToTile(Vector3 world)
+    {
+        var renderer = IslandTilemapRenderer.Instance;
+        if (renderer == null || renderer.Map == null)
+            return world;
+
+        var map  = renderer.Map;
+        var tile = map.WorldToTile(world);
+        var snapped = map.TileToWorld(tile.x, tile.y);
+        return new Vector3(snapped.x, snapped.y, world.z);
+    }
+
     private void CreateGhost(BuildingType type)
     {
         if (_ghost != null) Destroy(_ghost);
@@ -144,13 +162,12 @@ public class BuildPanel : MonoBehaviour
         _ghost.transform.localScale = new Vector3(GhostSize, GhostSize, 1f);
 
         _ghostSR = _ghost.AddComponent<SpriteRenderer>();
-        var registry = SpriteRegistry.Instance;
-        var sprite   = registry != null
-            ? registry.GetBuildingSprite(type, BuildingVisualState.Idle)
-            : null;
-        _ghostSR.sprite     = sprite ?? SimpleShapeFactory.CreateFilledSquareSprite(Color.white);
-        _ghostSR.color      = GhostInvalid;
-        _ghostSR.sortingOrder = 50;
+
+        // Always use a fresh colored square — no sprite registry dependency
+        _ghostSR.sprite           = SimpleShapeFactory.CreateFilledSquareSprite(Color.white);
+        _ghostSR.color            = GhostInvalid;
+        _ghostSR.sortingLayerName = "Default";
+        _ghostSR.sortingOrder     = 100;   // well above all tilemap tiles
     }
 
     // -------------------------------------------------------
@@ -162,12 +179,13 @@ public class BuildPanel : MonoBehaviour
         var go = new GameObject("BuildToggleBtn", typeof(RectTransform), typeof(Image), typeof(Button));
         go.transform.SetParent(canvas, false);
 
+        // Bottom right corner — matches wireframe BUILD MENU circle
         var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin        = new Vector2(0.5f, 0f);
-        rt.anchorMax        = new Vector2(0.5f, 0f);
-        rt.pivot            = new Vector2(0.5f, 0f);
-        rt.anchoredPosition = new Vector2(0f, 26f);
-        rt.sizeDelta        = new Vector2(44f, 36f);
+        rt.anchorMin        = new Vector2(1f, 0f);
+        rt.anchorMax        = new Vector2(1f, 0f);
+        rt.pivot            = new Vector2(1f, 0f);
+        rt.anchoredPosition = new Vector2(-10f, 10f);
+        rt.sizeDelta        = new Vector2(75f, 75f);
 
         var img = go.GetComponent<Image>();
         img.color = new Color(0.15f, 0.15f, 0.15f, 0.95f);

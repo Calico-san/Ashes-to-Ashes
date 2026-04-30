@@ -107,6 +107,7 @@ public class PrototypeGameController : MonoBehaviour
         {
             _simulatedMinutes -= 24f * 60f;
             _day++;
+            OnNewDay(_day);
         }
 
         RefreshUI();
@@ -206,7 +207,7 @@ public class PrototypeGameController : MonoBehaviour
         bool shipyard = type == BuildingType.Shipyard;
 
         var validator = PlacementValidator.Instance;
-        if (validator != null && !validator.IsValid(worldPosition, size, shipyard))
+        if (validator != null && !validator.IsValidForType(worldPosition, size, type))
             return false;
 
         wood  -= cost.Wood;
@@ -330,7 +331,11 @@ public class PrototypeGameController : MonoBehaviour
 
         foreach (var s in _buildSlots)
         {
+            // Only save slots that are actively under construction
             if (s == null) continue;
+            if (s.State != BuildSlot.SlotState.UnderConstruction) continue;
+            if (s.ConstructionHoursRemaining <= 0f) continue;
+
             data.BuildSlots.Add(new BuildSlotData
             {
                 PositionX                  = s.Position.x,
@@ -392,6 +397,14 @@ public class PrototypeGameController : MonoBehaviour
 
         PlacementValidator.Instance?.ClearAll();
 
+        // Re-register Town Hall footprint after clearing validator
+        var townHall = FindTownHall();
+        if (townHall != null)
+        {
+            _buildings.Add(townHall);
+            PlacementValidator.Instance?.Register(townHall.transform.position, townHall.Size);
+        }
+
         // Re-create buildings
         foreach (var bd in data.Buildings)
         {
@@ -407,6 +420,18 @@ public class PrototypeGameController : MonoBehaviour
                 new Vector3(bd.PositionX, bd.PositionY, 0f),
                 new Vector2(bd.SizeX, bd.SizeY), bd.IsShipyard);
 
+            // Label
+            var lbl = new GameObject(displayName + "Label");
+            lbl.transform.SetParent(go.transform, false);
+            lbl.transform.localPosition = new Vector3(0f, 0.85f, 0f);
+            var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
+            tmp.text        = displayName;
+            tmp.fontSize    = 1.8f;
+            tmp.alignment   = TMPro.TextAlignmentOptions.Center;
+            tmp.color       = Color.white;
+            tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
+            tmp.sortingOrder = 20;
+
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
                 building.TryAssignWorkerSilent();
@@ -414,18 +439,20 @@ public class PrototypeGameController : MonoBehaviour
             RegisterBuilding(building);
         }
 
-        // Re-create build slots
+        // Re-create build slots — only slots that are UnderConstruction
         foreach (var sd in data.BuildSlots)
         {
+            // Skip empty slots (no queued type = was never started)
+            if (string.IsNullOrEmpty(sd.QueuedTypeName)) continue;
+            if (!Enum.TryParse<BuildingType>(sd.QueuedTypeName, out var qt)) continue;
+            if (sd.ConstructionHoursRemaining <= 0f) continue;
+
             var go   = new GameObject("BuildSlot");
             var slot = go.AddComponent<BuildSlot>();
             slot.Initialize(this,
                 new Vector3(sd.PositionX, sd.PositionY, 0f),
                 new Vector2(sd.SizeX, sd.SizeY));
-
-            if (Enum.TryParse<BuildingType>(sd.QueuedTypeName, out var qt))
-                slot.RestoreConstruction(qt, sd.ConstructionHoursRemaining, sd.ConstructionHoursTotal);
-
+            slot.RestoreConstruction(qt, sd.ConstructionHoursRemaining, sd.ConstructionHoursTotal);
             RegisterBuildSlot(slot);
         }
 
@@ -461,6 +488,14 @@ public class PrototypeGameController : MonoBehaviour
     }
 
     // ---- Private ----
+
+    private void OnNewDay(int day)
+    {
+        // Team managers hook in here when ready:
+        // EventManager.Instance?.OnDayPassed(day);
+        // VolcanoManager.Instance?.OnDayPassed(day);
+        // ObjectiveManager.Instance?.CheckObjectives();
+    }
 
     private void TickHour()
     {
@@ -527,6 +562,13 @@ public class PrototypeGameController : MonoBehaviour
         tmp.sortingOrder = 20;
 
         RefreshUI();
+    }
+
+    private BuildingInstance FindTownHall()
+    {
+        foreach (var b in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
+            if (b != null && b.IsTownHall) return b;
+        return null;
     }
 
     private static (string name, ResourceType type, Color color) BuildingMeta(BuildingType t)

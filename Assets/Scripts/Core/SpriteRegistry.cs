@@ -1,21 +1,44 @@
 using UnityEngine;
 
 /// <summary>
-/// Central registry for all game sprites.
-/// Returns null if no sprite is registered — callers fall back to SimpleShapeFactory.
+/// ScriptableObject asset — created once via
+/// Assets > Create > Ashes > SpriteRegistry.
+/// Assign pixel art sprites in the Inspector at any time (no Play needed).
+/// Loaded at runtime via Resources.Load or direct field reference in Bootstrapper.
 ///
-/// Usage:
-///   var sprite = SpriteRegistry.Instance.GetBuildingSprite(BuildingType.Sawmill, BuildingVisualState.Built);
-///   if (sprite == null) sprite = SimpleShapeFactory.CreateFilledSquareSprite(fallbackColor);
-///
-/// To add pixel art sprites later:
-///   1. Import sprite sheets into Assets/Art/
-///   2. Assign in the Inspector on the SpriteRegistry GameObject
-///   3. No other code changes needed
+/// All systems call SpriteRegistry.Instance which is set when the
+/// Bootstrapper loads the asset.
 /// </summary>
-public class SpriteRegistry : MonoBehaviour
+[CreateAssetMenu(fileName = "SpriteRegistry", menuName = "Ashes/SpriteRegistry")]
+public class SpriteRegistry : ScriptableObject
 {
     public static SpriteRegistry Instance { get; private set; }
+
+    /// <summary>Called by PrototypeBootstrapper on startup.</summary>
+    public void Register() => Instance = this;
+
+    // ---- Buildings — Under Construction ----
+    [Header("Tilemap Tiles")]
+    public Sprite TileOcean;
+    public Sprite TileShore;
+    public Sprite TileLand;
+    public Sprite TileForest;
+    public Sprite TileIronMine;
+    public Sprite TileVolcano;
+
+    public Sprite GetTileSprite(TileType type)
+    {
+        switch (type)
+        {
+            case TileType.Ocean:    return TileOcean;
+            case TileType.Shore:    return TileShore;
+            case TileType.Land:     return TileLand;
+            case TileType.Forest:   return TileForest;
+            case TileType.IronMine: return TileIronMine;
+            case TileType.Volcano:  return TileVolcano;
+            default:                return null;
+        }
+    }
 
     [Header("Building — Under Construction")]
     public Sprite TownHallConstruction;
@@ -25,6 +48,7 @@ public class SpriteRegistry : MonoBehaviour
     public Sprite CookhouseConstruction;
     public Sprite ShipyardConstruction;
 
+    // ---- Buildings — Built / Idle ----
     [Header("Building — Built / Idle")]
     public Sprite TownHallBuilt;
     public Sprite SawmillBuilt;
@@ -33,6 +57,7 @@ public class SpriteRegistry : MonoBehaviour
     public Sprite CookhouseBuilt;
     public Sprite ShipyardBuilt;
 
+    // ---- Buildings — Producing ----
     [Header("Building — Producing")]
     public Sprite SawmillProducing;
     public Sprite SteelworksProducing;
@@ -40,76 +65,29 @@ public class SpriteRegistry : MonoBehaviour
     public Sprite CookhouseProducing;
     public Sprite ShipyardProducing;
 
+    // ---- Worker ----
     [Header("Worker")]
-    public Sprite WorkerIdle;
-    public Sprite[] WorkerWalkFrames;   // assigned later for walk cycle
+    public Sprite   WorkerIdle;
+    public Sprite[] WorkerWalkFrames;
 
+    // ---- Ship ----
     [Header("Ship")]
-    public Sprite ShipHull;
-    public Sprite ShipMast;
-    public Sprite ShipSail;
-    public Sprite[] ShipIdleFrames;     // assigned later for idle bob animation
+    public Sprite   ShipHull;
+    public Sprite   ShipMast;
+    public Sprite   ShipSail;
+    public Sprite[] ShipIdleFrames;
 
-    private void Awake()
-    {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-    }
-
-    // ---- Building sprites ----
+    // ---- API ----
 
     public Sprite GetBuildingSprite(BuildingType type, BuildingVisualState state)
     {
         switch (state)
         {
-            case BuildingVisualState.UnderConstruction: return GetConstructionSprite(type);
-            case BuildingVisualState.Producing:         return GetProducingSprite(type);
-            default:                                    return GetBuiltSprite(type);
+            case BuildingVisualState.UnderConstruction: return GetConstruction(type);
+            case BuildingVisualState.Producing:         return GetProducing(type);
+            default:                                    return GetBuilt(type);
         }
     }
-
-    private Sprite GetConstructionSprite(BuildingType type)
-    {
-        switch (type)
-        {
-            case BuildingType.TownHall:    return TownHallConstruction;
-            case BuildingType.Sawmill:     return SawmillConstruction;
-            case BuildingType.Steelworks:  return SteelworksConstruction;
-            case BuildingType.Fiberworks:  return FiberworksConstruction;
-            case BuildingType.Cookhouse:   return CookhouseConstruction;
-            case BuildingType.Shipyard:    return ShipyardConstruction;
-            default:                       return null;
-        }
-    }
-
-    private Sprite GetBuiltSprite(BuildingType type)
-    {
-        switch (type)
-        {
-            case BuildingType.TownHall:    return TownHallBuilt;
-            case BuildingType.Sawmill:     return SawmillBuilt;
-            case BuildingType.Steelworks:  return SteelworksBuilt;
-            case BuildingType.Fiberworks:  return FiberworksBuilt;
-            case BuildingType.Cookhouse:   return CookhouseBuilt;
-            case BuildingType.Shipyard:    return ShipyardBuilt;
-            default:                       return null;
-        }
-    }
-
-    private Sprite GetProducingSprite(BuildingType type)
-    {
-        switch (type)
-        {
-            case BuildingType.Sawmill:     return SawmillProducing;
-            case BuildingType.Steelworks:  return SteelworksProducing;
-            case BuildingType.Fiberworks:  return FiberworksProducing;
-            case BuildingType.Cookhouse:   return CookhouseProducing;
-            case BuildingType.Shipyard:    return ShipyardProducing;
-            default:                       return GetBuiltSprite(type);  // fallback to built
-        }
-    }
-
-    // ---- Worker sprites ----
 
     public Sprite GetWorkerSprite(int walkFrame = -1)
     {
@@ -118,13 +96,53 @@ public class SpriteRegistry : MonoBehaviour
         return WorkerIdle;
     }
 
-    // ---- Ship sprites ----
-
     public Sprite GetShipIdleFrame(int frame)
     {
         if (ShipIdleFrames != null && ShipIdleFrames.Length > 0)
             return ShipIdleFrames[frame % ShipIdleFrames.Length];
         return ShipHull;
     }
-}
 
+    // ---- Private ----
+
+    private Sprite GetConstruction(BuildingType type)
+    {
+        switch (type)
+        {
+            case BuildingType.TownHall:   return TownHallConstruction;
+            case BuildingType.Sawmill:    return SawmillConstruction;
+            case BuildingType.Steelworks: return SteelworksConstruction;
+            case BuildingType.Fiberworks: return FiberworksConstruction;
+            case BuildingType.Cookhouse:  return CookhouseConstruction;
+            case BuildingType.Shipyard:   return ShipyardConstruction;
+            default:                      return null;
+        }
+    }
+
+    private Sprite GetBuilt(BuildingType type)
+    {
+        switch (type)
+        {
+            case BuildingType.TownHall:   return TownHallBuilt;
+            case BuildingType.Sawmill:    return SawmillBuilt;
+            case BuildingType.Steelworks: return SteelworksBuilt;
+            case BuildingType.Fiberworks: return FiberworksBuilt;
+            case BuildingType.Cookhouse:  return CookhouseBuilt;
+            case BuildingType.Shipyard:   return ShipyardBuilt;
+            default:                      return null;
+        }
+    }
+
+    private Sprite GetProducing(BuildingType type)
+    {
+        switch (type)
+        {
+            case BuildingType.Sawmill:    return SawmillProducing    != null ? SawmillProducing    : GetBuilt(type);
+            case BuildingType.Steelworks: return SteelworksProducing != null ? SteelworksProducing : GetBuilt(type);
+            case BuildingType.Fiberworks: return FiberworksProducing != null ? FiberworksProducing : GetBuilt(type);
+            case BuildingType.Cookhouse:  return CookhouseProducing  != null ? CookhouseProducing  : GetBuilt(type);
+            case BuildingType.Shipyard:   return ShipyardProducing   != null ? ShipyardProducing   : GetBuilt(type);
+            default:                      return GetBuilt(type);
+        }
+    }
+}
