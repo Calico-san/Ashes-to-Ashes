@@ -45,6 +45,7 @@ public class PrototypeUIController : MonoBehaviour
 
     private PrototypeGameController _game;
     private BuildPanel              _buildPanel;
+    private SaveLoadPanel           _saveLoadPanel;
 
     // -------------------------------------------------------
     // Build
@@ -75,6 +76,9 @@ public class PrototypeUIController : MonoBehaviour
         _buildPanel = canvasGO.AddComponent<BuildPanel>();
         var cam = UnityEngine.Camera.main;
         _buildPanel.Build(game, canvas.transform, cam);
+
+        _saveLoadPanel = canvasGO.AddComponent<SaveLoadPanel>();
+        _saveLoadPanel.Build(game, canvas.transform);
     }
 
     // -------------------------------------------------------

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -59,6 +60,7 @@ public class PrototypeGameController : MonoBehaviour
     public int   Hour             => Mathf.FloorToInt(_simulatedMinutes / 60f) % 24;
     public int   Minute           => Mathf.FloorToInt(_simulatedMinutes) % 60;
     public int   SpeedMultiplier  => _speedMultiplier;
+    public float SimulatedMinutes => _simulatedMinutes;
     public Vector3 WorkerSpawnPoint { get; private set; }
     public Sprite  WorkerSprite     { get; private set; }
 
@@ -285,6 +287,178 @@ public class PrototypeGameController : MonoBehaviour
     // ---- Time control ----
 
     public void SetSpeed(int speed) { _speedMultiplier = Mathf.Clamp(speed, 0, 3); RefreshUI(); }
+
+    // ---- Save / Load ----
+
+    public GameStateData BuildSaveData()
+    {
+        var data = new GameStateData
+        {
+            Day              = _day,
+            SimulatedMinutes = _simulatedMinutes,
+            SpeedMultiplier  = _speedMultiplier,
+            Food             = food,
+            Wood             = wood,
+            Steel            = steel,
+            Cloth            = cloth,
+            Rope             = rope,
+            Ships            = ships,
+            TotalPopulation  = totalPopulation,
+            Children         = children,
+            FreeWorkers      = _freeWorkers,
+        };
+
+        foreach (var b in _buildings)
+        {
+            if (b == null) continue;
+            data.Buildings.Add(new BuildingData
+            {
+                DisplayName              = b.DisplayName,
+                BuildingTypeName         = b.BuildingTypeEnum.ToString(),
+                ResourceTypeName         = b.OutputType.ToString(),
+                PositionX                = b.transform.position.x,
+                PositionY                = b.transform.position.y,
+                SizeX                    = b.Size.x,
+                SizeY                    = b.Size.y,
+                AssignedWorkers          = b.AssignedWorkers,
+                IsShipyard               = b.IsShipyard,
+                IsTownHall               = b.IsTownHall,
+                ShipProgress             = b.ShipProgress,
+                ShipCount                = b.ShipCount,
+            });
+        }
+
+        foreach (var s in _buildSlots)
+        {
+            if (s == null) continue;
+            data.BuildSlots.Add(new BuildSlotData
+            {
+                PositionX                  = s.Position.x,
+                PositionY                  = s.Position.y,
+                SizeX                      = s.Size.x,
+                SizeY                      = s.Size.y,
+                QueuedTypeName             = s.QueuedType.ToString(),
+                ConstructionHoursRemaining = s.ConstructionHoursRemaining,
+                ConstructionHoursTotal     = s.ConstructionHoursTotal,
+            });
+        }
+
+        foreach (var ship in _ships)
+        {
+            if (ship == null) continue;
+            data.ShipList.Add(new ShipData
+            {
+                ShipNumber      = ship.ShipNumber,
+                PositionX       = ship.transform.position.x,
+                PositionY       = ship.transform.position.y,
+                AssignedSailors = ship.AssignedSailors,
+                Passengers      = ship.Passengers,
+                FoodLoaded      = ship.FoodLoaded,
+                HasVisual       = ship.HasVisual,
+            });
+        }
+
+        return data;
+    }
+
+    public void ApplyLoadData(GameStateData data)
+    {
+        // Restore primitives
+        _day              = data.Day;
+        _simulatedMinutes = data.SimulatedMinutes;
+        _speedMultiplier  = data.SpeedMultiplier;
+        food              = data.Food;
+        wood              = data.Wood;
+        steel             = data.Steel;
+        cloth             = data.Cloth;
+        rope              = data.Rope;
+        ships             = data.Ships;
+        totalPopulation   = data.TotalPopulation;
+        children          = data.Children;
+        _freeWorkers      = data.FreeWorkers;
+
+        // Destroy existing dynamic objects
+        foreach (var b in _buildings)
+            if (b != null && !b.IsTownHall) Destroy(b.gameObject);
+        _buildings.Clear();
+
+        foreach (var s in _buildSlots)
+            if (s != null) Destroy(s.gameObject);
+        _buildSlots.Clear();
+
+        foreach (var ship in _ships)
+            if (ship != null) Destroy(ship.gameObject);
+        _ships.Clear();
+
+        PlacementValidator.Instance?.ClearAll();
+
+        // Re-create buildings
+        foreach (var bd in data.Buildings)
+        {
+            if (bd.IsTownHall) continue; // Town Hall is static, not re-created
+
+            var (displayName, outputType, color) = BuildingMeta(
+                Enum.TryParse<BuildingType>(bd.BuildingTypeName, out var bt)
+                    ? bt : BuildingType.Sawmill);
+
+            var go       = new GameObject(bd.DisplayName);
+            var building = go.AddComponent<BuildingInstance>();
+            building.Initialize(this, displayName, outputType, color,
+                new Vector3(bd.PositionX, bd.PositionY, 0f),
+                new Vector2(bd.SizeX, bd.SizeY), bd.IsShipyard);
+
+            // Restore workers (spawn silently — no walk animation on load)
+            for (int i = 0; i < bd.AssignedWorkers; i++)
+                building.TryAssignWorkerSilent();
+
+            RegisterBuilding(building);
+        }
+
+        // Re-create build slots
+        foreach (var sd in data.BuildSlots)
+        {
+            var go   = new GameObject("BuildSlot");
+            var slot = go.AddComponent<BuildSlot>();
+            slot.Initialize(this,
+                new Vector3(sd.PositionX, sd.PositionY, 0f),
+                new Vector2(sd.SizeX, sd.SizeY));
+
+            if (Enum.TryParse<BuildingType>(sd.QueuedTypeName, out var qt))
+                slot.RestoreConstruction(qt, sd.ConstructionHoursRemaining, sd.ConstructionHoursTotal);
+
+            RegisterBuildSlot(slot);
+        }
+
+        // Re-create ships
+        foreach (var sd in data.ShipList)
+        {
+            var go   = new GameObject($"Ship_{sd.ShipNumber}");
+            var ship = go.AddComponent<ShipInstance>();
+            ship.Initialize(this, sd.ShipNumber,
+                new Vector3(sd.PositionX, sd.PositionY, 0f), sd.HasVisual);
+            ship.RestoreState(sd.AssignedSailors, sd.Passengers, sd.FoodLoaded);
+            RegisterShip(ship);
+        }
+
+        _selectedBuilding = null;
+        _selectedSlot     = null;
+        _selectedShip     = null;
+        RefreshUI();
+    }
+
+    public bool SaveGame(int slot = 0)
+    {
+        var data = BuildSaveData();
+        return SaveSystem.Save(data, slot);
+    }
+
+    public bool LoadGame(int slot = 0)
+    {
+        var data = SaveSystem.Load(slot);
+        if (data == null) return false;
+        ApplyLoadData(data);
+        return true;
+    }
 
     // ---- Private ----
 

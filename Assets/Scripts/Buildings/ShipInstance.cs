@@ -22,6 +22,8 @@ public class ShipInstance : MonoBehaviour
         get { int n = 0; foreach (var s in _sailors) if (s != null && s.IsInside) n++; return n; }
     }
 
+    public bool HasVisual { get; private set; }
+
     public bool IsReadyToSail =>
         AssignedSailors > 0 && Passengers > 0 && FoodLoaded >= RequiredFood;
 
@@ -44,6 +46,7 @@ public class ShipInstance : MonoBehaviour
 
         transform.position = position;
 
+        HasVisual = hasVisual;
         if (hasVisual)
         {
             FaceIsland();
@@ -51,6 +54,15 @@ public class ShipInstance : MonoBehaviour
             var col  = gameObject.AddComponent<BoxCollider2D>();
             col.size = new Vector2(0.5f, 0.5f);
         }
+    }
+
+    /// <summary>Restore passengers and food from save — no worker agents spawned.</summary>
+    public void RestoreState(int sailors, int passengers, int foodLoaded)
+    {
+        // Sailors restored as count only — no walk animation on load
+        for (int i = 0; i < sailors; i++) _sailors.Add(null);
+        Passengers = passengers;
+        FoodLoaded = foodLoaded;
     }
 
     // ---- Sailor management ----

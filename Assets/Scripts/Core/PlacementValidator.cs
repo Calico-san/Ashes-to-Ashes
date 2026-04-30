@@ -26,6 +26,9 @@ public class PlacementValidator : MonoBehaviour
         _occupied.Add(RectFrom(position, size));
     }
 
+    /// <summary>Clear all registered footprints. Called before applying load data.</summary>
+    public void ClearAll() => _occupied.Clear();
+
     /// <summary>Unregister (e.g. when a BuildSlot is destroyed).</summary>
     public void Unregister(Vector2 position, Vector2 size)
     {

@@ -11,8 +11,9 @@ public class BuildingInstance : MonoBehaviour
     public string       DisplayName  { get; private set; }
     public ResourceType OutputType   { get; private set; }
     public bool         IsShipyard   { get; private set; }
-    public bool         IsTownHall   { get; private set; }
-    public Vector2      Size         { get; private set; }
+    public bool         IsTownHall      { get; private set; }
+    public Vector2      Size            { get; private set; }
+    public BuildingType BuildingTypeEnum { get; private set; }
     public int          MaxWorkers   { get; private set; }
     public int          AssignedWorkers => _workers.Count;
     public int          WorkersInside
@@ -21,7 +22,7 @@ public class BuildingInstance : MonoBehaviour
         {
             int n = 0;
             foreach (var w in _workers)
-                if (w != null && w.IsInside) n++;
+                if (w == null || w.IsInside) n++; // null = silent worker (loaded from save)
             return n;
         }
     }
@@ -61,6 +62,7 @@ public class BuildingInstance : MonoBehaviour
         MaxWorkers  = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
 
         Size                 = size;
+        BuildingTypeEnum     = BuildingTypeFromResource(outputType, isShipyard);
         transform.position   = position;
         transform.localScale = new Vector3(size.x, size.y, 1f);
 
@@ -111,6 +113,15 @@ public class BuildingInstance : MonoBehaviour
     private void Update()
     {
         _animator?.SetProducing(WorkersInside > 0 && !IsTownHall);
+    }
+
+    /// <summary>Assign worker instantly without walk animation. Used on game load.</summary>
+    public bool TryAssignWorkerSilent()
+    {
+        if (AssignedWorkers >= MaxWorkers || !_game.CanCreateWorkerAgent()) return false;
+        _workers.Add(null); // null = worker is "inside" but no visual agent
+        _game.OnWorkerAssigned();
+        return true;
     }
 
     // ---- Hourly tick ----

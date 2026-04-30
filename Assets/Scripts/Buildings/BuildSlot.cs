@@ -81,6 +81,17 @@ public class BuildSlot : MonoBehaviour
         _animator?.Setup(type, _constructionColor);
     }
 
+    /// <summary>Restore construction state from save data (no resource cost).</summary>
+    public void RestoreConstruction(BuildingType type, float hoursRemaining, float hoursTotal)
+    {
+        QueuedType                 = type;
+        ConstructionHoursTotal     = hoursTotal;
+        ConstructionHoursRemaining = hoursRemaining;
+        State                      = SlotState.UnderConstruction;
+        if (_renderer != null) _renderer.color = _constructionColor;
+        _animator?.Setup(type, _constructionColor);
+    }
+
     /// <summary>Called each in-game hour. Returns true when construction finishes.</summary>
     public bool TickHour()
     {
