@@ -317,7 +317,7 @@ public class BuildPanel : MonoBehaviour
         for (int i = 0; i < _buildBtns.Count && i < types.Length; i++)
         {
             var cost = BuildingCost.For(types[i]);
-            _buildBtns[i].interactable = cost.CanAfford(game.Wood, game.Steel, game.Cloth);
+            _buildBtns[i].interactable = cost.CanAfford(game.Wood, game.Steel, game.Cloth, game.Rope);
         }
     }
 
@@ -338,6 +338,7 @@ public class BuildPanel : MonoBehaviour
         if (cost.Wood  > 0) parts.Add($"W:{cost.Wood}");
         if (cost.Steel > 0) parts.Add($"S:{cost.Steel}");
         if (cost.Cloth > 0) parts.Add($"C:{cost.Cloth}");
+        if (cost.Rope  > 0) parts.Add($"R:{cost.Rope}");
         return parts.Count > 0 ? string.Join("  ", parts) : "Free";
     }
 }

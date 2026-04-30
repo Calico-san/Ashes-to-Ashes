@@ -10,7 +10,8 @@ public static class BalanceConfig
     // Building production (per worker per day)
     public const float SawmillWoodPerWorker    = 1.2f;
     public const float SteelworksPerWorker     = 0.6f;
-    public const float FiberworksPerWorker     = 0.5f;
+    public const float FiberworksClothPerWorker = 0.5f;   // Cloth per worker per day
+    public const float FiberworksRopePerWorker  = 0.5f;   // Rope per worker per day
     public const float CookhouseFoodPerWorker  = 2.0f;
 
     // Shipyard
@@ -21,6 +22,7 @@ public static class BalanceConfig
     public const int   ShipWoodCostPerWorker   = 1;
     public const int   ShipSteelCostPerWorker  = 1;
     public const int   ShipClothCostDivisor    = 2;
+    public const int   ShipRopeCostDivisor     = 2;
 
     // Ship capacity
     public const int   ShipMaxPassengers       = 50;

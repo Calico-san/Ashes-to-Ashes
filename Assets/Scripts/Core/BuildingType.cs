@@ -15,6 +15,7 @@ public struct BuildingCost
     public int  Wood;
     public int  Steel;
     public int  Cloth;
+    public int  Rope;
     public int  Hours;   // in-game hours to build
 
     public static BuildingCost For(BuildingType type)
@@ -36,8 +37,8 @@ public struct BuildingCost
         }
     }
 
-    public bool CanAfford(int wood, int steel, int cloth)
-        => wood >= Wood && steel >= Steel && cloth >= Cloth;
+    public bool CanAfford(int wood, int steel, int cloth, int rope = 0)
+        => wood >= Wood && steel >= Steel && cloth >= Cloth && rope >= Rope;
 }
 
 /// <summary>Visual state of a building, used to pick the correct sprite.</summary>

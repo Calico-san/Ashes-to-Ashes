@@ -36,6 +36,7 @@ public class BuildingInstance : MonoBehaviour
     public int   ShipWoodPerCycle     => EconomyCalculator.ShipWoodCost(WorkersInside);
     public int   ShipSteelPerCycle    => EconomyCalculator.ShipSteelCost(WorkersInside);
     public int   ShipClothPerCycle    => EconomyCalculator.ShipClothCost(WorkersInside);
+    public int   ShipRopePerCycle     => EconomyCalculator.ShipRopeCost(WorkersInside);
 
     // ---- Private ----
     private readonly List<WorkerAgent>  _workers     = new();
@@ -119,8 +120,16 @@ public class BuildingInstance : MonoBehaviour
         int active = WorkersInside;
         if (active <= 0) return;
 
-        if (IsShipyard) TickShipyard(active);
-        else            _game.AddResource(OutputType, active);
+        if (IsShipyard)                             TickShipyard(active);
+        else if (OutputType == ResourceType.Cloth)  TickFiberworks(active);
+        else                                        _game.AddResource(OutputType, active);
+    }
+
+    private void TickFiberworks(int activeWorkers)
+    {
+        // Fiberworks produces both Cloth and Rope each cycle
+        _game.AddResource(ResourceType.Cloth, activeWorkers);
+        _game.AddResource(ResourceType.Rope,  activeWorkers);
     }
 
     // ---- Selection ----
@@ -138,10 +147,11 @@ public class BuildingInstance : MonoBehaviour
         int wood  = EconomyCalculator.ShipWoodCost(activeWorkers);
         int steel = EconomyCalculator.ShipSteelCost(activeWorkers);
         int cloth = EconomyCalculator.ShipClothCost(activeWorkers);
+        int rope  = EconomyCalculator.ShipRopeCost(activeWorkers);
 
-        if (!_game.HasResources(wood, steel, cloth)) return;
+        if (!_game.HasResources(wood, steel, cloth, rope)) return;
 
-        _game.ConsumeShipResources(wood, steel, cloth);
+        _game.ConsumeShipResources(wood, steel, cloth, rope);
         _shipProgress += EconomyCalculator.ShipProgress(activeWorkers);
 
         while (_shipProgress >= BalanceConfig.ShipProgressRequired)

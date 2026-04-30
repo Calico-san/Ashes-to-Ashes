@@ -16,6 +16,7 @@ public class PrototypeGameController : MonoBehaviour
     [SerializeField] private int wood  = 30;
     [SerializeField] private int steel = 5;
     [SerializeField] private int cloth = 5;
+    [SerializeField] private int rope  = 5;
     [SerializeField] private int ships = 0;
 
     [Header("Time")]
@@ -52,6 +53,7 @@ public class PrototypeGameController : MonoBehaviour
     public int   Wood             => wood;
     public int   Steel            => steel;
     public int   Cloth            => cloth;
+    public int   Rope             => rope;
     public int   Ships            => ships;
     public int   Day              => _day;
     public int   Hour             => Mathf.FloorToInt(_simulatedMinutes / 60f) % 24;
@@ -254,19 +256,21 @@ public class PrototypeGameController : MonoBehaviour
             case ResourceType.Wood:  wood  += amount; break;
             case ResourceType.Steel: steel += amount; break;
             case ResourceType.Cloth: cloth += amount; break;
+            case ResourceType.Rope:  rope  += amount; break;
             case ResourceType.Ships: ships += amount; break;
         }
         RefreshUI();
     }
 
-    public bool HasResources(int w, int s, int c)
-        => wood >= w && steel >= s && cloth >= c;
+    public bool HasResources(int w, int s, int c, int r = 0)
+        => wood >= w && steel >= s && cloth >= c && rope >= r;
 
-    public void ConsumeShipResources(int w, int s, int c)
+    public void ConsumeShipResources(int w, int s, int c, int r = 0)
     {
         wood  -= w;
         steel -= s;
         cloth -= c;
+        rope  -= r;
         RefreshUI();
     }
 

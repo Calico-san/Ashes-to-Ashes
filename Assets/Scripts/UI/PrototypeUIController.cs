@@ -126,7 +126,7 @@ public class PrototypeUIController : MonoBehaviour
     {
         if (_resourcesText != null)
             _resourcesText.text =
-                $"Wood: {game.Wood}   Steel: {game.Steel}   Cloth: {game.Cloth}   Food: {game.Food}   Ships: {game.Ships}";
+                $"Wood: {game.Wood}   Steel: {game.Steel}   Cloth: {game.Cloth}   Rope: {game.Rope}   Food: {game.Food}   Ships: {game.Ships}";
         if (_clockText != null)
             _clockText.text = $"Day {game.Day}  {game.Hour:00}:{game.Minute:00}";
     }
@@ -259,7 +259,7 @@ public class PrototypeUIController : MonoBehaviour
             float pct = sel.ShipProgress / BalanceConfig.ShipProgressRequired * 100f;
             SetTitle("Shipyard");
             SetWorkerLine($"Workers: {sel.AssignedWorkers} / {sel.MaxWorkers}  |  Progress: {pct:F0}%");
-            SetOutputLine($"Cost/tick — Wood: {sel.ShipWoodPerCycle}  Steel: {sel.ShipSteelPerCycle}  Cloth: {sel.ShipClothPerCycle}\nShips built: {sel.ShipCount}");
+            SetOutputLine($"Cost/tick — Wood: {sel.ShipWoodPerCycle}  Steel: {sel.ShipSteelPerCycle}  Cloth: {sel.ShipClothPerCycle}  Rope: {sel.ShipRopePerCycle}\nShips built: {sel.ShipCount}");
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
                        "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
                        sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
@@ -411,7 +411,7 @@ public class PrototypeUIController : MonoBehaviour
             if (btn == null) continue;
             btn.gameObject.SetActive(true);
             SetBtnLabel(btn, BuildingLabel(types[i], cost));
-            btn.interactable = cost.CanAfford(game.Wood, game.Steel, game.Cloth);
+            btn.interactable = cost.CanAfford(game.Wood, game.Steel, game.Cloth, game.Rope);
         }
     }
 
