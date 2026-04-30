@@ -33,6 +33,8 @@ public class PrototypeUIController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _outputText;
     [SerializeField] private Button          _assignBtn;
     [SerializeField] private Button          _removeBtn;
+    [SerializeField] private Button          _assignEngBtn;
+    [SerializeField] private Button          _removeEngBtn;
 
     // ---- Ship list (Shipyard panel) ----
     [Header("Ship List")]
@@ -86,8 +88,10 @@ public class PrototypeUIController : MonoBehaviour
         _speed3Btn?.onClick.AddListener(() => _game.SetSpeed(3));
 
         // Wire assign/remove buttons (labels updated in Refresh)
-        _assignBtn?.onClick.AddListener(() => _game.AssignWorkerToSelectedBuilding());
-        _removeBtn?.onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
+        _assignBtn?   .onClick.AddListener(() => _game.AssignWorkerToSelectedBuilding());
+        _removeBtn?   .onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
+        _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
+        _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
 
         // Wire ship detail buttons
         _shipDetailBack?  .onClick.AddListener(() => _game.SelectShip(null));
@@ -143,7 +147,7 @@ public class PrototypeUIController : MonoBehaviour
         float foodPerDay = EconomyCalculator.FoodConsumptionPerDay(game.AdultPopulation, game.Children);
         _populationText.text =
             $"Population: {game.TotalPopulation}   Children: {game.Children}   " +
-            $"Free workers: {game.FreeWorkers}   Food/day: -{foodPerDay:F0}";
+            $"Workers: {game.FreeWorkers}   Engineers: {game.FreeEngineers}   Food/day: -{foodPerDay:F0}";
     }
 
     // -------------------------------------------------------
@@ -178,7 +182,7 @@ public class PrototypeUIController : MonoBehaviour
         {
             float pct = sel.ShipProgress / BalanceConfig.ShipProgressRequired * 100f;
             SetTitle("Shipyard");
-            SetWorkerLine($"Workers: {sel.AssignedWorkers} / {sel.MaxWorkers}  |  Progress: {pct:F0}%");
+            SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}  Engineers: {sel.AssignedEngineers}/{sel.MaxEngineers}  |  {pct:F0}%");
             SetOutputLine($"Cost/tick — Wood: {sel.ShipWoodPerCycle}  Steel: {sel.ShipSteelPerCycle}" +
                           $"  Cloth: {sel.ShipClothPerCycle}  Rope: {sel.ShipRopePerCycle}" +
                           $"\nShips built: {sel.ShipCount}");
@@ -186,6 +190,8 @@ public class PrototypeUIController : MonoBehaviour
                        "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
                        sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
                        sel.AssignedWorkers > 0);
+            SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
+                          sel.AssignedEngineers > 0);
 
             bool inDetail = selShip != null;
             _shipListContainer?  .SetActive(!inDetail);
@@ -223,14 +229,17 @@ public class PrototypeUIController : MonoBehaviour
             float perW = sel.OutputPerWorkerPerHour;
             float tot  = sel.TotalOutputPerHour;
             SetTitle(sel.DisplayName);
-            SetWorkerLine($"Workers: {sel.AssignedWorkers} / {sel.MaxWorkers}" +
-                (sel.WorkersInside > 0 ? $"  ({sel.WorkersInside} active)" : ""));
+            SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}" +
+                (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
+                (sel.AssignedEngineers > 0 ? $"  | Eng: {sel.AssignedEngineers} +{(int)((sel.EngineerBonus-1)*100)}%" : ""));
             SetOutputLine($"{sel.OutputType}/worker/h: {perW:F2}\n" +
                           $"Total/h: {tot:F2}  |  /day: {tot * 24f:F1}");
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
                        "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
                        sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
                        sel.AssignedWorkers > 0);
+            SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
+                          sel.AssignedEngineers > 0);
         }
         else if (showShip)
         {
@@ -320,7 +329,8 @@ public class PrototypeUIController : MonoBehaviour
         Highlight(_pauseBtn,  speed == 0);
         Highlight(_speed1Btn, speed == 1);
         Highlight(_speed2Btn, speed == 2);
-        Highlight(_speed3Btn, speed == 3);
+        // No 3x — Frostpunk style: pause, 1x, 2x only
+        if (_speed3Btn != null) _speed3Btn.gameObject.SetActive(false);
     }
 
     // -------------------------------------------------------
@@ -349,6 +359,14 @@ public class PrototypeUIController : MonoBehaviour
             if (removeCb != null) _removeBtn.onClick.AddListener(removeCb);
             _removeBtn.interactable = removeEnabled;
         }
+    }
+
+    private void SetEngButtons(bool assignEnabled, bool removeEnabled)
+    {
+        if (_assignEngBtn != null) _assignEngBtn.interactable = assignEnabled;
+        if (_removeEngBtn != null) _removeEngBtn.interactable = removeEnabled;
+        if (_assignEngBtn != null) _assignEngBtn.gameObject.SetActive(true);
+        if (_removeEngBtn != null) _removeEngBtn.gameObject.SetActive(true);
     }
 
     private static void SetLabel(Button btn, string text)
@@ -414,8 +432,10 @@ public class PrototypeUIController : MonoBehaviour
         _speed1Btn?.onClick.AddListener(() => _game.SetSpeed(1));
         _speed2Btn?.onClick.AddListener(() => _game.SetSpeed(2));
         _speed3Btn?.onClick.AddListener(() => _game.SetSpeed(3));
-        _assignBtn?.onClick.AddListener(() => _game.AssignWorkerToSelectedBuilding());
-        _removeBtn?.onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
+        _assignBtn?   .onClick.AddListener(() => _game.AssignWorkerToSelectedBuilding());
+        _removeBtn?   .onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
+        _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
+        _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
         _shipDetailBack?  .onClick.AddListener(() => _game.SelectShip(null));
         _shipDetailAssign?.onClick.AddListener(() => _game.AssignSailorToSelectedShip());
         _shipDetailRemove?.onClick.AddListener(() => _game.RemoveSailorFromSelectedShip());

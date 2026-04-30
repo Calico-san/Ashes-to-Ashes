@@ -9,19 +9,20 @@ using UnityEngine;
 public class PrototypeGameController : MonoBehaviour
 {
     [Header("Population")]
-    [SerializeField] private int totalPopulation = 40;
-    [SerializeField] private int children        = 8;
+    [SerializeField] private int totalPopulation = 1100;
+    [SerializeField] private int children        = 440;
+    [SerializeField] private int engineers       = 165; // 25% of adults
 
     [Header("Starting Resources")]
-    [SerializeField] private int food  = 20;
-    [SerializeField] private int wood  = 30;
-    [SerializeField] private int steel = 5;
-    [SerializeField] private int cloth = 5;
-    [SerializeField] private int rope  = 5;
+    [SerializeField] private int food  = 500;
+    [SerializeField] private int wood  = 80;
+    [SerializeField] private int steel = 20;
+    [SerializeField] private int cloth = 15;
+    [SerializeField] private int rope  = 0;
     [SerializeField] private int ships = 0;
 
     [Header("Time")]
-    [SerializeField] private float simulationMinutesPerSecond = 12f;
+    [SerializeField] private float simulationMinutesPerSecond = 3.0f; // 8 min/day at 1x
 
     // ---- References ----
     private PrototypeUIController _ui;
@@ -44,12 +45,15 @@ public class PrototypeGameController : MonoBehaviour
 
     // ---- Workers ----
     private int _freeWorkers;
+    private int _freeEngineers;
 
     // ---- Public properties ----
     public int   TotalPopulation  => totalPopulation;
     public int   Children         => children;
     public int   AdultPopulation  => totalPopulation - children;
     public int   FreeWorkers      => _freeWorkers;
+    public int   FreeEngineers    => _freeEngineers;
+    public int   Engineers        => engineers;
     public int   Food             => food;
     public int   Wood             => wood;
     public int   Steel            => steel;
@@ -63,6 +67,7 @@ public class PrototypeGameController : MonoBehaviour
     public float SimulatedMinutes => _simulatedMinutes;
     public Vector3 WorkerSpawnPoint { get; private set; }
     public Sprite  WorkerSprite     { get; private set; }
+    public Sprite  EngineerSprite   { get; private set; }
 
     public IReadOnlyList<BuildingInstance> Buildings  => _buildings;
     public IReadOnlyList<BuildSlot>        BuildSlots => _buildSlots;
@@ -82,7 +87,9 @@ public class PrototypeGameController : MonoBehaviour
         _ui               = ui;
         WorkerSprite      = workerSprite;
         WorkerSpawnPoint  = spawnPoint;
-        _freeWorkers      = AdultPopulation;
+        _freeWorkers      = AdultPopulation - engineers;
+        _freeEngineers    = engineers;
+        EngineerSprite    = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(0.3f, 0.7f, 1f, 1f));
         _simulatedMinutes = 8f * 60f; // start at 08:00
         RefreshUI();
     }
@@ -171,9 +178,12 @@ public class PrototypeGameController : MonoBehaviour
 
     // ---- Worker pool ----
 
-    public bool CanCreateWorkerAgent() => _freeWorkers > 0;
-    public void OnWorkerAssigned() { _freeWorkers = Mathf.Max(0, _freeWorkers - 1); RefreshUI(); }
-    public void OnWorkerRemoved()  { _freeWorkers++;                                  RefreshUI(); }
+    public bool CanCreateWorkerAgent()   => _freeWorkers   > 0;
+    public bool CanCreateEngineerAgent() => _freeEngineers > 0;
+    public void OnWorkerAssigned()   { _freeWorkers   = Mathf.Max(0, _freeWorkers   - 1); RefreshUI(); }
+    public void OnWorkerRemoved()    { _freeWorkers++;                                     RefreshUI(); }
+    public void OnEngineerAssigned() { _freeEngineers = Mathf.Max(0, _freeEngineers - 1); RefreshUI(); }
+    public void OnEngineerRemoved()  { _freeEngineers++;                                   RefreshUI(); }
 
     // ---- Building actions ----
 
@@ -187,6 +197,20 @@ public class PrototypeGameController : MonoBehaviour
     public bool RemoveWorkerFromSelectedBuilding()
     {
         bool ok = _selectedBuilding != null && _selectedBuilding.RemoveWorker();
+        if (ok) RefreshUI();
+        return ok;
+    }
+
+    public bool AssignEngineerToSelectedBuilding()
+    {
+        bool ok = _selectedBuilding != null && _selectedBuilding.TryAssignEngineer();
+        if (ok) RefreshUI();
+        return ok;
+    }
+
+    public bool RemoveEngineerFromSelectedBuilding()
+    {
+        bool ok = _selectedBuilding != null && _selectedBuilding.RemoveEngineer();
         if (ok) RefreshUI();
         return ok;
     }
@@ -307,6 +331,7 @@ public class PrototypeGameController : MonoBehaviour
             TotalPopulation  = totalPopulation,
             Children         = children,
             FreeWorkers      = _freeWorkers,
+            FreeEngineers    = _freeEngineers,
         };
 
         foreach (var b in _buildings)
@@ -322,6 +347,7 @@ public class PrototypeGameController : MonoBehaviour
                 SizeX                    = b.Size.x,
                 SizeY                    = b.Size.y,
                 AssignedWorkers          = b.AssignedWorkers,
+                AssignedEngineers        = b.AssignedEngineers,
                 IsShipyard               = b.IsShipyard,
                 IsTownHall               = b.IsTownHall,
                 ShipProgress             = b.ShipProgress,
@@ -381,6 +407,7 @@ public class PrototypeGameController : MonoBehaviour
         totalPopulation   = data.TotalPopulation;
         children          = data.Children;
         _freeWorkers      = data.FreeWorkers;
+        _freeEngineers    = data.FreeEngineers;
 
         // Destroy existing dynamic objects
         foreach (var b in _buildings)
@@ -435,6 +462,8 @@ public class PrototypeGameController : MonoBehaviour
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
                 building.TryAssignWorkerSilent();
+            for (int i = 0; i < bd.AssignedEngineers; i++)
+                building.TryAssignEngineerSilent();
 
             RegisterBuilding(building);
         }

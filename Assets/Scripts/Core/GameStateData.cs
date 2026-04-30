@@ -31,6 +31,7 @@ public class GameStateData
     public int      TotalPopulation;
     public int      Children;
     public int      FreeWorkers;
+    public int      FreeEngineers;
 
     // ---- Buildings ----
     public List<BuildingData>  Buildings  = new List<BuildingData>();
@@ -55,6 +56,7 @@ public class BuildingData
     public float    SizeX;
     public float    SizeY;
     public int      AssignedWorkers;
+    public int      AssignedEngineers;
     public bool     IsShipyard;
     public bool     IsTownHall;
 

@@ -15,21 +15,37 @@ public class BuildingInstance : MonoBehaviour
     public Vector2      Size            { get; private set; }
     public BuildingType BuildingTypeEnum { get; private set; }
     public int          MaxWorkers   { get; private set; }
-    public int          AssignedWorkers => _workers.Count;
+    public int          AssignedWorkers   => _workers.Count;
+    public int          AssignedEngineers => _engineers.Count;
+    public int          MaxEngineers      => Mathf.Max(1, MaxWorkers / 5); // max 20% engineers
+    public bool         HasEngineer       => EngineersInside > 0;
     public int          WorkersInside
     {
         get
         {
             int n = 0;
             foreach (var w in _workers)
-                if (w == null || w.IsInside) n++; // null = silent worker (loaded from save)
+                if (w == null || w.IsInside) n++;
+            return n;
+        }
+    }
+    public int          EngineersInside
+    {
+        get
+        {
+            int n = 0;
+            foreach (var e in _engineers)
+                if (e == null || e.IsInside) n++;
             return n;
         }
     }
 
     // Production info (read by UI)
     public float OutputPerWorkerPerHour => EconomyCalculator.ProductionPerWorkerPerHour(OutputType);
-    public float TotalOutputPerHour     => OutputPerWorkerPerHour * WorkersInside;
+    public float EngineerBonus => HasEngineer
+        ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
+        : 1.0f;
+    public float TotalOutputPerHour     => OutputPerWorkerPerHour * WorkersInside * EngineerBonus;
 
     // Shipyard info (read by UI)
     public float ShipProgress         => _shipProgress;
@@ -41,6 +57,7 @@ public class BuildingInstance : MonoBehaviour
 
     // ---- Private ----
     private readonly List<WorkerAgent>  _workers     = new();
+    private readonly List<WorkerAgent>  _engineers   = new();
     private readonly List<GameObject>   _shipObjects = new();
     private SpriteRenderer              _renderer;
     private BuildingAnimator            _animator;
@@ -100,13 +117,41 @@ public class BuildingInstance : MonoBehaviour
     public bool RemoveWorker()
     {
         if (_workers.Count == 0) return false;
-
         var worker = _workers[_workers.Count - 1];
         _workers.RemoveAt(_workers.Count - 1);
         worker?.LeaveBuilding(_game.WorkerSpawnPoint);
-
         RepositionWorkers();
         _game.OnWorkerRemoved();
+        return true;
+    }
+
+    public bool TryAssignEngineer()
+    {
+        if (IsTownHall) return false;
+        if (AssignedEngineers >= MaxEngineers || !_game.CanCreateEngineerAgent()) return false;
+        var agent = new GameObject($"{DisplayName}_Engineer_{AssignedEngineers + 1}")
+            .AddComponent<WorkerAgent>();
+        agent.Initialize(_game.WorkerSpawnPoint, EngineerSlot(_engineers.Count), _game.EngineerSprite);
+        _engineers.Add(agent);
+        _game.OnEngineerAssigned();
+        return true;
+    }
+
+    public bool RemoveEngineer()
+    {
+        if (_engineers.Count == 0) return false;
+        var eng = _engineers[_engineers.Count - 1];
+        _engineers.RemoveAt(_engineers.Count - 1);
+        eng?.LeaveBuilding(_game.WorkerSpawnPoint);
+        _game.OnEngineerRemoved();
+        return true;
+    }
+
+    public bool TryAssignEngineerSilent()
+    {
+        if (AssignedEngineers >= MaxEngineers || !_game.CanCreateEngineerAgent()) return false;
+        _engineers.Add(null);
+        _game.OnEngineerAssigned();
         return true;
     }
 
@@ -131,16 +176,20 @@ public class BuildingInstance : MonoBehaviour
         int active = WorkersInside;
         if (active <= 0) return;
 
-        if (IsShipyard)                             TickShipyard(active);
-        else if (OutputType == ResourceType.Cloth)  TickFiberworks(active);
-        else                                        _game.AddResource(OutputType, active);
+        float bonus = HasEngineer
+            ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
+            : 1.0f;
+
+        if (IsShipyard)                             TickShipyard(active, bonus);
+        else if (OutputType == ResourceType.Cloth)  TickFiberworks(active, bonus);
+        else                                        _game.AddResource(OutputType, Mathf.RoundToInt(active * bonus));
     }
 
-    private void TickFiberworks(int activeWorkers)
+    private void TickFiberworks(int activeWorkers, float bonus = 1f)
     {
         // Fiberworks produces both Cloth and Rope each cycle
-        _game.AddResource(ResourceType.Cloth, activeWorkers);
-        _game.AddResource(ResourceType.Rope,  activeWorkers);
+        _game.AddResource(ResourceType.Cloth, Mathf.RoundToInt(activeWorkers * bonus));
+        _game.AddResource(ResourceType.Rope,  Mathf.RoundToInt(activeWorkers * bonus));
     }
 
     // ---- Selection ----
@@ -153,7 +202,7 @@ public class BuildingInstance : MonoBehaviour
 
     // ---- Private ----
 
-    private void TickShipyard(int activeWorkers)
+    private void TickShipyard(int activeWorkers, float bonus = 1f)
     {
         int wood  = EconomyCalculator.ShipWoodCost(activeWorkers);
         int steel = EconomyCalculator.ShipSteelCost(activeWorkers);
@@ -163,7 +212,7 @@ public class BuildingInstance : MonoBehaviour
         if (!_game.HasResources(wood, steel, cloth, rope)) return;
 
         _game.ConsumeShipResources(wood, steel, cloth, rope);
-        _shipProgress += EconomyCalculator.ShipProgress(activeWorkers);
+        _shipProgress += EconomyCalculator.ShipProgress(activeWorkers) * bonus;
 
         while (_shipProgress >= BalanceConfig.ShipProgressRequired)
         {
@@ -211,5 +260,11 @@ public class BuildingInstance : MonoBehaviour
     {
         int col = index % 5, row = index / 5;
         return transform.position + new Vector3(-0.45f + col * 0.22f, 0.35f - row * 0.22f, 0f);
+    }
+
+    private Vector3 EngineerSlot(int index)
+    {
+        // Engineers stand slightly above workers, tinted differently
+        return transform.position + new Vector3(-0.45f + index * 0.22f, 0.58f, 0f);
     }
 }
