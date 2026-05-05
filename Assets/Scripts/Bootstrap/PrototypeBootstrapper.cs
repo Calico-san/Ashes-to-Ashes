@@ -14,6 +14,11 @@ public class PrototypeBootstrapper : MonoBehaviour
     private static void AutoBootstrap()
     {
         if (FindFirstObjectByType<PrototypeBootstrapper>() != null) return;
+
+        // Only boot in the Game scene — not in MainMenu or other scenes
+        var sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (sceneName == "MainMenu") return;
+
         new GameObject("PrototypeBootstrapper").AddComponent<PrototypeBootstrapper>();
     }
 
