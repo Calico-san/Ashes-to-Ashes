@@ -35,6 +35,7 @@ public class PrototypeUIController : MonoBehaviour
     [SerializeField] private Button          _removeBtn;
     [SerializeField] private Button          _assignEngBtn;
     [SerializeField] private Button          _removeEngBtn;
+    [SerializeField] private Button          _upgradeBtn;
 
     // ---- Ship list (Shipyard panel) ----
     [Header("Ship List")]
@@ -92,6 +93,7 @@ public class PrototypeUIController : MonoBehaviour
         _removeBtn?   .onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
         _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
+        _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
 
         // Wire ship detail buttons
         _shipDetailBack?  .onClick.AddListener(() => _game.SelectShip(null));
@@ -115,6 +117,8 @@ public class PrototypeUIController : MonoBehaviour
     public void Refresh(PrototypeGameController game,
         BuildingInstance selBuilding, ShipInstance selShip = null, BuildSlot selSlot = null)
     {
+        if (game == null) return;
+        _game = game; // ensure _game is set even before Build() is called
         RefreshTopBar(game);
         RefreshBottomBar(game);
         RefreshRightPanel(game, selBuilding, selShip, selSlot);
@@ -240,6 +244,7 @@ public class PrototypeUIController : MonoBehaviour
                        sel.AssignedWorkers > 0);
             SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
                           sel.AssignedEngineers > 0);
+            SetUpgradeBtn(true, game.CanAffordUpgrade(sel));
         }
         else if (showShip)
         {
@@ -361,6 +366,14 @@ public class PrototypeUIController : MonoBehaviour
         }
     }
 
+    private void SetUpgradeBtn(bool visible, bool enabled)
+    {
+        if (_upgradeBtn == null) return;
+        _upgradeBtn.gameObject.SetActive(visible);
+        _upgradeBtn.interactable = enabled;
+        SetLabel(_upgradeBtn, enabled ? "Upgrade ▲" : "Upgrade (insufficient resources)");
+    }
+
     private void SetEngButtons(bool assignEnabled, bool removeEnabled)
     {
         if (_assignEngBtn != null) _assignEngBtn.interactable = assignEnabled;
@@ -436,6 +449,7 @@ public class PrototypeUIController : MonoBehaviour
         _removeBtn?   .onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
         _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
+        _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
         _shipDetailBack?  .onClick.AddListener(() => _game.SelectShip(null));
         _shipDetailAssign?.onClick.AddListener(() => _game.AssignSailorToSelectedShip());
         _shipDetailRemove?.onClick.AddListener(() => _game.RemoveSailorFromSelectedShip());

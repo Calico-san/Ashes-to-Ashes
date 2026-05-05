@@ -10,20 +10,13 @@ using UnityEngine.InputSystem.UI;
 /// </summary>
 public class PrototypeBootstrapper : MonoBehaviour
 {
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AutoBootstrap()
-    {
-        if (FindFirstObjectByType<PrototypeBootstrapper>() != null) return;
-
-        // Only boot in the Game scene — not in MainMenu or other scenes
-        var sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        if (sceneName == "MainMenu") return;
-
-        new GameObject("PrototypeBootstrapper").AddComponent<PrototypeBootstrapper>();
-    }
+    // PrototypeBootstrapper must exist as a GameObject in the Game scene.
+    // Add it via: Hierarchy → Create Empty → Add Component → PrototypeBootstrapper
+    // It will call Boot() automatically on Awake every time the scene loads.
 
     private void Awake()
     {
+        Debug.Log($"[Bootstrapper] Awake — scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
         Application.targetFrameRate = 120;
         Boot();
     }
@@ -36,7 +29,9 @@ public class PrototypeBootstrapper : MonoBehaviour
         var gameController = FindFirstObjectByType<PrototypeGameController>();
         var uiController   = FindFirstObjectByType<PrototypeUIController>();
         var selection      = FindFirstObjectByType<PrototypeSelectionController>();
-        var mainCamera     = Camera.main;
+
+        // Camera.main requires tag "MainCamera" — find directly if null
+        var mainCamera = Camera.main ?? FindFirstObjectByType<Camera>();
 
         if (gameController == null)
         {
@@ -52,32 +47,31 @@ public class PrototypeBootstrapper : MonoBehaviour
         if (FindFirstObjectByType<PlacementValidator>() == null)
             new GameObject("PlacementValidator").AddComponent<PlacementValidator>();
 
-        // ---- Tilemap ----
+        // ---- Tilemap FIRST — needed for FindTownHallPosition ----
         SetupTilemap();
-
-        // ---- UI ----
-        if (uiController != null)
-            uiController.Build(gameController, mainCamera);
-        else
-            Debug.LogWarning("[Bootstrapper] UIController not found. Run Ashes → Setup Scene.");
+        var tilemapCheck = IslandTilemapRenderer.Instance;
+        Debug.Log($"[Bootstrapper] TilemapRenderer.Instance = {tilemapCheck}, Map = {tilemapCheck?.Map}");
 
         // ---- Town Hall ----
-        var townHallPos = FindTownHallPosition();
+        var townHallPos  = FindTownHallPosition();
+        Debug.Log($"[Bootstrapper] TownHallPos = {townHallPos}, Camera = {mainCamera}");
         var workerSprite = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(1f, 0.9f, 0.25f, 1f));
 
-        // Check if Town Hall already exists in scene
-        var existingTownHall = FindFirstObjectByType<BuildingInstance>();
         bool hasTownHall = false;
-        if (existingTownHall != null)
-        {
-            foreach (var b in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
-                if (b.IsTownHall) { hasTownHall = true; break; }
-        }
+        foreach (var b in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
+            if (b.IsTownHall) { hasTownHall = true; break; }
 
+        // ---- GameController init ----
         gameController.Initialize(uiController, workerSprite, townHallPos);
 
         if (!hasTownHall)
             CreateTownHall(gameController, townHallPos);
+
+        // ---- UI (after GameController so Build() can wire game references) ----
+        if (uiController != null)
+            uiController.Build(gameController, mainCamera);
+        else
+            Debug.LogWarning("[Bootstrapper] UIController not found. Run Ashes → Setup Scene.");
 
         // ---- Selection Controller ----
         if (selection != null)
@@ -97,8 +91,7 @@ public class PrototypeBootstrapper : MonoBehaviour
             return;
         }
 
-        if (renderer.Map != null) return; // already initialized
-
+        // Always reinitialize — map may be null when loading from MainMenu
         var map = Resources.Load<TilemapData>("IslandMap");
         if (map == null)
         {

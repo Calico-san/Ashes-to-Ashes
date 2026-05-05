@@ -5,7 +5,13 @@ using UnityEngine.InputSystem;
 public class PrototypeSelectionController : MonoBehaviour
 {
     private PrototypeGameController _game;
-    private Camera _camera;
+    private Camera                  _camera;
+
+    // Lazy lookup — works even if Initialize() wasn't called yet
+    private Camera Cam =>
+        _camera != null ? _camera : (_camera = Camera.main ?? FindFirstObjectByType<Camera>());
+    private PrototypeGameController Game =>
+        _game != null ? _game : (_game = FindFirstObjectByType<PrototypeGameController>());
 
     public void Initialize(PrototypeGameController game, Camera cameraComponent)
     {
@@ -15,52 +21,53 @@ public class PrototypeSelectionController : MonoBehaviour
 
     private void Update()
     {
+        if (Cam == null || Game == null) return;
+
         var mouse = Mouse.current;
         if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
 
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
-        // BuildPanel handles its own clicks during ghost placement
         var buildPanel = FindFirstObjectByType<BuildPanel>();
         if (buildPanel != null && buildPanel.IsPlacing) return;
 
-        Vector2 worldPoint = _camera.ScreenToWorldPoint(mouse.position.ReadValue());
-        Collider2D hit     = Physics2D.OverlapPoint(worldPoint);
+        Vector2    worldPoint = Cam.ScreenToWorldPoint(mouse.position.ReadValue());
+        Collider2D hit        = Physics2D.OverlapPoint(worldPoint);
 
         if (hit == null)
         {
-            _game.SelectBuilding(null);
-            _game.SelectSlot(null);
+            Game.SelectBuilding(null);
+            Game.SelectSlot(null);
             return;
         }
 
         var building = hit.GetComponent<BuildingInstance>();
         if (building != null)
         {
-            _game.SelectShip(null);
-            _game.SelectSlot(null);
-            _game.SelectBuilding(building);
+            Game.SelectShip(null);
+            Game.SelectSlot(null);
+            Game.SelectBuilding(building);
             return;
         }
 
         var slot = hit.GetComponent<BuildSlot>();
         if (slot != null)
         {
-            _game.SelectBuilding(null);
-            _game.SelectSlot(slot);
+            Game.SelectBuilding(null);
+            Game.SelectSlot(slot);
             return;
         }
 
         var ship = hit.GetComponent<ShipInstance>();
         if (ship != null)
         {
-            _game.SelectShip(null);
-            _game.SelectBuilding(_game.GetShipyard());
+            Game.SelectShip(null);
+            Game.SelectBuilding(Game.GetShipyard());
             return;
         }
 
-        _game.SelectBuilding(null);
-        _game.SelectSlot(null);
-        _game.SelectShip(null);
+        Game.SelectBuilding(null);
+        Game.SelectSlot(null);
+        Game.SelectShip(null);
     }
 }

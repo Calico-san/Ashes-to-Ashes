@@ -201,6 +201,27 @@ public class PrototypeGameController : MonoBehaviour
         return ok;
     }
 
+    /// <summary>
+    /// Upgrade selected building to next tier.
+    /// MISLAV — implementiraj upgrade logiku ovdje.
+    /// Troškovi nadogradnje idu u BalanceConfig.cs (dogovori s Igorom).
+    /// </summary>
+    public bool TryUpgradeSelectedBuilding()
+    {
+        if (_selectedBuilding == null) return false;
+        // TODO Mislav: implement upgrade logic
+        Debug.Log($"[GameController] Upgrade requested for {_selectedBuilding.DisplayName}");
+        return false;
+    }
+
+    /// <summary>True if player can afford upgrade for this building.</summary>
+    public bool CanAffordUpgrade(BuildingInstance building)
+    {
+        if (building == null) return false;
+        // TODO Mislav: check upgrade cost from BalanceConfig
+        return false;
+    }
+
     public bool AssignEngineerToSelectedBuilding()
     {
         bool ok = _selectedBuilding != null && _selectedBuilding.TryAssignEngineer();
