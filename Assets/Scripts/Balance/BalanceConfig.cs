@@ -12,10 +12,10 @@ public static class BalanceConfig
     public const float SteelworksPerWorker     = 2.0f;  // 10 workers = 20 steel/day
     public const float FiberworksClothPerWorker = 2.0f;  // 10 workers = 20 cloth/day
     public const float FiberworksRopePerWorker  = 2.0f;  // 10 workers = 20 rope/day
-    public const float CookhouseFoodPerWorker  = 8.0f;  // 15 workers = 120 food/day
+    public const float CookhouseFoodPerWorker  = 20.0f; // 15 workers = 300 food/day
 
     // Shipyard
-    public const float ShipProgressPerWorker   = 12f;
+    public const float ShipProgressPerWorker   = 5f;   // ~2.5 days/ship at 10 workers
     public const float ShipProgressRequired    = 100f;
 
     // Ship build cost (per active worker per tick)
@@ -68,7 +68,7 @@ public static class BalanceConfig
 
     // ---- Hunters Hut ----
     public const int   HuntersHutMaxWorkers   = 5;
-    public const float HuntersHutFoodPerWorker = 12f;  // 60 food/day at full capacity
+    public const float HuntersHutFoodPerWorker = 30f;  // 150 food/day at full capacity
     public const int   HuntersHutWoodCost      = 8;
     public const int   HuntersHutSteelCost     = 0;
     public const int   HuntersHutBuildHours    = 3;
