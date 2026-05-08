@@ -155,6 +155,10 @@ public class IslandTilemapRenderer : MonoBehaviour
                 // Sawmill on Land or Forest — must be near Forest (proximity check in IsValidPlacement)
                 return tile == TileType.Land || tile == TileType.Forest;
 
+            case BuildingType.HuntersHut:
+            case BuildingType.ScoutStation:
+                return tile == TileType.Land || tile == TileType.Forest;
+
             default:
                 return tile == TileType.Land || tile == TileType.Forest;
         }

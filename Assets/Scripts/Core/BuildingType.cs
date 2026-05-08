@@ -6,7 +6,9 @@ public enum BuildingType
     Steelworks,
     Fiberworks,
     Cookhouse,
-    Shipyard
+    Shipyard,
+    HuntersHut,
+    ScoutStation
 }
 
 /// <summary>Construction cost and time for a building type.</summary>
@@ -32,6 +34,10 @@ public struct BuildingCost
                 return new BuildingCost { Wood = BalanceConfig.CookhouseWoodCost,  Steel = BalanceConfig.CookhouseSteelCost,  Cloth = BalanceConfig.CookhouseClothCost,  Hours = BalanceConfig.CookhouseBuildHours };
             case BuildingType.Shipyard:
                 return new BuildingCost { Wood = BalanceConfig.ShipyardWoodCost,   Steel = BalanceConfig.ShipyardSteelCost,   Cloth = BalanceConfig.ShipyardClothCost,   Hours = BalanceConfig.ShipyardBuildHours };
+            case BuildingType.HuntersHut:
+                return new BuildingCost { Wood = BalanceConfig.HuntersHutWoodCost, Steel = BalanceConfig.HuntersHutSteelCost, Cloth = 0, Hours = BalanceConfig.HuntersHutBuildHours };
+            case BuildingType.ScoutStation:
+                return new BuildingCost { Wood = BalanceConfig.ScoutStationWoodCost, Steel = BalanceConfig.ScoutStationSteelCost, Cloth = 0, Hours = BalanceConfig.ScoutStationBuildHours };
             default:
                 return new BuildingCost();
         }

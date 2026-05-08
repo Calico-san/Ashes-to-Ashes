@@ -65,4 +65,19 @@ public static class BalanceConfig
 
     // Free placement building size (world units)
     public const float BuildingPlacementSize = 1.0f;   // 32x32px @ PPU=32
+
+    // ---- Hunters Hut ----
+    public const int   HuntersHutMaxWorkers   = 5;
+    public const float HuntersHutFoodPerWorker = 12f;  // 60 food/day at full capacity
+    public const int   HuntersHutWoodCost      = 8;
+    public const int   HuntersHutSteelCost     = 0;
+    public const int   HuntersHutBuildHours    = 3;
+
+    // ---- Scout Station ----
+    public const int   ScoutStationMaxWorkers  = 5;
+    public const int   ScoutStationWoodCost    = 10;
+    public const int   ScoutStationSteelCost   = 5;
+    public const int   ScoutStationBuildHours  = 4;
+
+
 }

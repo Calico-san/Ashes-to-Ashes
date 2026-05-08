@@ -240,6 +240,8 @@ public class BuildPanel : MonoBehaviour
             BuildingType.Fiberworks,
             BuildingType.Cookhouse,
             BuildingType.Shipyard,
+            BuildingType.HuntersHut,
+            BuildingType.ScoutStation,
         };
 
         foreach (var type in types)
@@ -330,6 +332,7 @@ public class BuildPanel : MonoBehaviour
         {
             BuildingType.Sawmill, BuildingType.Steelworks,
             BuildingType.Fiberworks, BuildingType.Cookhouse, BuildingType.Shipyard,
+            BuildingType.HuntersHut, BuildingType.ScoutStation,
         };
 
         for (int i = 0; i < _buildBtns.Count && i < types.Length; i++)

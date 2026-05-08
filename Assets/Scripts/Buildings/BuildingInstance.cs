@@ -59,6 +59,9 @@ public class BuildingInstance : MonoBehaviour
     private readonly List<WorkerAgent>  _workers     = new();
     private readonly List<WorkerAgent>  _engineers   = new();
     private readonly List<GameObject>   _shipObjects = new();
+    private List<Vector3>               _pathToTownHall;
+
+    public bool HasPath => _pathToTownHall != null && _pathToTownHall.Count > 0;
     private SpriteRenderer              _renderer;
     private BuildingAnimator            _animator;
     private Color                       _normalColor;
@@ -75,8 +78,12 @@ public class BuildingInstance : MonoBehaviour
         _game       = game;
         DisplayName = displayName;
         OutputType  = outputType;
-        IsShipyard  = isShipyard;
-        MaxWorkers  = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
+        IsShipyard       = isShipyard;
+        BuildingTypeEnum = type;
+        if (type == BuildingType.HuntersHut || type == BuildingType.ScoutStation)
+            MaxWorkers = BalanceConfig.HuntersHutMaxWorkers;
+        else
+            MaxWorkers = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
 
         Size                 = size;
         BuildingTypeEnum     = BuildingTypeFromResource(outputType, isShipyard);
@@ -99,6 +106,12 @@ public class BuildingInstance : MonoBehaviour
     }
 
     // ---- Worker management ----
+
+    /// <summary>Called by GameController after placement — stores pre-computed path.</summary>
+    public void SetPath(List<Vector3> path)
+    {
+        _pathToTownHall = path;
+    }
 
     public bool TryAssignWorker()
     {
@@ -131,7 +144,7 @@ public class BuildingInstance : MonoBehaviour
         if (AssignedEngineers >= MaxEngineers || !_game.CanCreateEngineerAgent()) return false;
         var agent = new GameObject($"{DisplayName}_Engineer_{AssignedEngineers + 1}")
             .AddComponent<WorkerAgent>();
-        agent.Initialize(_game.WorkerSpawnPoint, EngineerSlot(_engineers.Count), _game.EngineerSprite);
+        agent.Initialize(_game.WorkerSpawnPoint, EngineerSlot(_engineers.Count - 1), _game.EngineerSprite, _pathToTownHall);
         _engineers.Add(agent);
         _game.OnEngineerAssigned();
         return true;
@@ -180,9 +193,14 @@ public class BuildingInstance : MonoBehaviour
             ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
             : 1.0f;
 
-        if (IsShipyard)                             TickShipyard(active, bonus);
-        else if (OutputType == ResourceType.Cloth)  TickFiberworks(active, bonus);
-        else                                        _game.AddResource(OutputType, Mathf.RoundToInt(active * bonus));
+        if (IsShipyard)
+            TickShipyard(active, bonus);
+        else if (OutputType == ResourceType.Cloth)
+            TickFiberworks(active, bonus);
+        else if (BuildingTypeEnum == BuildingType.HuntersHut)
+            _game.AddResource(ResourceType.Food, Mathf.RoundToInt(active * (BalanceConfig.HuntersHutFoodPerWorker / 24f) * bonus));
+        else
+            _game.AddResource(OutputType, Mathf.RoundToInt(active * bonus));
     }
 
     private void TickFiberworks(int activeWorkers, float bonus = 1f)
