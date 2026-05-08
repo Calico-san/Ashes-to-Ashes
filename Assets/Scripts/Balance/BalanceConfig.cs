@@ -66,6 +66,12 @@ public static class BalanceConfig
     // Free placement building size (world units)
     public const float BuildingPlacementSize = 1.0f;   // 32x32px @ PPU=32
 
+    // ---- Raw Food ----
+    public const float RawFoodPerWorkerPerDay    = 5f;  // Hunter's Hut: 5 raw food/worker/day
+    public const float CookhouseRawFoodPerWorker = 1f;  // Cookhouse consumes 1 raw food/worker/hour
+    public const float CookhouseNormalMultiplier = 1.0f;
+    public const float CookhouseLowMultiplier    = 0.5f; // no raw food
+
     // ---- Hunters Hut ----
     public const int   HuntersHutMaxWorkers   = 5;
     public const float HuntersHutFoodPerWorker = 30f;  // 150 food/day at full capacity

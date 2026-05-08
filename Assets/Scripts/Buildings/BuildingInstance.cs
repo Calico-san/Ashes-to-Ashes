@@ -73,20 +73,22 @@ public class BuildingInstance : MonoBehaviour
     // ---- Init ----
 
     public void Initialize(PrototypeGameController game, string displayName,
-        ResourceType outputType, Color color, Vector3 position, Vector2 size, bool isShipyard = false)
+        ResourceType outputType, Color color, Vector3 position, Vector2 size,
+        bool isShipyard = false, BuildingType buildingType = BuildingType.Cookhouse)
     {
         _game       = game;
         DisplayName = displayName;
         OutputType  = outputType;
         IsShipyard       = isShipyard;
-        BuildingTypeEnum = type;
-        if (type == BuildingType.HuntersHut || type == BuildingType.ScoutStation)
+        Size             = size;
+        BuildingTypeEnum = buildingType != BuildingType.Cookhouse
+            ? buildingType
+            : BuildingTypeFromResource(outputType, isShipyard);
+
+        if (BuildingTypeEnum == BuildingType.HuntersHut || BuildingTypeEnum == BuildingType.ScoutStation)
             MaxWorkers = BalanceConfig.HuntersHutMaxWorkers;
         else
             MaxWorkers = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
-
-        Size                 = size;
-        BuildingTypeEnum     = BuildingTypeFromResource(outputType, isShipyard);
         transform.position   = position;
         transform.localScale = new Vector3(size.x, size.y, 1f);
 
@@ -198,9 +200,22 @@ public class BuildingInstance : MonoBehaviour
         else if (OutputType == ResourceType.Cloth)
             TickFiberworks(active, bonus);
         else if (BuildingTypeEnum == BuildingType.HuntersHut)
-            _game.AddResource(ResourceType.Food, Mathf.RoundToInt(active * (BalanceConfig.HuntersHutFoodPerWorker / 24f) * bonus));
+            _game.AddRawFood(Mathf.RoundToInt(active * (BalanceConfig.RawFoodPerWorkerPerDay / 24f) * bonus));
         else
-            _game.AddResource(OutputType, Mathf.RoundToInt(active * bonus));
+        {
+            int output = Mathf.RoundToInt(active * bonus);
+            if (BuildingTypeEnum == BuildingType.Cookhouse)
+            {
+                // Consume raw food — 1 per worker per hour
+                int rawNeeded  = Mathf.RoundToInt(active * BalanceConfig.CookhouseRawFoodPerWorker);
+                int rawConsumed = _game.ConsumeRawFood(rawNeeded);
+                float multiplier = rawConsumed >= rawNeeded
+                    ? BalanceConfig.CookhouseNormalMultiplier
+                    : BalanceConfig.CookhouseLowMultiplier;
+                output = Mathf.RoundToInt(output * multiplier);
+            }
+            _game.AddResource(OutputType, output);
+        }
     }
 
     private void TickFiberworks(int activeWorkers, float bonus = 1f)

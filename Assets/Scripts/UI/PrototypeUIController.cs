@@ -233,9 +233,17 @@ public class PrototypeUIController : MonoBehaviour
             float perW = sel.OutputPerWorkerPerHour;
             float tot  = sel.TotalOutputPerHour;
             SetTitle(sel.DisplayName);
-            SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}" +
-                (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
-                (sel.AssignedEngineers > 0 ? $"  | Eng: {sel.AssignedEngineers} +{(int)((sel.EngineerBonus-1)*100)}%" : ""));
+            {
+                string engStr = sel.AssignedEngineers > 0
+                    ? $"  | Eng: {sel.AssignedEngineers} +{(int)((sel.EngineerBonus-1)*100)}%"
+                    : "";
+                string rawStr = sel.BuildingTypeEnum == BuildingType.Cookhouse
+                    ? $"  | Raw Food: {(int)game.RawFood}"
+                    : "";
+                SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}" +
+                    (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
+                    engStr + rawStr);
+            }
             SetOutputLine($"{sel.OutputType}/worker/h: {perW:F2}\n" +
                           $"Total/h: {tot:F2}  |  /day: {tot * 24f:F1}");
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),

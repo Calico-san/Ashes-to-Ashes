@@ -19,7 +19,8 @@ public class PrototypeGameController : MonoBehaviour
     [SerializeField] private int steel = 20;
     [SerializeField] private int cloth = 15;
     [SerializeField] private int rope  = 0;
-    [SerializeField] private int ships = 0;
+    [SerializeField] private int ships   = 0;
+    [SerializeField] private int rawFood = 0;
 
     [Header("Time")]
     [SerializeField] private float simulationMinutesPerSecond = 3.0f; // 8 min/day at 1x
@@ -60,6 +61,7 @@ public class PrototypeGameController : MonoBehaviour
     public int   Cloth            => cloth;
     public int   Rope             => rope;
     public int   Ships            => ships;
+    public int   RawFood          => rawFood;
     public int   Day              => _day;
     public int   Hour             => Mathf.FloorToInt(_simulatedMinutes / 60f) % 24;
     public int   Minute           => Mathf.FloorToInt(_simulatedMinutes) % 60;
@@ -296,6 +298,13 @@ public class PrototypeGameController : MonoBehaviour
 
     // ---- Resource access ----
 
+    public void AddRawFood(int amount) { rawFood = Mathf.Max(0, rawFood + amount); RefreshUI(); }
+    public int  ConsumeRawFood(int amount) {
+        int consumed = Mathf.RoundToInt(Mathf.Min(rawFood, amount));
+        rawFood = Mathf.Max(0, rawFood - consumed);
+        return consumed;
+    }
+
     public void AddResource(ResourceType type, int amount)
     {
         switch (type)
@@ -466,7 +475,7 @@ public class PrototypeGameController : MonoBehaviour
             var building = go.AddComponent<BuildingInstance>();
             building.Initialize(this, displayName, outputType, color,
                 new Vector3(bd.PositionX, bd.PositionY, 0f),
-                new Vector2(bd.SizeX, bd.SizeY), bd.IsShipyard);
+                new Vector2(bd.SizeX, bd.SizeY), bd.IsShipyard, bt);
 
             // Label
             var lbl = new GameObject(displayName + "Label");
@@ -596,7 +605,7 @@ public class PrototypeGameController : MonoBehaviour
 
         var go       = new GameObject(displayName);
         var building = go.AddComponent<BuildingInstance>();
-        building.Initialize(this, displayName, outputType, color, position, size, isShipyard);
+        building.Initialize(this, displayName, outputType, color, position, size, isShipyard, type);
         RegisterBuilding(building);
 
         // Label

@@ -134,7 +134,7 @@ public class PrototypeBootstrapper : MonoBehaviour
         var go       = new GameObject("TownHall");
         var building = go.AddComponent<BuildingInstance>();
         building.Initialize(game, "Town Hall", ResourceType.Wood,
-            new Color(0.72f, 0.58f, 0.22f), position, new Vector2(1f, 1f), false);
+            new Color(0.72f, 0.58f, 0.22f), position, new Vector2(1f, 1f), false, BuildingType.TownHall);
         building.SetTownHall(true);
         game.RegisterBuilding(building);
 
