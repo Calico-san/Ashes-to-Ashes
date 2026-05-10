@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SaveLoadPanel : MonoBehaviour
@@ -53,6 +54,12 @@ public class SaveLoadPanel : MonoBehaviour
         RefreshLabels();
     }
 
+    private void OnMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
+    }
+
     private void OnLoad(int slot)
     {
         if (!SaveSystem.SlotExists(slot)) { ShowFeedback($"Slot {slot + 1} is empty."); return; }
@@ -93,34 +100,37 @@ public class SaveLoadPanel : MonoBehaviour
         var panel = Make("Panel", _overlay.transform);
         var pRT   = panel.AddComponent<RectTransform>();
         pRT.anchorMin = pRT.anchorMax = pRT.pivot = new Vector2(0.5f, 0.5f);
-        pRT.sizeDelta        = new Vector2(400f, 310f);
+        pRT.sizeDelta        = new Vector2(400f, 360f);
         pRT.anchoredPosition = Vector2.zero;
         panel.AddComponent<Image>().color = new Color(0.08f, 0.08f, 0.08f, 0.97f);
 
         TMP(panel.transform,  "PAUSED", 17, Color.white,          0f, 0.88f, 1f, 1f);
-        Btn(panel.transform,  "Resume", () => { _game.SetSpeed(1); Close(); }, 0.1f, 0.78f, 0.9f, 0.93f);
-        TMP(panel.transform,  "SAVE",   10, new Color(.6f,.6f,.6f), 0f, 0.63f, 1f, 0.71f);
+        Btn(panel.transform,  "Resume", () => { _game.SetSpeed(1); Close(); }, 0.1f, 0.82f, 0.9f, 0.97f);
+        TMP(panel.transform,  "SAVE",   10, new Color(.6f,.6f,.6f), 0f, 0.67f, 1f, 0.75f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
             float x0 = 0.04f + i * 0.32f, x1 = x0 + 0.28f;
             int s = i;
-            var b = Btn(panel.transform, $"Slot {i+1}", () => OnSave(s), x0, 0.44f, x1, 0.63f);
+            var b = Btn(panel.transform, $"Slot {i+1}", () => OnSave(s), x0, 0.48f, x1, 0.67f);
             _saveLabels[i] = SetupSlotLabel(b);
         }
 
-        TMP(panel.transform, "LOAD", 10, new Color(.6f,.6f,.6f), 0f, 0.29f, 1f, 0.37f);
+        TMP(panel.transform, "LOAD", 10, new Color(.6f,.6f,.6f), 0f, 0.33f, 1f, 0.41f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
             float x0 = 0.04f + i * 0.32f, x1 = x0 + 0.28f;
             int s = i;
-            var b = Btn(panel.transform, $"Slot {i+1}", () => OnLoad(s), x0, 0.10f, x1, 0.29f);
+            var b = Btn(panel.transform, $"Slot {i+1}", () => OnLoad(s), x0, 0.14f, x1, 0.33f);
             _loadLabels[i] = SetupSlotLabel(b);
             _loadBtns[i]   = b;
         }
 
-        _feedbackText = TMP(panel.transform, "", 10, new Color(.4f,.9f,.4f), 0f, 0f, 1f, 0.10f);
+        _feedbackText = TMP(panel.transform, "", 10, new Color(.4f,.9f,.4f), 0f, 0.05f, 1f, 0.14f);
+
+        // Main Menu button at bottom
+        Btn(panel.transform, "Main Menu", () => OnMainMenu(), 0.25f, 0f, 0.75f, 0.05f);
     }
 
     private static TextMeshProUGUI SetupSlotLabel(Button btn)
