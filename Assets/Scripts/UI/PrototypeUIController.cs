@@ -50,6 +50,10 @@ public class PrototypeUIController : MonoBehaviour
     [SerializeField] private Button          _shipDetailBack;
     [SerializeField] private Button          _shipDetailAssign;
     [SerializeField] private Button          _shipDetailRemove;
+    [SerializeField] private Button          _addPassengerBtn;
+    [SerializeField] private Button          _removePassengerBtn;
+    [SerializeField] private Button          _loadFoodBtn;
+    [SerializeField] private Button          _unloadFoodBtn;
 
     // ---- Build slot panel ----
     [Header("Build Slot")]
