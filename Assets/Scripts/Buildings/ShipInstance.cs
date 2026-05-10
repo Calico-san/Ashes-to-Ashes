@@ -116,6 +116,16 @@ public class ShipInstance : MonoBehaviour
 
     public bool LoadAllFood() => FoodLoaded >= RequiredFood || LoadFood(RequiredFood - FoodLoaded) > 0;
 
+    public void DisembarkPassengers(int count)
+    {
+        Passengers = Mathf.Max(0, Passengers - count);
+    }
+
+    public void UnloadFood(int amount)
+    {
+        FoodLoaded = Mathf.Max(0, FoodLoaded - amount);
+    }
+
     // ---- Selection ----
 
     public void SetSelected(bool selected)

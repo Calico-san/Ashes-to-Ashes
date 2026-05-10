@@ -25,6 +25,7 @@ public static class BalanceConfig
     public const int   ShipRopeCostDivisor     = 2;
 
     // Ship capacity
+    public const int   ShipFoodLoadStep    = 10;  // food per click
     public const int   ShipMaxPassengers       = 50;
     public const int   ShipFoodRequired        = 750;
     public const int   ShipMaxSailors          = 5;

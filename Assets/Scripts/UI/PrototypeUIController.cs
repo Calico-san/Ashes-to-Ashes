@@ -266,6 +266,8 @@ public class PrototypeUIController : MonoBehaviour
                        "- Remove sailor", () => game.RemoveSailorFromSelectedShip(),
                        selShip.AssignedSailors < selShip.MaxSailors && game.FreeWorkers > 0,
                        selShip.AssignedSailors > 0);
+            SetShipPassengerButtons(selShip, game);
+            SetShipFoodButtons(selShip, game);
         }
     }
 
@@ -335,6 +337,8 @@ public class PrototypeUIController : MonoBehaviour
                 ship.AssignedSailors < ship.MaxSailors && game.FreeWorkers > 0;
         if (_shipDetailRemove != null)
             _shipDetailRemove.interactable = ship.AssignedSailors > 0;
+        SetShipPassengerButtons(ship, game);
+        SetShipFoodButtons(ship, game);
     }
 
     private void RefreshSpeedButtons(int speed)
@@ -371,6 +375,39 @@ public class PrototypeUIController : MonoBehaviour
             _removeBtn.onClick.RemoveAllListeners();
             if (removeCb != null) _removeBtn.onClick.AddListener(removeCb);
             _removeBtn.interactable = removeEnabled;
+        }
+    }
+
+    private void SetShipPassengerButtons(ShipInstance ship, PrototypeGameController game)
+    {
+        if (_addPassengerBtn != null)
+        {
+            _addPassengerBtn.gameObject.SetActive(true);
+            _addPassengerBtn.interactable = ship.Passengers < ship.MaxPassengers && game.FreeWorkers > 0;
+            SetLabel(_addPassengerBtn, $"+ Passenger ({ship.Passengers}/{ship.MaxPassengers})");
+        }
+        if (_removePassengerBtn != null)
+        {
+            _removePassengerBtn.gameObject.SetActive(true);
+            _removePassengerBtn.interactable = ship.Passengers > 0;
+            SetLabel(_removePassengerBtn, "- Passenger");
+        }
+    }
+
+    private void SetShipFoodButtons(ShipInstance ship, PrototypeGameController game)
+    {
+        if (_loadFoodBtn != null)
+        {
+            _loadFoodBtn.gameObject.SetActive(true);
+            _loadFoodBtn.interactable = game.Food >= BalanceConfig.ShipFoodLoadStep
+                                      && ship.FoodLoaded < ship.RequiredFood;
+            SetLabel(_loadFoodBtn, $"+ Load Food ({ship.FoodLoaded}/{ship.RequiredFood})");
+        }
+        if (_unloadFoodBtn != null)
+        {
+            _unloadFoodBtn.gameObject.SetActive(true);
+            _unloadFoodBtn.interactable = ship.FoodLoaded > 0;
+            SetLabel(_unloadFoodBtn, "- Unload Food");
         }
     }
 

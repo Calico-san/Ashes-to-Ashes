@@ -296,6 +296,46 @@ public class PrototypeGameController : MonoBehaviour
         return ok;
     }
 
+    public bool AddPassengerToSelectedShip()
+    {
+        if (_selectedShip == null || _freeWorkers <= 0) return false;
+        if (_selectedShip.Passengers >= _selectedShip.MaxPassengers) return false;
+        _selectedShip.BoardPassengers(1);
+        _freeWorkers--;
+        RefreshUI();
+        return true;
+    }
+
+    public bool RemovePassengerFromSelectedShip()
+    {
+        if (_selectedShip == null || _selectedShip.Passengers <= 0) return false;
+        _selectedShip.DisembarkPassengers(1);
+        _freeWorkers++;
+        RefreshUI();
+        return true;
+    }
+
+    public bool LoadFoodToSelectedShip()
+    {
+        if (_selectedShip == null) return false;
+        int step = BalanceConfig.ShipFoodLoadStep;
+        if (food < step || _selectedShip.FoodLoaded >= _selectedShip.RequiredFood) return false;
+        int loaded = _selectedShip.LoadFood(step);
+        food -= loaded;
+        RefreshUI();
+        return loaded > 0;
+    }
+
+    public bool UnloadFoodFromSelectedShip()
+    {
+        if (_selectedShip == null || _selectedShip.FoodLoaded <= 0) return false;
+        int step = Mathf.Min(BalanceConfig.ShipFoodLoadStep, _selectedShip.FoodLoaded);
+        _selectedShip.UnloadFood(step);
+        food += step;
+        RefreshUI();
+        return true;
+    }
+
     // ---- Resource access ----
 
     public void AddRawFood(int amount) { rawFood = Mathf.Max(0, rawFood + amount); RefreshUI(); }
