@@ -107,6 +107,24 @@ public static class SaveSystem
     // ---- Query ----
 
     /// <summary>True if a save file exists for the given slot.</summary>
+    /// <summary>Returns slot index of most recently saved game, or -1 if none exist.</summary>
+    public static int GetLatestSlot()
+    {
+        int    bestSlot = -1;
+        System.DateTime bestTime = System.DateTime.MinValue;
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            var info = GetSlotInfo(i);
+            if (info == null) continue;
+            if (System.DateTime.TryParse(info.DateTime, out var dt) && dt > bestTime)
+            {
+                bestTime = dt;
+                bestSlot = i;
+            }
+        }
+        return bestSlot;
+    }
+
     public static bool SlotExists(int slot) =>
         ValidateSlot(slot) && File.Exists(SlotPath(slot));
 

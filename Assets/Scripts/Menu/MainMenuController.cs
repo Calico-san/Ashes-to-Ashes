@@ -12,25 +12,27 @@ using UnityEngine.SceneManagement;
 public class MainMenuController : MonoBehaviour
 {
     [Header("Scene Names")]
-    [SerializeField] private string _gameSceneName = "Game";
+    [SerializeField] private string _gameSceneName = "AshesToAshes";
 
     public void OnStartNewGame()
     {
+        GameSceneLoader.ShouldLoadSave = false;
         SceneManager.LoadScene(_gameSceneName);
     }
 
     public void OnContinue()
     {
-        // Load slot 0 by default — Mislav can expand to slot picker UI
-        if (SaveSystem.SlotExists(0))
+        int latest = SaveSystem.GetLatestSlot();
+        if (latest >= 0)
         {
             GameSceneLoader.ShouldLoadSave = true;
-            GameSceneLoader.LoadSlot       = 0;
+            GameSceneLoader.LoadSlot       = latest;
             SceneManager.LoadScene(_gameSceneName);
         }
         else
         {
-            Debug.Log("[MainMenu] No save file found in slot 0.");
+            Debug.Log("[MainMenu] No save files found.");
+            // Optionally: show feedback text in UI
         }
     }
 
