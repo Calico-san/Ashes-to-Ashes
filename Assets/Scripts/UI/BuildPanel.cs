@@ -34,7 +34,7 @@ public class BuildPanel : MonoBehaviour
     private static readonly Color GhostInvalid = new Color(1.0f, 0.2f, 0.2f, 0.55f);
     private const float GhostSize = BalanceConfig.BuildingPlacementSize;
 
-    private PrototypeGameController _game;
+    private GameController _game;
     private Camera                  _cam;
     private Camera Cam => _cam != null ? _cam : (_cam = Camera.main);
 
@@ -42,7 +42,7 @@ public class BuildPanel : MonoBehaviour
     // Init
     // -------------------------------------------------------
 
-    public void Build(PrototypeGameController game, Transform canvasTransform, Camera cam)
+    public void Build(GameController game, Transform canvasTransform, Camera cam)
     {
         _game = game;
         _cam  = cam;
@@ -106,7 +106,7 @@ public class BuildPanel : MonoBehaviour
     // Public
     // -------------------------------------------------------
 
-    public void Refresh(PrototypeGameController game)
+    public void Refresh(GameController game)
     {
         RefreshButtonStates(game);
     }
@@ -326,7 +326,7 @@ public class BuildPanel : MonoBehaviour
         return btn;
     }
 
-    private void RefreshButtonStates(PrototypeGameController game)
+    private void RefreshButtonStates(GameController game)
     {
         var types = new[]
         {

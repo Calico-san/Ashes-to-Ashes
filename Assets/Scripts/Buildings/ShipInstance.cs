@@ -29,7 +29,7 @@ public class ShipInstance : MonoBehaviour
 
     // ---- Private ----
     private readonly List<WorkerAgent> _sailors = new();
-    private PrototypeGameController    _game;
+    private GameController    _game;
     private SpriteRenderer             _hullRenderer;
     private Color                      _normalColor;
     private Color                      _selectedColor;
@@ -38,7 +38,7 @@ public class ShipInstance : MonoBehaviour
 
     // ---- Init ----
 
-    public void Initialize(PrototypeGameController game, int shipNumber, Vector3 position, bool hasVisual = true)
+    public void Initialize(GameController game, int shipNumber, Vector3 position, bool hasVisual = true)
     {
         _game       = game;
         ShipNumber  = shipNumber;

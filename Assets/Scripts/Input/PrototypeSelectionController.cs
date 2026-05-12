@@ -4,16 +4,16 @@ using UnityEngine.InputSystem;
 
 public class PrototypeSelectionController : MonoBehaviour
 {
-    private PrototypeGameController _game;
+    private GameController _game;
     private Camera                  _camera;
 
     // Lazy lookup — works even if Initialize() wasn't called yet
     private Camera Cam =>
         _camera != null ? _camera : (_camera = Camera.main ?? FindFirstObjectByType<Camera>());
-    private PrototypeGameController Game =>
-        _game != null ? _game : (_game = FindFirstObjectByType<PrototypeGameController>());
+    private GameController Game =>
+        _game != null ? _game : (_game = FindFirstObjectByType<GameController>());
 
-    public void Initialize(PrototypeGameController game, Camera cameraComponent)
+    public void Initialize(GameController game, Camera cameraComponent)
     {
         _game   = game;
         _camera = cameraComponent;

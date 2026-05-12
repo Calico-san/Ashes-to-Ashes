@@ -66,13 +66,13 @@ public class BuildingInstance : MonoBehaviour
     private BuildingAnimator            _animator;
     private Color                       _normalColor;
     private Color                       _selectedColor;
-    private PrototypeGameController     _game;
+    private GameController     _game;
     private float                       _shipProgress;
     private int                         _shipCount;
 
     // ---- Init ----
 
-    public void Initialize(PrototypeGameController game, string displayName,
+    public void Initialize(GameController game, string displayName,
         ResourceType outputType, Color color, Vector3 position, Vector2 size,
         bool isShipyard = false, BuildingType buildingType = BuildingType.Cookhouse)
     {

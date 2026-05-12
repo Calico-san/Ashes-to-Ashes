@@ -23,14 +23,14 @@ public class BuildSlot : MonoBehaviour
 
     private SpriteRenderer          _renderer;
     private BuildingAnimator        _animator;
-    private PrototypeGameController _game;
+    private GameController _game;
     private Color                   _normalColor;
     private Color                   _selectedColor;
     private Color                   _constructionColor;
 
     // ---- Init ----
 
-    public void Initialize(PrototypeGameController game, Vector3 position, Vector2 size)
+    public void Initialize(GameController game, Vector3 position, Vector2 size)
     {
         _game    = game;
         Size     = size;

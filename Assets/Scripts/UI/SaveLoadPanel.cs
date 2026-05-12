@@ -7,7 +7,7 @@ public class SaveLoadPanel : MonoBehaviour
 {
     private GameObject              _overlay;
     private bool                    _open;
-    private PrototypeGameController _game;
+    private GameController _game;
 
     private readonly TextMeshProUGUI[] _saveLabels = new TextMeshProUGUI[SaveSystem.MaxSlots];
     private readonly TextMeshProUGUI[] _loadLabels = new TextMeshProUGUI[SaveSystem.MaxSlots];
@@ -17,7 +17,7 @@ public class SaveLoadPanel : MonoBehaviour
     private float           _feedbackTimer;
     private const float     FEEDBACK_DURATION = 2.5f;
 
-    public void Build(PrototypeGameController game, Transform canvas)
+    public void Build(GameController game, Transform canvas)
     {
         _game = game;
         BuildOverlay(canvas);

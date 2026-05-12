@@ -26,8 +26,8 @@ public class PrototypeBootstrapper : MonoBehaviour
         EnsureEventSystem();
 
         // ---- Find scene objects ----
-        var gameController = FindFirstObjectByType<PrototypeGameController>();
-        var uiController   = FindFirstObjectByType<PrototypeUIController>();
+        var gameController = FindFirstObjectByType<GameController>();
+        var uiController   = FindFirstObjectByType<UIController>();
         var selection      = FindFirstObjectByType<PrototypeSelectionController>();
 
         // Camera.main requires tag "MainCamera" — find directly if null
@@ -129,7 +129,7 @@ public class PrototypeBootstrapper : MonoBehaviour
         return new Vector3(world.x, world.y, 0f);
     }
 
-    private void CreateTownHall(PrototypeGameController game, Vector3 position)
+    private void CreateTownHall(GameController game, Vector3 position)
     {
         var go       = new GameObject("TownHall");
         var building = go.AddComponent<BuildingInstance>();

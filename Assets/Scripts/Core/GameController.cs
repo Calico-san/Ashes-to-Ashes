@@ -6,7 +6,7 @@ using UnityEngine;
 /// Central game state. Owns resources, time, population, buildings, build slots and ships.
 /// All other systems communicate through this controller.
 /// </summary>
-public class PrototypeGameController : MonoBehaviour
+public class GameController : MonoBehaviour
 {
     [Header("Population")]
     [SerializeField] private int totalPopulation = 1100;
@@ -26,7 +26,7 @@ public class PrototypeGameController : MonoBehaviour
     [SerializeField] private float simulationMinutesPerSecond = 3.0f; // 8 min/day at 1x
 
     // ---- References ----
-    private PrototypeUIController _ui;
+    private UIController _ui;
 
     // ---- Collections ----
     private readonly List<BuildingInstance> _buildings  = new();
@@ -84,7 +84,7 @@ public class PrototypeGameController : MonoBehaviour
 
     // ---- Init ----
 
-    public void Initialize(PrototypeUIController ui, Sprite workerSprite, Vector3 spawnPoint)
+    public void Initialize(UIController ui, Sprite workerSprite, Vector3 spawnPoint)
     {
         _ui               = ui;
         WorkerSprite      = workerSprite;

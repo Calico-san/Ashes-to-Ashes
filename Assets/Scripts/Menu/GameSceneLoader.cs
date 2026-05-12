@@ -17,7 +17,7 @@ public class GameSceneLoader : MonoBehaviour
         if (!ShouldLoadSave) return;
         ShouldLoadSave = false;
 
-        var game = FindFirstObjectByType<PrototypeGameController>();
+        var game = FindFirstObjectByType<GameController>();
         if (game == null)
         {
             Debug.LogWarning("[GameSceneLoader] PrototypeGameController not found.");

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /// MISLAV — povuci elemente iz Hierarchy u polja u Inspectoru.
 /// Pogledaj komentare uz svako polje.
 /// </summary>
-public class PrototypeUIController : MonoBehaviour
+public class UIController : MonoBehaviour
 {
     // ---- Top bar ----
     [Header("Top Bar")]
@@ -71,7 +71,7 @@ public class PrototypeUIController : MonoBehaviour
 
     // ---- Runtime ----
     private readonly List<Button> _shipRowBtns = new();
-    private PrototypeGameController _game;
+    private GameController _game;
     private Camera                  _mainCamera;
 
     // -------------------------------------------------------
@@ -80,7 +80,7 @@ public class PrototypeUIController : MonoBehaviour
 
     private bool _initialized;
 
-    public void Initialize(PrototypeGameController game, Camera cam)
+    public void Initialize(GameController game, Camera cam)
     {
         if (_initialized) return;
         _initialized = true;
@@ -112,13 +112,13 @@ public class PrototypeUIController : MonoBehaviour
     }
 
     // Keep Build() as alias so Bootstrapper doesn't break before migration
-    public void Build(PrototypeGameController game, Camera cam = null) => Initialize(game, cam);
+    public void Build(GameController game, Camera cam = null) => Initialize(game, cam);
 
     // -------------------------------------------------------
     // Refresh — called every frame by GameController
     // -------------------------------------------------------
 
-    public void Refresh(PrototypeGameController game,
+    public void Refresh(GameController game,
         BuildingInstance selBuilding, ShipInstance selShip = null, BuildSlot selSlot = null)
     {
         if (game == null) return;
@@ -134,7 +134,7 @@ public class PrototypeUIController : MonoBehaviour
     // Top bar
     // -------------------------------------------------------
 
-    private void RefreshTopBar(PrototypeGameController game)
+    private void RefreshTopBar(GameController game)
     {
         if (_resourcesText != null)
             _resourcesText.text =
@@ -149,7 +149,7 @@ public class PrototypeUIController : MonoBehaviour
     // Bottom bar
     // -------------------------------------------------------
 
-    private void RefreshBottomBar(PrototypeGameController game)
+    private void RefreshBottomBar(GameController game)
     {
         if (_populationText == null) return;
         float foodPerDay = EconomyCalculator.FoodConsumptionPerDay(game.AdultPopulation, game.Children);
@@ -162,7 +162,7 @@ public class PrototypeUIController : MonoBehaviour
     // Right panel
     // -------------------------------------------------------
 
-    private void RefreshRightPanel(PrototypeGameController game,
+    private void RefreshRightPanel(GameController game,
         BuildingInstance sel, ShipInstance selShip, BuildSlot selSlot)
     {
         bool showShipyard = sel != null && sel.IsShipyard;
@@ -275,7 +275,7 @@ public class PrototypeUIController : MonoBehaviour
         }
     }
 
-    private void RefreshShipList(PrototypeGameController game)
+    private void RefreshShipList(GameController game)
     {
         if (_shipListContainer == null) return;
         var ships = game.GetShips();
@@ -325,7 +325,7 @@ public class PrototypeUIController : MonoBehaviour
         }
     }
 
-    private void RefreshShipDetail(PrototypeGameController game, ShipInstance ship)
+    private void RefreshShipDetail(GameController game, ShipInstance ship)
     {
         if (ship == null) return;
         if (_shipDetailTitle != null) _shipDetailTitle.text = ship.DisplayName;
@@ -382,7 +382,7 @@ public class PrototypeUIController : MonoBehaviour
         }
     }
 
-    private void SetShipPassengerButtons(ShipInstance ship, PrototypeGameController game)
+    private void SetShipPassengerButtons(ShipInstance ship, GameController game)
     {
         if (_addPassengerBtn != null)
         {
@@ -398,7 +398,7 @@ public class PrototypeUIController : MonoBehaviour
         }
     }
 
-    private void SetShipFoodButtons(ShipInstance ship, PrototypeGameController game)
+    private void SetShipFoodButtons(ShipInstance ship, GameController game)
     {
         if (_loadFoodBtn != null)
         {
@@ -472,7 +472,7 @@ public class PrototypeUIController : MonoBehaviour
     // Remove this when Inspector references are wired.
     // -------------------------------------------------------
 
-    public void BuildFromCode(PrototypeGameController game, Transform canvasTransform, Camera cam)
+    public void BuildFromCode(GameController game, Transform canvasTransform, Camera cam)
     {
         _game       = game;
         _mainCamera = cam;
