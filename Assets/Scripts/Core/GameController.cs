@@ -590,6 +590,8 @@ public class GameController : MonoBehaviour
 
     private void OnNewDay(int day)
     {
+        UniversalPopup.Instance?.OpenPopup($"Day {day}", 
+            "A new day has begun. Check your resources and plan your next moves.");
         // Team managers hook in here when ready:
         // EventManager.Instance?.OnDayPassed(day);
         // VolcanoManager.Instance?.OnDayPassed(day);
