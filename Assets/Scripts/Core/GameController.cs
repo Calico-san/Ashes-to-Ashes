@@ -398,6 +398,7 @@ public class GameController : MonoBehaviour
             Cloth            = cloth,
             Rope             = rope,
             Ships            = ships,
+            RawFood          = rawFood,
             TotalPopulation  = totalPopulation,
             Children         = children,
             FreeWorkers      = _freeWorkers,
@@ -474,6 +475,7 @@ public class GameController : MonoBehaviour
         cloth             = data.Cloth;
         rope              = data.Rope;
         ships             = data.Ships;
+        rawFood           = data.RawFood;
         totalPopulation   = data.TotalPopulation;
         children          = data.Children;
         _freeWorkers      = data.FreeWorkers;
@@ -507,27 +509,12 @@ public class GameController : MonoBehaviour
         {
             if (bd.IsTownHall) continue; // Town Hall is static, not re-created
 
-            var (displayName, outputType, color) = BuildingMeta(
-                Enum.TryParse<BuildingType>(bd.BuildingTypeName, out var bt)
-                    ? bt : BuildingType.Sawmill);
+            var type = Enum.TryParse<BuildingType>(bd.BuildingTypeName, out var bt)
+                ? bt : BuildingType.Sawmill;
 
-            var go       = new GameObject(bd.DisplayName);
-            var building = go.AddComponent<BuildingInstance>();
-            building.Initialize(this, displayName, outputType, color,
+            var building = BuildingFactory.Create(this, type,
                 new Vector3(bd.PositionX, bd.PositionY, 0f),
-                new Vector2(bd.SizeX, bd.SizeY), bd.IsShipyard, bt);
-
-            // Label
-            var lbl = new GameObject(displayName + "Label");
-            lbl.transform.SetParent(go.transform, false);
-            lbl.transform.localPosition = new Vector3(0f, 0.85f, 0f);
-            var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
-            tmp.text        = displayName;
-            tmp.fontSize    = 1.8f;
-            tmp.alignment   = TMPro.TextAlignmentOptions.Center;
-            tmp.color       = Color.white;
-            tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
-            tmp.sortingOrder = 20;
+                new Vector2(bd.SizeX, bd.SizeY));
 
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
@@ -641,26 +628,9 @@ public class GameController : MonoBehaviour
         _buildSlots.Remove(slot);
         Destroy(slot.gameObject);
 
-        // Create the real building
-        var (displayName, outputType, color) = BuildingMeta(type);
-        bool isShipyard = type == BuildingType.Shipyard;
-
-        var go       = new GameObject(displayName);
-        var building = go.AddComponent<BuildingInstance>();
-        building.Initialize(this, displayName, outputType, color, position, size, isShipyard, type);
+        // Create the real building (+ label) via the factory
+        var building = BuildingFactory.Create(this, type, position, size);
         RegisterBuilding(building);
-
-        // Label
-        var lbl = new GameObject(displayName + "Label");
-        lbl.transform.SetParent(go.transform, false);
-        lbl.transform.localPosition = new Vector3(0f, 0.85f, 0f);
-        var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
-        tmp.text        = displayName;
-        tmp.fontSize    = 1.8f;
-        tmp.alignment   = TMPro.TextAlignmentOptions.Center;
-        tmp.color       = Color.white;
-        tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
-        tmp.sortingOrder = 20;
 
         RefreshUI();
     }
@@ -670,21 +640,6 @@ public class GameController : MonoBehaviour
         foreach (var b in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
             if (b != null && b.IsTownHall) return b;
         return null;
-    }
-
-    private static (string name, ResourceType type, Color color) BuildingMeta(BuildingType t)
-    {
-        switch (t)
-        {
-            case BuildingType.Sawmill:     return ("Sawmill",     ResourceType.Wood,  new Color(0.22f, 0.65f, 0.25f));
-            case BuildingType.Steelworks:  return ("Steelworks",  ResourceType.Steel, new Color(0.55f, 0.55f, 0.58f));
-            case BuildingType.Fiberworks:  return ("Fiberworks", ResourceType.Cloth, new Color(0.70f, 0.44f, 0.74f));
-            case BuildingType.Cookhouse:   return ("Cookhouse",   ResourceType.Food,  new Color(0.82f, 0.53f, 0.20f));
-            case BuildingType.Shipyard:    return ("Shipyard",     ResourceType.Ships, new Color(0.25f, 0.38f, 0.82f));
-            case BuildingType.HuntersHut:  return ("Hunters Hut",  ResourceType.Food,  new Color(0.55f, 0.35f, 0.15f));
-            case BuildingType.ScoutStation:return ("Scout Station", ResourceType.Food,  new Color(0.20f, 0.50f, 0.50f));
-            default:                       return ("Building",     ResourceType.Wood,  Color.white);
-        }
     }
 
     private void RefreshUI() => _ui?.Refresh(this, _selectedBuilding, _selectedShip, _selectedSlot);

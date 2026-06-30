@@ -41,7 +41,10 @@ public class BuildingInstance : MonoBehaviour
     }
 
     // Production info (read by UI)
-    public float OutputPerWorkerPerHour => EconomyCalculator.ProductionPerWorkerPerHour(OutputType);
+    public float OutputPerWorkerPerHour =>
+        BuildingTypeEnum == BuildingType.HuntersHut
+            ? BalanceConfig.RawFoodPerWorkerPerDay / 24f   // Hunter's Hut outputs Raw Food, not cooked Food
+            : EconomyCalculator.ProductionPerWorkerPerHour(OutputType);
     public float EngineerBonus => HasEngineer
         ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
         : 1.0f;
@@ -69,6 +72,11 @@ public class BuildingInstance : MonoBehaviour
     private GameController     _game;
     private float                       _shipProgress;
     private int                         _shipCount;
+
+    // Fractional production carry-over: banks whole units, keeps the remainder
+    // so sub-1.0/hour rates (e.g. Steelworks 0.083/worker/h) survive rounding.
+    private float                       _outputAccumulator;   // primary output
+    private float                       _ropeAccumulator;     // Fiberworks secondary output (Rope)
 
     // ---- Init ----
 
@@ -146,7 +154,7 @@ public class BuildingInstance : MonoBehaviour
         if (AssignedEngineers >= MaxEngineers || !_game.CanCreateEngineerAgent()) return false;
         var agent = new GameObject($"{DisplayName}_Engineer_{AssignedEngineers + 1}")
             .AddComponent<WorkerAgent>();
-        agent.Initialize(_game.WorkerSpawnPoint, EngineerSlot(_engineers.Count - 1), _game.EngineerSprite, _pathToTownHall);
+        agent.Initialize(_game.WorkerSpawnPoint, EngineerSlot(_engineers.Count), _game.EngineerSprite, _pathToTownHall);
         _engineers.Add(agent);
         _game.OnEngineerAssigned();
         return true;
@@ -191,38 +199,58 @@ public class BuildingInstance : MonoBehaviour
         int active = WorkersInside;
         if (active <= 0) return;
 
-        float bonus = HasEngineer
-            ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
-            : 1.0f;
+        float bonus = EngineerBonus;
 
-        if (IsShipyard)
-            TickShipyard(active, bonus);
-        else if (OutputType == ResourceType.Cloth)
-            TickFiberworks(active, bonus);
-        else if (BuildingTypeEnum == BuildingType.HuntersHut)
-            _game.AddRawFood(Mathf.RoundToInt(active * (BalanceConfig.RawFoodPerWorkerPerDay / 24f) * bonus));
-        else
+        if (IsShipyard) { TickShipyard(active, bonus); return; }
+
+        // Hunter's Hut — produces Raw Food at its own per-worker rate
+        if (BuildingTypeEnum == BuildingType.HuntersHut)
         {
-            int output = Mathf.RoundToInt(active * bonus);
-            if (BuildingTypeEnum == BuildingType.Cookhouse)
-            {
-                // Consume raw food — 1 per worker per hour
-                int rawNeeded  = Mathf.RoundToInt(active * BalanceConfig.CookhouseRawFoodPerWorker);
-                int rawConsumed = _game.ConsumeRawFood(rawNeeded);
-                float multiplier = rawConsumed >= rawNeeded
-                    ? BalanceConfig.CookhouseNormalMultiplier
-                    : BalanceConfig.CookhouseLowMultiplier;
-                output = Mathf.RoundToInt(output * multiplier);
-            }
-            _game.AddResource(OutputType, output);
+            int raw = Bank(ref _outputAccumulator, OutputPerWorkerPerHour * active * bonus);
+            if (raw > 0) _game.AddRawFood(raw);
+            return;
         }
+
+        // Fiberworks — produces both Cloth and Rope from their BalanceConfig rates
+        if (OutputType == ResourceType.Cloth)
+        {
+            float clothRate = EconomyCalculator.ProductionPerWorkerPerHour(ResourceType.Cloth);
+            float ropeRate  = EconomyCalculator.ProductionPerWorkerPerHour(ResourceType.Rope);
+            int cloth = Bank(ref _outputAccumulator, active * clothRate * bonus);
+            int rope  = Bank(ref _ropeAccumulator,  active * ropeRate  * bonus);
+            if (cloth > 0) _game.AddResource(ResourceType.Cloth, cloth);
+            if (rope  > 0) _game.AddResource(ResourceType.Rope,  rope);
+            return;
+        }
+
+        // Standard single-output buildings (Sawmill, Steelworks, Cookhouse, ...)
+        float perHour = OutputPerWorkerPerHour * active * bonus;
+
+        if (BuildingTypeEnum == BuildingType.Cookhouse)
+        {
+            // Consume raw food — CookhouseRawFoodPerWorker per worker per hour
+            int rawNeeded   = Mathf.RoundToInt(active * BalanceConfig.CookhouseRawFoodPerWorker);
+            int rawConsumed = _game.ConsumeRawFood(rawNeeded);
+            float multiplier = rawConsumed >= rawNeeded
+                ? BalanceConfig.CookhouseNormalMultiplier
+                : BalanceConfig.CookhouseLowMultiplier;
+            perHour *= multiplier;
+        }
+
+        int output = Bank(ref _outputAccumulator, perHour);
+        if (output > 0) _game.AddResource(OutputType, output);
     }
 
-    private void TickFiberworks(int activeWorkers, float bonus = 1f)
+    /// <summary>
+    /// Adds fractional per-hour production to the accumulator and returns only the
+    /// whole units ready to bank; the remainder carries over to the next hour.
+    /// </summary>
+    private static int Bank(ref float accumulator, float amount)
     {
-        // Fiberworks produces both Cloth and Rope each cycle
-        _game.AddResource(ResourceType.Cloth, Mathf.RoundToInt(activeWorkers * bonus));
-        _game.AddResource(ResourceType.Rope,  Mathf.RoundToInt(activeWorkers * bonus));
+        accumulator += amount;
+        int whole = Mathf.FloorToInt(accumulator);
+        accumulator -= whole;
+        return whole;
     }
 
     // ---- Selection ----

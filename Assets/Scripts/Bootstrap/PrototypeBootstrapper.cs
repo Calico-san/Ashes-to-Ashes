@@ -131,21 +131,8 @@ public class PrototypeBootstrapper : MonoBehaviour
 
     private void CreateTownHall(GameController game, Vector3 position)
     {
-        var go       = new GameObject("TownHall");
-        var building = go.AddComponent<BuildingInstance>();
-        building.Initialize(game, "Town Hall", ResourceType.Wood,
-            new Color(0.72f, 0.58f, 0.22f), position, new Vector2(1f, 1f), false, BuildingType.TownHall);
-        building.SetTownHall(true);
-        game.RegisterBuilding(building);
-
-        var lbl = new GameObject("Label");
-        lbl.transform.SetParent(go.transform, false);
-        lbl.transform.localPosition = new Vector3(0f, 0.65f, 0f);
-        var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
-        tmp.text = "Town Hall"; tmp.fontSize = 1.8f;
-        tmp.alignment = TMPro.TextAlignmentOptions.Center;
-        tmp.color = Color.white; tmp.sortingOrder = 20;
-        tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
+        var townHall = BuildingFactory.Create(game, BuildingType.TownHall, position, new Vector2(1f, 1f));
+        game.RegisterBuilding(townHall);
     }
 
     // ---- Helpers ----

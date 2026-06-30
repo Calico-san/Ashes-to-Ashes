@@ -26,6 +26,7 @@ public class GameStateData
     public int      Cloth;
     public int      Rope;
     public int      Ships;
+    public int      RawFood;        // Hunter's Hut → Cookhouse intermediate
 
     // ---- Population ----
     public int      TotalPopulation;
