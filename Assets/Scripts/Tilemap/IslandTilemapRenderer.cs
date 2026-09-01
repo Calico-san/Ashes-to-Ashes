@@ -13,6 +13,11 @@ public class IslandTilemapRenderer : MonoBehaviour
 
     [SerializeField] private TilemapData _map;
 
+    [Header("Rendering")]
+    [Tooltip("Blago prosirenje polja da se pri zoomu ne vide tanke linije izmedu susjednih polja.")]
+    [Range(1f, 1.05f)]
+    [SerializeField] private float _tileOverscan = 1.01f;
+
     // Placeholder colors per tile type
     private static readonly Color[] TileColors = new Color[]
     {
@@ -108,11 +113,22 @@ public class IslandTilemapRenderer : MonoBehaviour
             go.transform.position   = new Vector3(pos.x, pos.y, 0f);
             go.transform.localScale = new Vector3(_map.TileSize, _map.TileSize, 1f);
 
-            var sr      = go.AddComponent<SpriteRenderer>();
-            var tileSprite = SpriteRegistry.Instance?.GetTileSprite(type);
-            sr.sprite   = tileSprite != null
-                ? tileSprite
-                : SimpleShapeFactory.CreateFilledSquareSprite(TileColorFor(type));
+            var sr         = go.AddComponent<SpriteRenderer>();
+            var tileSprite = SpriteRegistry.Instance != null
+                ? SpriteRegistry.Instance.GetTileSprite(type)
+                : null;
+
+            if (tileSprite != null)
+            {
+                sr.sprite = tileSprite;
+                // Sliced: polje uvijek zauzima tocno jedno polje, bez obzira na PPU.
+                SpriteFit.Fill(sr, Vector2.one * _tileOverscan);
+            }
+            else
+            {
+                sr.sprite = SimpleShapeFactory.CreateFilledSquareSprite(TileColorFor(type));
+            }
+
             sr.sortingOrder = SortOrderFor(type);
 
             _tileObjects[idx] = go;

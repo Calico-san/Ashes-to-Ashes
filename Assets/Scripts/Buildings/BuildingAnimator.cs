@@ -17,6 +17,9 @@ public class BuildingAnimator : MonoBehaviour
     [SerializeField] private Color        _fallbackConstructionColor = new Color(0.55f, 0.45f, 0.20f);
     [SerializeField] private Color        _fallbackBuiltColor        = Color.white;
 
+    [Tooltip("Sirina arta u lokalnim jedinicama (1 = tocno jedno polje). Visina se racuna iz omjera stranica.")]
+    [SerializeField] private float _artWidth = 1f;
+
     // ---- Progress bar (world space, shown during construction) ----
     private GameObject    _progressBarBg;
     private GameObject    _progressBarFill;
@@ -28,6 +31,14 @@ public class BuildingAnimator : MonoBehaviour
     // ---- State ----
     private SpriteRenderer     _sr;
     private BuildingVisualState _currentState = BuildingVisualState.UnderConstruction;
+
+    /// <summary>True ako trenutno stanje koristi pravi sprite, a ne placeholder kvadrat.</summary>
+    public bool UsesArt { get; private set; }
+
+    /// <summary>True ako za ovaj tip zgrade postoji built sprite — cita BuildingInstance za tintu.</summary>
+    public static bool HasArtFor(BuildingType type)
+        => SpriteRegistry.Instance != null
+        && SpriteRegistry.Instance.GetBuildingSprite(type, BuildingVisualState.Idle) != null;
 
     // ---- Init ----
 
@@ -85,23 +96,28 @@ public class BuildingAnimator : MonoBehaviour
     private void SetState(BuildingVisualState state)
     {
         _currentState = state;
-        _sr.sprite = ResolveSprite(state);
-    }
 
-    private Sprite ResolveSprite(BuildingVisualState state)
-    {
         var registry = SpriteRegistry.Instance;
-        Sprite sprite = registry != null
+        Sprite art   = registry != null
             ? registry.GetBuildingSprite(_buildingType, state)
             : null;
 
-        if (sprite != null) return sprite;
+        if (art != null)
+        {
+            UsesArt    = true;
+            _sr.sprite = art;
+            _sr.color  = Color.white;              // placeholder tinta bi zaprljala pixel art
+            SpriteFit.FitWidth(_sr, _artWidth);    // PPU-neovisno, cuva omjer stranica
+            return;
+        }
 
         // Fallback — colored square
+        UsesArt = false;
+        SpriteFit.Reset(_sr);
         Color fallback = state == BuildingVisualState.UnderConstruction
             ? _fallbackConstructionColor
             : _fallbackBuiltColor;
-        return SimpleShapeFactory.CreateFilledSquareSprite(fallback);
+        _sr.sprite = SimpleShapeFactory.CreateFilledSquareSprite(fallback);
     }
 
     private void BuildProgressBar()

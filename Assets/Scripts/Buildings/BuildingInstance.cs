@@ -100,18 +100,25 @@ public class BuildingInstance : MonoBehaviour
         transform.position   = position;
         transform.localScale = new Vector3(size.x, size.y, 1f);
 
-        _normalColor   = color;
-        _selectedColor = Color.Lerp(color, Color.white, 0.35f);
+        // Kad postoji pravi sprite, tinta mora biti bijela — inace placeholder
+        // boja tipa zgrade zaprlja pixel art.
+        bool hasArt    = BuildingAnimator.HasArtFor(BuildingTypeEnum);
+        _normalColor   = hasArt ? Color.white : color;
+        _selectedColor = hasArt
+            ? new Color(1f, 0.92f, 0.55f)
+            : Color.Lerp(color, Color.white, 0.35f);
 
         _renderer        = gameObject.AddComponent<SpriteRenderer>();
-        _renderer.sprite = SimpleShapeFactory.CreateFilledSquareSprite(color);
+        _renderer.sprite = SimpleShapeFactory.CreateFilledSquareSprite(_normalColor);
         _renderer.sortingOrder = 5;
 
         var col  = gameObject.AddComponent<BoxCollider2D>();
         col.size = Vector2.one;
 
         _animator = gameObject.AddComponent<BuildingAnimator>();
-        _animator.Setup(BuildingTypeFromResource(outputType, isShipyard), color);
+        _animator.Setup(BuildingTypeEnum, color);   // BuildingTypeEnum — HuntersHut i ScoutStation
+                                                    // oboje daju Food pa bi ih BuildingTypeFromResource
+                                                    // pogresno mapirao u Cookhouse
         _animator.SetBuilt();
     }
 

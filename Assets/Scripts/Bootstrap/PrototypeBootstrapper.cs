@@ -101,6 +101,10 @@ public class PrototypeBootstrapper : MonoBehaviour
                              "Using placeholder. Create via Assets > Create > Ashes > TilemapData.");
         }
         renderer.Initialize(map);
+
+        // Vulkan je jedan veliki animirani objekt, ne tile. Vraca null ako karta
+        // nema Volcano polja ili ako VolcanoFrames u SpriteRegistryju nisu popunjeni.
+        VolcanoRenderer.Spawn(renderer.Map);
     }
 
     // ---- Town Hall ----

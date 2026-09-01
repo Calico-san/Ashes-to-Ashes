@@ -34,6 +34,11 @@ public class BuildPanel : MonoBehaviour
     private static readonly Color GhostInvalid = new Color(1.0f, 0.2f, 0.2f, 0.55f);
     private const float GhostSize = BalanceConfig.BuildingPlacementSize;
 
+    // Build panel — visina panela mora primiti ikonu + tri retka teksta
+    private const float PanelHeight = 126f;
+    private const float ButtonWidth =  96f;
+    private const float IconHeight  =  44f;
+
     private GameController _game;
     private Camera                  _cam;
     private Camera Cam => _cam != null ? _cam : (_cam = Camera.main);
@@ -219,7 +224,7 @@ public class BuildPanel : MonoBehaviour
         rt.anchorMax        = new Vector2(1f, 0f);
         rt.pivot            = new Vector2(0.5f, 0f);
         rt.anchoredPosition = new Vector2(0f, 62f);
-        rt.sizeDelta        = new Vector2(0f, 72f);
+        rt.sizeDelta        = new Vector2(0f, PanelHeight);
 
         _panelRoot.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.06f, 0.93f);
 
@@ -259,7 +264,7 @@ public class BuildPanel : MonoBehaviour
         go.transform.SetParent(_panelRoot.transform, false);
 
         var rt = go.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(110f, 0f);
+        rt.sizeDelta = new Vector2(ButtonWidth, 0f);
 
         var img = go.GetComponent<Image>();
         img.color = new Color(0.18f, 0.18f, 0.18f, 0.95f);
@@ -286,6 +291,17 @@ public class BuildPanel : MonoBehaviour
         vg.childControlHeight    = false;
         vg.childForceExpandWidth = true;
         vg.childForceExpandHeight= false;
+
+        // Icon — sprite zgrade iz SpriteRegistryja, fallback na obojani kvadrat
+        var iconGO = new GameObject("Icon", typeof(RectTransform));
+        iconGO.transform.SetParent(go.transform, false);
+        var iconLE = iconGO.AddComponent<LayoutElement>();
+        iconLE.preferredHeight = IconHeight;
+        var iconImg = iconGO.AddComponent<Image>();
+        iconImg.sprite        = BuildingIcon(type, out bool isArt);
+        iconImg.color         = isArt ? Color.white : BuildingFactory.Meta(type).color;
+        iconImg.preserveAspect = true;
+        iconImg.raycastTarget  = false;   // klik mora proci do gumba
 
         // Name
         var nameGO = new GameObject("Name", typeof(RectTransform));
@@ -343,6 +359,21 @@ public class BuildPanel : MonoBehaviour
     }
 
     // ---- Helpers ----
+
+    /// <summary>
+    /// Ikona za gumb. Vraca built sprite iz SpriteRegistryja; ako ga nema,
+    /// vraca bijeli kvadrat koji pozivatelj oboji bojom tipa zgrade.
+    /// </summary>
+    private static Sprite BuildingIcon(BuildingType type, out bool isArt)
+    {
+        var registry = SpriteRegistry.Instance;
+        var sprite   = registry != null
+            ? registry.GetBuildingSprite(type, BuildingVisualState.Idle)
+            : null;
+
+        isArt = sprite != null;
+        return isArt ? sprite : SimpleShapeFactory.CreateFilledSquareSprite(Color.white);
+    }
 
     private static string BuildingDisplayName(BuildingType type)
     {

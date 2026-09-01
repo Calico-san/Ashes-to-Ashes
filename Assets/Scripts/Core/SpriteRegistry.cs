@@ -17,7 +17,7 @@ public class SpriteRegistry : ScriptableObject
     /// <summary>Called by PrototypeBootstrapper on startup.</summary>
     public void Register() => Instance = this;
 
-    // ---- Buildings — Under Construction ----
+    // ---- Tilemap ----
     [Header("Tilemap Tiles")]
     public Sprite TileOcean;
     public Sprite TileShore;
@@ -40,13 +40,31 @@ public class SpriteRegistry : ScriptableObject
         }
     }
 
+    // ---- Volcano (jedan veliki animirani objekt, ne tile) ----
+    [Header("Volcano — animated object")]
+    [Tooltip("Frameovi iz volcano.png. Prazno = vulkan se ne iscrtava kao objekt.")]
+    public Sprite[] VolcanoFrames;
+    [Tooltip("Brzina animacije vulkana u frameovima po sekundi.")]
+    public float VolcanoFps = 8f;
+
+    public Sprite GetVolcanoFrame(int frame)
+    {
+        if (VolcanoFrames == null || VolcanoFrames.Length == 0) return null;
+        return VolcanoFrames[((frame % VolcanoFrames.Length) + VolcanoFrames.Length) % VolcanoFrames.Length];
+    }
+
+    // ---- Buildings — Under Construction ----
     [Header("Building — Under Construction")]
+    [Tooltip("Koristi se za svaki tip koji nema vlastiti construction sprite.")]
+    public Sprite GenericConstruction;
     public Sprite TownHallConstruction;
     public Sprite SawmillConstruction;
     public Sprite SteelworksConstruction;
     public Sprite FiberworksConstruction;
     public Sprite CookhouseConstruction;
     public Sprite ShipyardConstruction;
+    public Sprite HuntersHutConstruction;
+    public Sprite ScoutStationConstruction;
 
     // ---- Buildings — Built / Idle ----
     [Header("Building — Built / Idle")]
@@ -56,6 +74,8 @@ public class SpriteRegistry : ScriptableObject
     public Sprite FiberworksBuilt;
     public Sprite CookhouseBuilt;
     public Sprite ShipyardBuilt;
+    public Sprite HuntersHutBuilt;
+    public Sprite ScoutStationBuilt;
 
     // ---- Buildings — Producing ----
     [Header("Building — Producing")]
@@ -64,6 +84,8 @@ public class SpriteRegistry : ScriptableObject
     public Sprite FiberworksProducing;
     public Sprite CookhouseProducing;
     public Sprite ShipyardProducing;
+    public Sprite HuntersHutProducing;
+    public Sprite ScoutStationProducing;
 
     // ---- Worker ----
     [Header("Worker")]
@@ -107,29 +129,35 @@ public class SpriteRegistry : ScriptableObject
 
     private Sprite GetConstruction(BuildingType type)
     {
+        Sprite s;
         switch (type)
         {
-            case BuildingType.TownHall:   return TownHallConstruction;
-            case BuildingType.Sawmill:    return SawmillConstruction;
-            case BuildingType.Steelworks: return SteelworksConstruction;
-            case BuildingType.Fiberworks: return FiberworksConstruction;
-            case BuildingType.Cookhouse:  return CookhouseConstruction;
-            case BuildingType.Shipyard:   return ShipyardConstruction;
-            default:                      return null;
+            case BuildingType.TownHall:     s = TownHallConstruction;     break;
+            case BuildingType.Sawmill:      s = SawmillConstruction;      break;
+            case BuildingType.Steelworks:   s = SteelworksConstruction;   break;
+            case BuildingType.Fiberworks:   s = FiberworksConstruction;   break;
+            case BuildingType.Cookhouse:    s = CookhouseConstruction;    break;
+            case BuildingType.Shipyard:     s = ShipyardConstruction;     break;
+            case BuildingType.HuntersHut:   s = HuntersHutConstruction;   break;
+            case BuildingType.ScoutStation: s = ScoutStationConstruction; break;
+            default:                        s = null;                     break;
         }
+        return s != null ? s : GenericConstruction;
     }
 
     private Sprite GetBuilt(BuildingType type)
     {
         switch (type)
         {
-            case BuildingType.TownHall:   return TownHallBuilt;
-            case BuildingType.Sawmill:    return SawmillBuilt;
-            case BuildingType.Steelworks: return SteelworksBuilt;
-            case BuildingType.Fiberworks: return FiberworksBuilt;
-            case BuildingType.Cookhouse:  return CookhouseBuilt;
-            case BuildingType.Shipyard:   return ShipyardBuilt;
-            default:                      return null;
+            case BuildingType.TownHall:     return TownHallBuilt;
+            case BuildingType.Sawmill:      return SawmillBuilt;
+            case BuildingType.Steelworks:   return SteelworksBuilt;
+            case BuildingType.Fiberworks:   return FiberworksBuilt;
+            case BuildingType.Cookhouse:    return CookhouseBuilt;
+            case BuildingType.Shipyard:     return ShipyardBuilt;
+            case BuildingType.HuntersHut:   return HuntersHutBuilt;
+            case BuildingType.ScoutStation: return ScoutStationBuilt;
+            default:                        return null;
         }
     }
 
@@ -137,12 +165,14 @@ public class SpriteRegistry : ScriptableObject
     {
         switch (type)
         {
-            case BuildingType.Sawmill:    return SawmillProducing    != null ? SawmillProducing    : GetBuilt(type);
-            case BuildingType.Steelworks: return SteelworksProducing != null ? SteelworksProducing : GetBuilt(type);
-            case BuildingType.Fiberworks: return FiberworksProducing != null ? FiberworksProducing : GetBuilt(type);
-            case BuildingType.Cookhouse:  return CookhouseProducing  != null ? CookhouseProducing  : GetBuilt(type);
-            case BuildingType.Shipyard:   return ShipyardProducing   != null ? ShipyardProducing   : GetBuilt(type);
-            default:                      return GetBuilt(type);
+            case BuildingType.Sawmill:      return SawmillProducing      != null ? SawmillProducing      : GetBuilt(type);
+            case BuildingType.Steelworks:   return SteelworksProducing   != null ? SteelworksProducing   : GetBuilt(type);
+            case BuildingType.Fiberworks:   return FiberworksProducing   != null ? FiberworksProducing   : GetBuilt(type);
+            case BuildingType.Cookhouse:    return CookhouseProducing    != null ? CookhouseProducing    : GetBuilt(type);
+            case BuildingType.Shipyard:     return ShipyardProducing     != null ? ShipyardProducing     : GetBuilt(type);
+            case BuildingType.HuntersHut:   return HuntersHutProducing   != null ? HuntersHutProducing   : GetBuilt(type);
+            case BuildingType.ScoutStation: return ScoutStationProducing != null ? ScoutStationProducing : GetBuilt(type);
+            default:                        return GetBuilt(type);
         }
     }
 }

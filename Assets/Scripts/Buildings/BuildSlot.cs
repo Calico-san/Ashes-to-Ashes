@@ -40,7 +40,11 @@ public class BuildSlot : MonoBehaviour
 
         _normalColor      = new Color(0.28f, 0.28f, 0.28f, 0.55f);
         _selectedColor    = new Color(0.55f, 0.55f, 0.30f, 0.80f);
-        _constructionColor= new Color(0.60f, 0.45f, 0.15f, 0.75f);
+        // Poluprozirna smeda tinta bi zaprljala construction pixel art.
+        _constructionColor = SpriteRegistry.Instance != null
+                          && SpriteRegistry.Instance.GenericConstruction != null
+            ? Color.white
+            : new Color(0.60f, 0.45f, 0.15f, 0.75f);
 
         _renderer             = gameObject.AddComponent<SpriteRenderer>();
         _renderer.sprite      = SimpleShapeFactory.CreateFilledSquareSprite(_normalColor);
