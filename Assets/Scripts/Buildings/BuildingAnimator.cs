@@ -17,19 +17,44 @@ public class BuildingAnimator : MonoBehaviour
     [SerializeField] private Color        _fallbackConstructionColor = new Color(0.55f, 0.45f, 0.20f);
     [SerializeField] private Color        _fallbackBuiltColor        = Color.white;
 
-    [Tooltip("Sirina arta u lokalnim jedinicama (1 = tocno jedno polje). Visina se racuna iz omjera stranica.")]
-    [SerializeField] private float _artWidth = 1f;
+    // Postavlja se u Setup() iz ArtWidthFor(). Komponenta se dodaje kroz AddComponent
+    // u runtimeu, pa vrijednost upisana u Inspectoru ne bi prezivjela Play — mijenjaj
+    // brojeve u tablici ispod.
+    private float _artWidth      = 1f;
+    private float _artHalfHeight = 0.5f;
+
+    /// <summary>
+    /// Vizualna sirina zgrade u poljima. Otisak za validaciju i koliziju ostaje 1x1
+    /// (BalanceConfig.BuildingPlacementSize) — ovo je cisto izgled, po uzoru na Frostpunk
+    /// gdje zgrada vizualno prelazi preko svog otiska.
+    /// Visina se ne postavlja rucno; racuna se iz omjera stranica arta.
+    /// </summary>
+    private static float ArtWidthFor(BuildingType type)
+    {
+        switch (type)
+        {
+            case BuildingType.Shipyard:     return 3.0f;   // harbor       144x112
+            case BuildingType.TownHall:     return 2.5f;   // house         32x32
+            case BuildingType.Sawmill:      return 2.0f;   // sawmill       80x64
+            case BuildingType.Steelworks:   return 2.0f;   // steelworks    80x64
+            case BuildingType.Fiberworks:   return 2.0f;   // fiberworks    80x48
+            case BuildingType.Cookhouse:    return 2.0f;   // cookhouse     64x64
+            case BuildingType.ScoutStation: return 1.5f;   // scoutstation  64x96 — visok i uzak
+            case BuildingType.HuntersHut:   return 1.5f;   // huntershut    48x32
+            default:                        return 2.0f;
+        }
+    }
 
     // ---- Progress bar (world space, shown during construction) ----
-    private GameObject    _progressBarBg;
-    private GameObject    _progressBarFill;
+    private GameObject     _progressBarBg;
+    private GameObject     _progressBarFill;
     private SpriteRenderer _progressFillSR;
-    private const float   BAR_WIDTH  = 1.2f;
-    private const float   BAR_HEIGHT = 0.12f;
-    private const float   BAR_OFFSET_Y = 0.72f;
+    private const float    BAR_WIDTH    = 1.2f;
+    private const float    BAR_HEIGHT   = 0.12f;
+    private const float    BAR_OFFSET_Y = 0.72f;
 
     // ---- State ----
-    private SpriteRenderer     _sr;
+    private SpriteRenderer      _sr;
     private BuildingVisualState _currentState = BuildingVisualState.UnderConstruction;
 
     /// <summary>True ako trenutno stanje koristi pravi sprite, a ne placeholder kvadrat.</summary>
@@ -44,13 +69,20 @@ public class BuildingAnimator : MonoBehaviour
 
     public void Setup(BuildingType type, Color fallbackBuiltColor)
     {
-        _buildingType      = type;
+        _buildingType       = type;
         _fallbackBuiltColor = fallbackBuiltColor;
+        _artWidth           = ArtWidthFor(type);
         _sr = GetComponent<SpriteRenderer>();
 
         BuildProgressBar();
         SetState(BuildingVisualState.UnderConstruction);
     }
+
+    /// <summary>
+    /// Lebdecu oznaku kaci BuildingFactory tek nakon Initialize(), pa je pri prvom
+    /// SetState jos nema. Start() se izvrsi kad postoji.
+    /// </summary>
+    private void Start() => PlaceOverlays();
 
     // ---- Public API ----
 
@@ -68,7 +100,7 @@ public class BuildingAnimator : MonoBehaviour
             float clampedW = Mathf.Clamp01(progress) * BAR_WIDTH;
             _progressBarFill.transform.localScale = new Vector3(clampedW, BAR_HEIGHT, 1f);
 
-            // Color shifts green → yellow → orange as progress increases
+            // Color shifts green -> yellow -> orange as progress increases
             _progressFillSR.color = Color.Lerp(
                 new Color(0.20f, 0.75f, 0.25f),
                 new Color(0.90f, 0.55f, 0.10f),
@@ -108,16 +140,36 @@ public class BuildingAnimator : MonoBehaviour
             _sr.sprite = art;
             _sr.color  = Color.white;              // placeholder tinta bi zaprljala pixel art
             SpriteFit.FitWidth(_sr, _artWidth);    // PPU-neovisno, cuva omjer stranica
-            return;
+            _artHalfHeight = _sr.size.y * 0.5f;
+        }
+        else
+        {
+            // Fallback — colored square
+            UsesArt        = false;
+            _artHalfHeight = 0.5f;
+            SpriteFit.Reset(_sr);
+            Color fallback = state == BuildingVisualState.UnderConstruction
+                ? _fallbackConstructionColor
+                : _fallbackBuiltColor;
+            _sr.sprite = SimpleShapeFactory.CreateFilledSquareSprite(fallback);
         }
 
-        // Fallback — colored square
-        UsesArt = false;
-        SpriteFit.Reset(_sr);
-        Color fallback = state == BuildingVisualState.UnderConstruction
-            ? _fallbackConstructionColor
-            : _fallbackBuiltColor;
-        _sr.sprite = SimpleShapeFactory.CreateFilledSquareSprite(fallback);
+        PlaceOverlays();
+    }
+
+    /// <summary>Traka napretka i lebdeca oznaka idu iznad arta, ne iznad polja.</summary>
+    private void PlaceOverlays()
+    {
+        float top = _artHalfHeight + 0.15f;
+
+        if (_progressBarBg != null)
+            _progressBarBg.transform.localPosition = new Vector3(0f, top, -0.1f);
+        if (_progressBarFill != null)
+            _progressBarFill.transform.localPosition = new Vector3(-BAR_WIDTH * 0.5f, top, -0.2f);
+
+        var label = GetComponentInChildren<TMPro.TextMeshPro>();
+        if (label != null)
+            label.transform.localPosition = new Vector3(0f, top + 0.20f, 0f);
     }
 
     private void BuildProgressBar()
@@ -133,20 +185,16 @@ public class BuildingAnimator : MonoBehaviour
         bgSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(new Color(0.15f, 0.15f, 0.15f, 0.85f));
         bgSR.sortingOrder = 10;
 
-        // Fill (colored bar — scaled on x axis)
+        // Fill (colored bar — scaled on x axis, pivot at left edge)
         _progressBarFill = new GameObject("ProgressBar_Fill");
         _progressBarFill.transform.SetParent(transform);
-        _progressBarFill.transform.localPosition = new Vector3(
-            -BAR_WIDTH * 0.5f, BAR_OFFSET_Y, -0.2f);
+        _progressBarFill.transform.localPosition = new Vector3(-BAR_WIDTH * 0.5f, BAR_OFFSET_Y, -0.2f);
         _progressBarFill.transform.localRotation = Quaternion.identity;
         _progressBarFill.transform.localScale    = new Vector3(0f, BAR_HEIGHT, 1f);
 
         _progressFillSR = _progressBarFill.AddComponent<SpriteRenderer>();
         _progressFillSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(Color.green);
         _progressFillSR.sortingOrder = 11;
-
-        // Pivot fill bar at left edge so scaling stretches rightward
-        _progressBarFill.transform.localPosition = new Vector3(-BAR_WIDTH * 0.5f, BAR_OFFSET_Y, -0.2f);
 
         HideProgressBar();
     }
