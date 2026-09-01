@@ -12,23 +12,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4ec8fa47b8209c449f33c893b36c015, type: 3}
   m_Name: SpriteRegistry
   m_EditorClassIdentifier: Assembly-CSharp::SpriteRegistry
-  TownHallConstruction: {fileID: 0}
-  SawmillConstruction: {fileID: 0}
-  SteelworksConstruction: {fileID: 0}
-  FiberworksConstruction: {fileID: 0}
-  CookhouseConstruction: {fileID: 0}
-  ShipyardConstruction: {fileID: 0}
-  TownHallBuilt: {fileID: 0}
-  SawmillBuilt: {fileID: 0}
-  SteelworksBuilt: {fileID: 0}
-  FiberworksBuilt: {fileID: 0}
-  CookhouseBuilt: {fileID: 0}
-  ShipyardBuilt: {fileID: 0}
+  TileOcean: {fileID: 1407615122, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  TileShore: {fileID: -966269095, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  TileLand: {fileID: 145928239, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  TileForest: {fileID: 0}
+  TileIronMine: {fileID: 1590986552, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  TileVolcano: {fileID: 1590986552, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanN: {fileID: 403224047, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanE: {fileID: 762336029, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanS: {fileID: 932376730, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanW: {fileID: 1327361289, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanNE: {fileID: 1071812869, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanSE: {fileID: 905860839, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanSW: {fileID: -455864088, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreOceanNW: {fileID: 667731071, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  ShoreLandN: {fileID: 1474933774, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  ShoreLandE: {fileID: 1688499704, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  ShoreLandS: {fileID: -1393029847, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  ShoreLandW: {fileID: 43270190, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  VolcanoFrames:
+  - {fileID: 790823014, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  - {fileID: 580060535, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  - {fileID: -303806917, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  - {fileID: 462017387, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  - {fileID: 267943027, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  - {fileID: 1001189245, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  - {fileID: 1434374051, guid: ff270735ac9fca241a26793977a8480a, type: 3}
+  VolcanoFps: 8
+  GenericConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  TownHallConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  SawmillConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  SteelworksConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  FiberworksConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  CookhouseConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  ShipyardConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  HuntersHutConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
+  ScoutStationConstruction: {fileID: 0}
+  TownHallBuilt: {fileID: 21300000, guid: 66675e87886532d4a85befb9b2cd27f7, type: 3}
+  SawmillBuilt: {fileID: 21300000, guid: 67a1f1daf800cdc4aa67ec2b2b29a8a4, type: 3}
+  SteelworksBuilt: {fileID: 21300000, guid: 1e32a76fa0cc48f42bb425f8cc5ea48d, type: 3}
+  FiberworksBuilt: {fileID: 21300000, guid: b35cafdc230808949b58fb7e732d8958, type: 3}
+  CookhouseBuilt: {fileID: 21300000, guid: 558df5cfaa928f64e8247b76f63ef756, type: 3}
+  ShipyardBuilt: {fileID: 21300000, guid: 4ec6370d85e7da74596cc792d256c630, type: 3}
+  HuntersHutBuilt: {fileID: 21300000, guid: b01be9cbd8d240a40b58ca9b69f415c8, type: 3}
+  ScoutStationBuilt: {fileID: 21300000, guid: dd73c421c5c61df48aaac6c323c550e8, type: 3}
   SawmillProducing: {fileID: 0}
   SteelworksProducing: {fileID: 0}
   FiberworksProducing: {fileID: 0}
   CookhouseProducing: {fileID: 0}
   ShipyardProducing: {fileID: 0}
+  HuntersHutProducing: {fileID: 0}
+  ScoutStationProducing: {fileID: 0}
   WorkerIdle: {fileID: 0}
   WorkerWalkFrames: []
   ShipHull: {fileID: 0}
