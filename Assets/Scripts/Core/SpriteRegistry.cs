@@ -40,6 +40,56 @@ public class SpriteRegistry : ScriptableObject
         }
     }
 
+    // ---- Rub Shore -> Ocean ----
+    // Smjer u nazivu je smjer u kojem se nalazi OCEAN, gledano s tog Shore polja.
+    [Header("Rub Shore -> Ocean (voda na toj strani)")]
+    public Sprite ShoreOceanN;
+    public Sprite ShoreOceanE;
+    public Sprite ShoreOceanS;
+    public Sprite ShoreOceanW;
+
+    [Header("Rub Shore -> Ocean (vanjski kut)")]
+    public Sprite ShoreOceanNE;
+    public Sprite ShoreOceanSE;
+    public Sprite ShoreOceanSW;
+    public Sprite ShoreOceanNW;
+
+    public Sprite GetShoreOceanEdge(EdgeDir dir)
+    {
+        switch (dir)
+        {
+            case EdgeDir.N:  return ShoreOceanN;
+            case EdgeDir.E:  return ShoreOceanE;
+            case EdgeDir.S:  return ShoreOceanS;
+            case EdgeDir.W:  return ShoreOceanW;
+            case EdgeDir.NE: return ShoreOceanNE;
+            case EdgeDir.SE: return ShoreOceanSE;
+            case EdgeDir.SW: return ShoreOceanSW;
+            case EdgeDir.NW: return ShoreOceanNW;
+            default:         return null;
+        }
+    }
+
+    // ---- Rub Shore -> Land ----
+    // Smjer u nazivu je smjer u kojem se nalazi KOPNO.
+    [Header("Rub Shore -> Land (trava na toj strani)")]
+    public Sprite ShoreLandN;
+    public Sprite ShoreLandE;
+    public Sprite ShoreLandS;
+    public Sprite ShoreLandW;
+
+    public Sprite GetShoreLandEdge(EdgeDir dir)
+    {
+        switch (dir)
+        {
+            case EdgeDir.N: return ShoreLandN;
+            case EdgeDir.E: return ShoreLandE;
+            case EdgeDir.S: return ShoreLandS;
+            case EdgeDir.W: return ShoreLandW;
+            default:        return null;
+        }
+    }
+
     // ---- Volcano (jedan veliki animirani objekt, ne tile) ----
     [Header("Volcano — animated object")]
     [Tooltip("Frameovi iz volcano.png. Prazno = vulkan se ne iscrtava kao objekt.")]
@@ -50,7 +100,8 @@ public class SpriteRegistry : ScriptableObject
     public Sprite GetVolcanoFrame(int frame)
     {
         if (VolcanoFrames == null || VolcanoFrames.Length == 0) return null;
-        return VolcanoFrames[((frame % VolcanoFrames.Length) + VolcanoFrames.Length) % VolcanoFrames.Length];
+        int len = VolcanoFrames.Length;
+        return VolcanoFrames[((frame % len) + len) % len];
     }
 
     // ---- Buildings — Under Construction ----

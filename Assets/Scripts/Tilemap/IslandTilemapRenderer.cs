@@ -101,6 +101,8 @@ public class IslandTilemapRenderer : MonoBehaviour
         var parent = new GameObject("Tiles");
         parent.transform.SetParent(transform);
 
+        var registry = SpriteRegistry.Instance;
+
         for (int row = 0; row < _map.Height; row++)
         for (int col = 0; col < _map.Width;  col++)
         {
@@ -113,10 +115,12 @@ public class IslandTilemapRenderer : MonoBehaviour
             go.transform.position   = new Vector3(pos.x, pos.y, 0f);
             go.transform.localScale = new Vector3(_map.TileSize, _map.TileSize, 1f);
 
-            var sr         = go.AddComponent<SpriteRenderer>();
-            var tileSprite = SpriteRegistry.Instance != null
-                ? SpriteRegistry.Instance.GetTileSprite(type)
-                : null;
+            var sr = go.AddComponent<SpriteRenderer>();
+
+            // Prvo rubni sprite (prijelaz Shore/Ocean i Shore/Land), pa obican tile
+            var tileSprite = TileEdgeResolver.Resolve(_map, col, row, type);
+            if (tileSprite == null && registry != null)
+                tileSprite = registry.GetTileSprite(type);
 
             if (tileSprite != null)
             {
