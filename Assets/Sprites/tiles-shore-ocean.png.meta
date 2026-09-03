@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 57c48a8ed00508f49b88279ac24b7333
+guid: b5d6c496bef0a7a41b0c8b22868be100
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: tiles-land-shore-edges_0
+      name: tiles-shore-ocean_0
       rect:
         serializedVersion: 2
         x: 0
@@ -125,14 +125,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6155c8de8f56e804b92dd719f365dd89
-      internalID: 1474933774
+      spriteID: cbc398158c8d3544aabdd58387b8dc21
+      internalID: -1366872002
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_1
+      name: tiles-shore-ocean_1
       rect:
         serializedVersion: 2
         x: 16
@@ -147,14 +147,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1b6f817d05c1d8542914308e7e855f1d
-      internalID: 1688499704
+      spriteID: 7dbf752b2cbf5e94da1b6ee96cc5a916
+      internalID: 1397481886
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_2
+      name: tiles-shore-ocean_2
       rect:
         serializedVersion: 2
         x: 32
@@ -169,14 +169,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c96ea2d9cc1dbea4fa9bc514a6012f4c
-      internalID: -1393029847
+      spriteID: 5d0a15c0b2a16eb40867deb665ba7ffd
+      internalID: 1781946460
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_3
+      name: tiles-shore-ocean_3
       rect:
         serializedVersion: 2
         x: 48
@@ -191,14 +191,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 269f9aa7d900f614ca25bacd58882f72
-      internalID: 43270190
+      spriteID: 301f3f3dcfd85bb47bbb265aa0beec1f
+      internalID: -1851439742
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_4
+      name: tiles-shore-ocean_4
       rect:
         serializedVersion: 2
         x: 64
@@ -213,14 +213,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 0532d9244b81b274b83d8a3c1e621c0d
-      internalID: 1062955314
+      spriteID: 25e8410b9d0b74642874d32b8b8d378b
+      internalID: -480562839
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_5
+      name: tiles-shore-ocean_5
       rect:
         serializedVersion: 2
         x: 80
@@ -235,14 +235,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 212a2d5f855721a40861c66522368af4
-      internalID: 1416721184
+      spriteID: 7100e50fe7545b543a3f1d1c5f3eecd9
+      internalID: -1516575297
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_6
+      name: tiles-shore-ocean_6
       rect:
         serializedVersion: 2
         x: 96
@@ -257,14 +257,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 23ed50342a392384fb3bcf03aa6b9b03
-      internalID: 321614433
+      spriteID: 59c083989f0c4ac449b9da6b382b3ef7
+      internalID: -1829475025
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_7
+      name: tiles-shore-ocean_7
       rect:
         serializedVersion: 2
         x: 112
@@ -279,14 +279,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9d492396da31cc344b931bf4c2cefd07
-      internalID: -1891209312
+      spriteID: c87b28fead981034d9e4dfd4b8d0f99f
+      internalID: -611327876
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_8
+      name: tiles-shore-ocean_8
       rect:
         serializedVersion: 2
         x: 128
@@ -301,14 +301,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 13b14e437eb1f54418e28e7397b8425a
-      internalID: -1744052914
+      spriteID: 0b363b4961b146c46a44a05a99f56750
+      internalID: -1867816975
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_9
+      name: tiles-shore-ocean_9
       rect:
         serializedVersion: 2
         x: 144
@@ -323,14 +323,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ad808ca483739ee4dbb5cf413173790c
-      internalID: -1001241472
+      spriteID: 40ebec9c4b162ea438b4c9cd5e1952a3
+      internalID: 1025247554
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_10
+      name: tiles-shore-ocean_10
       rect:
         serializedVersion: 2
         x: 160
@@ -345,14 +345,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2215379c26d27dc40966d45bef395ffb
-      internalID: 659521206
+      spriteID: d256c1c2791e8d04d8d0bccf92d5fc23
+      internalID: -2006336410
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_11
+      name: tiles-shore-ocean_11
       rect:
         serializedVersion: 2
         x: 176
@@ -367,14 +367,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7a4c149c6f4511a49b03d992d7c9a5a1
-      internalID: -1971529427
+      spriteID: c32115325aae3114d926b491c38c160b
+      internalID: -1044687916
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_12
+      name: tiles-shore-ocean_12
       rect:
         serializedVersion: 2
         x: 192
@@ -389,14 +389,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1cb681dfca9cdeb42a19585b4cafb149
-      internalID: 1559588423
+      spriteID: 2cfe61d34ebee65459540deb129b60a4
+      internalID: 1063906230
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_13
+      name: tiles-shore-ocean_13
       rect:
         serializedVersion: 2
         x: 208
@@ -411,14 +411,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 36b408c748aaa9045b6d389d544e20dd
-      internalID: 868542383
+      spriteID: 64515a3b681046444bd768b9ea3f2602
+      internalID: -791886462
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_14
+      name: tiles-shore-ocean_14
       rect:
         serializedVersion: 2
         x: 224
@@ -433,14 +433,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 67a6847e025429f46b5e52665a211e57
-      internalID: 946031253
+      spriteID: 0378047755f0c414cb184047907a309c
+      internalID: 671305648
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: tiles-land-shore-edges_15
+      name: tiles-shore-ocean_15
       rect:
         serializedVersion: 2
         x: 240
@@ -455,8 +455,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5ec66ea36d61800459597d7cc4dded83
-      internalID: -908296374
+      spriteID: 4401de97816ab4b449b12462b28dc9e8
+      internalID: -92910365
       vertices: []
       indices: 
       edges: []
@@ -465,7 +465,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 21c90825d6d04c149941ff857f7ca64b
+    spriteID: f67d1192633b62e4596c7503b05a0f14
     internalID: 0
     vertices: []
     indices: 
@@ -477,22 +477,22 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      tiles-land-shore-edges_0: 1474933774
-      tiles-land-shore-edges_1: 1688499704
-      tiles-land-shore-edges_10: 659521206
-      tiles-land-shore-edges_11: -1971529427
-      tiles-land-shore-edges_12: 1559588423
-      tiles-land-shore-edges_13: 868542383
-      tiles-land-shore-edges_14: 946031253
-      tiles-land-shore-edges_15: -908296374
-      tiles-land-shore-edges_2: -1393029847
-      tiles-land-shore-edges_3: 43270190
-      tiles-land-shore-edges_4: 1062955314
-      tiles-land-shore-edges_5: 1416721184
-      tiles-land-shore-edges_6: 321614433
-      tiles-land-shore-edges_7: -1891209312
-      tiles-land-shore-edges_8: -1744052914
-      tiles-land-shore-edges_9: -1001241472
+      tiles-shore-ocean_0: -1366872002
+      tiles-shore-ocean_1: 1397481886
+      tiles-shore-ocean_10: -2006336410
+      tiles-shore-ocean_11: -1044687916
+      tiles-shore-ocean_12: 1063906230
+      tiles-shore-ocean_13: -791886462
+      tiles-shore-ocean_14: 671305648
+      tiles-shore-ocean_15: -92910365
+      tiles-shore-ocean_2: 1781946460
+      tiles-shore-ocean_3: -1851439742
+      tiles-shore-ocean_4: -480562839
+      tiles-shore-ocean_5: -1516575297
+      tiles-shore-ocean_6: -1829475025
+      tiles-shore-ocean_7: -611327876
+      tiles-shore-ocean_8: -1867816975
+      tiles-shore-ocean_9: 1025247554
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

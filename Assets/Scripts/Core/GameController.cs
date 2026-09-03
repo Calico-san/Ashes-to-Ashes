@@ -415,8 +415,10 @@ public class GameController : MonoBehaviour
                 ResourceTypeName         = b.OutputType.ToString(),
                 PositionX                = b.transform.position.x,
                 PositionY                = b.transform.position.y,
-                SizeX                    = b.Size.x,
-                SizeY                    = b.Size.y,
+                // Zadrzano radi kompatibilnosti sa SaveVersion 1.0; zapisuje se
+                // konstanta jer se pri ucitavanju ionako vise ne cita.
+                SizeX                    = BalanceConfig.BuildingPlacementSize,
+                SizeY                    = BalanceConfig.BuildingPlacementSize,
                 AssignedWorkers          = b.AssignedWorkers,
                 AssignedEngineers        = b.AssignedEngineers,
                 IsShipyard               = b.IsShipyard,
@@ -437,8 +439,8 @@ public class GameController : MonoBehaviour
             {
                 PositionX                  = s.Position.x,
                 PositionY                  = s.Position.y,
-                SizeX                      = s.Size.x,
-                SizeY                      = s.Size.y,
+                SizeX                      = BalanceConfig.BuildingPlacementSize,
+                SizeY                      = BalanceConfig.BuildingPlacementSize,
                 QueuedTypeName             = s.QueuedType.ToString(),
                 ConstructionHoursRemaining = s.ConstructionHoursRemaining,
                 ConstructionHoursTotal     = s.ConstructionHoursTotal,
@@ -512,9 +514,14 @@ public class GameController : MonoBehaviour
             var type = Enum.TryParse<BuildingType>(bd.BuildingTypeName, out var bt)
                 ? bt : BuildingType.Sawmill;
 
+            // SizeX/SizeY iz zapisa se namjerno ignoriraju. Stariji zapisi nose
+            // velicine koje su dolazile iz prirodne velicine sprite-a (npr. 3x4 =
+            // construction_building 48x64 @ PPU 16); one su zavrsavale kao
+            // localScale i mnozile vec ispravno skaliran sprite, pa je zgrada
+            // izgledala 3x3 polja. Otisak je uvijek 1x1 — vidi BuildingInstance.
             var building = BuildingFactory.Create(this, type,
                 new Vector3(bd.PositionX, bd.PositionY, 0f),
-                new Vector2(bd.SizeX, bd.SizeY));
+                Vector2.one * BalanceConfig.BuildingPlacementSize);
 
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
@@ -537,7 +544,7 @@ public class GameController : MonoBehaviour
             var slot = go.AddComponent<BuildSlot>();
             slot.Initialize(this,
                 new Vector3(sd.PositionX, sd.PositionY, 0f),
-                new Vector2(sd.SizeX, sd.SizeY));
+                Vector2.one * BalanceConfig.BuildingPlacementSize);   // isti razlog kao gore
             slot.RestoreConstruction(qt, sd.ConstructionHoursRemaining, sd.ConstructionHoursTotal);
             RegisterBuildSlot(slot);
         }

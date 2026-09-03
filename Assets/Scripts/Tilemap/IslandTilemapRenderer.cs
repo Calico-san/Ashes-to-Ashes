@@ -1,9 +1,18 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
-/// Reads TilemapData and creates one colored SpriteRenderer quad per tile.
-/// Each TileType has a placeholder color — replaced by Tomislav's sprites later
-/// via SpriteRegistry (same pattern as buildings).
+/// Reads TilemapData and draws it into a standard Unity Tilemap ("Ground" layer)
+/// instead of one GameObject+SpriteRenderer per tile. TilemapData stays the single
+/// source of truth for gameplay (PlacementValidator, WorkerAgent, camera bounds all
+/// read it through this class's public API, unchanged) — only the drawing mechanism
+/// changed, so no other system needed to be touched.
+///
+/// Grid + Tilemap are created at runtime, aligned to TilemapData.Offset/TileSize,
+/// same as before. Tile assets are generated on the fly from SpriteRegistry sprites
+/// and cached per-sprite (one Tile per unique sprite, not per cell) — this is what
+/// keeps memory sane at 1536 cells.
 ///
 /// Attach to a GameObject in the scene, or let Bootstrapper create it.
 /// </summary>
@@ -13,12 +22,7 @@ public class IslandTilemapRenderer : MonoBehaviour
 
     [SerializeField] private TilemapData _map;
 
-    [Header("Rendering")]
-    [Tooltip("Blago prosirenje polja da se pri zoomu ne vide tanke linije izmedu susjednih polja.")]
-    [Range(1f, 1.05f)]
-    [SerializeField] private float _tileOverscan = 1.01f;
-
-    // Placeholder colors per tile type
+    // Placeholder colors per tile type — used only if SpriteRegistry has no sprite yet.
     private static readonly Color[] TileColors = new Color[]
     {
         new Color(0.09f, 0.28f, 0.52f, 1f),  // 0 Ocean     — blue
@@ -29,7 +33,13 @@ public class IslandTilemapRenderer : MonoBehaviour
         new Color(0.75f, 0.15f, 0.10f, 1f),  // 5 Volcano   — red
     };
 
-    private GameObject[] _tileObjects;
+    /// <summary>Grid shared with UnityTilemapSetup so Details/Objects layers line up exactly.</summary>
+    public Grid WorldGrid { get; private set; }
+
+    private Tilemap _ground;
+
+    // One Tile asset per unique sprite — avoids creating 1536 ScriptableObjects.
+    private readonly Dictionary<Sprite, Tile> _tileCache = new();
 
     private void Awake()
     {
@@ -45,11 +55,12 @@ public class IslandTilemapRenderer : MonoBehaviour
     {
         _map = map;
         if (_map == null) { Debug.LogWarning("[TilemapRenderer] No TilemapData assigned."); return; }
+        EnsureGrid();
         BuildTiles();
     }
 
     // -------------------------------------------------------
-    // Public accessors (used by PlacementValidator)
+    // Public accessors (used by PlacementValidator, camera, workers — unchanged)
     // -------------------------------------------------------
 
     public TilemapData Map => _map;
@@ -69,19 +80,47 @@ public class IslandTilemapRenderer : MonoBehaviour
             if (!IsTileAllowed(tile, buildingType)) return false;
         }
 
-        // Steelworks: must be within 1 tile of IronMine
         if (buildingType == BuildingType.Steelworks && !IsNearIronMine(center))
             return false;
 
-        // Sawmill: must be within 1 tile of Forest
         if (buildingType == BuildingType.Sawmill && !IsNearForest(center))
             return false;
 
-        // Shipyard: must be within 1 tile of Ocean
         if (buildingType == BuildingType.Shipyard && !IsNearOcean(center))
             return false;
 
         return true;
+    }
+
+    // -------------------------------------------------------
+    // Grid / Tilemap setup
+    // -------------------------------------------------------
+
+    /// <summary>Creates the Grid + Ground Tilemap aligned to TilemapData, if not already present.</summary>
+    private void EnsureGrid()
+    {
+        if (WorldGrid != null && _ground != null) return;
+
+        var gridGO = new GameObject("VisualTilemap");
+        gridGO.transform.SetParent(transform);
+
+        var grid = gridGO.AddComponent<Grid>();
+        grid.cellSize   = new Vector3(_map.TileSize, _map.TileSize, 0f);
+        grid.cellLayout = GridLayout.CellLayout.Rectangle;
+        gridGO.transform.position = new Vector3(_map.Offset.x, _map.Offset.y, 0f);
+        WorldGrid = grid;
+
+        var groundGO = new GameObject("Ground");
+        groundGO.transform.SetParent(gridGO.transform, false);
+        _ground = groundGO.AddComponent<Tilemap>();
+        // Efektivni fps = animationFrameRate * TileAnimationData.animationSpeed.
+        // Drzimo bazu na 1 da OceanFps iz SpriteRegistryja bude izravno u fps-ima.
+        _ground.animationFrameRate = 1f;
+
+        var renderer = groundGO.AddComponent<TilemapRenderer>();
+        renderer.sortingOrder = -5;
+        // Non-overlapping grid — one tile per cell, so all terrain shares one sort order.
+        // Buildings/workers render above it (sortingOrder 0+), same as before.
     }
 
     // -------------------------------------------------------
@@ -90,69 +129,79 @@ public class IslandTilemapRenderer : MonoBehaviour
 
     private void BuildTiles()
     {
-        // Clear old tiles if rebuilding
-        if (_tileObjects != null)
-            foreach (var o in _tileObjects)
-                if (o != null) Destroy(o);
-
-        int total = _map.Width * _map.Height;
-        _tileObjects = new GameObject[total];
-
-        var parent = new GameObject("Tiles");
-        parent.transform.SetParent(transform);
+        _ground.ClearAllTiles();
+        _tileCache.Clear();
 
         var registry = SpriteRegistry.Instance;
+        if (registry == null)
+            Debug.LogError("[TilemapRenderer] SpriteRegistry.Instance je null — svi tileovi ce biti placeholder boje. " +
+                           "Provjeri da Bootstrapper poziva SpriteRegistry.Register() prije SetupTilemap().");
+
+        var missing = new Dictionary<TileType, int>();
+        int total = _map.Width * _map.Height;
+
+        // Jedna animirana pločica dijeli se na sva "cista" oceanska polja. Rubna
+        // polja (prijelaz prema obali) ostaju staticna jer ona nisu ocean nego Shore.
+        // Vraca null ako OceanFrames nisu postavljeni — tada se koristi TileOcean.
+        TileBase oceanTile = OceanRenderer.Create(registry);
 
         for (int row = 0; row < _map.Height; row++)
         for (int col = 0; col < _map.Width;  col++)
         {
-            int      idx  = row * _map.Width + col;
             TileType type = _map.GetTile(col, row);
-            Vector2  pos  = _map.TileToWorld(col, row);
 
-            var go = new GameObject($"Tile_{col}_{row}");
-            go.transform.SetParent(parent.transform);
-            go.transform.position   = new Vector3(pos.x, pos.y, 0f);
-            go.transform.localScale = new Vector3(_map.TileSize, _map.TileSize, 1f);
-
-            var sr = go.AddComponent<SpriteRenderer>();
+            // Animirani ocean ima prednost pred staticnim TileOcean spriteom
+            if (type == TileType.Ocean && oceanTile != null)
+            {
+                _ground.SetTile(new Vector3Int(col, row, 0), oceanTile);
+                continue;
+            }
 
             // Prvo rubni sprite (prijelaz Shore/Ocean i Shore/Land), pa obican tile
-            var tileSprite = TileEdgeResolver.Resolve(_map, col, row, type);
-            if (tileSprite == null && registry != null)
-                tileSprite = registry.GetTileSprite(type);
+            var sprite = TileEdgeResolver.Resolve(_map, col, row, type);
+            if (sprite == null && registry != null)
+                sprite = registry.GetTileSprite(type);
 
-            if (tileSprite != null)
+            bool isPlaceholder = sprite == null;
+            if (isPlaceholder)
             {
-                sr.sprite = tileSprite;
-                // Sliced: polje uvijek zauzima tocno jedno polje, bez obzira na PPU.
-                SpriteFit.Fill(sr, Vector2.one * _tileOverscan);
-            }
-            else
-            {
-                sr.sprite = SimpleShapeFactory.CreateFilledSquareSprite(TileColorFor(type));
+                sprite = SimpleShapeFactory.CreateFilledSquareSprite(TileColorFor(type));
+                missing.TryGetValue(type, out int n);
+                missing[type] = n + 1;
             }
 
-            sr.sortingOrder = SortOrderFor(type);
-
-            _tileObjects[idx] = go;
+            var tile = GetOrCreateTile(sprite);
+            _ground.SetTile(new Vector3Int(col, row, 0), tile);
         }
+
+        if (missing.Count == 0)
+            Debug.Log($"[TilemapRenderer] Svih {total} polja koristi sprite.");
+        else
+            foreach (var kv in missing)
+                Debug.LogWarning($"[TilemapRenderer] {kv.Key}: {kv.Value} polja bez sprite-a, crta se placeholder boja. " +
+                                 $"Provjeri polje Tile{kv.Key} u SpriteRegistry.asset.");
+    }
+
+    /// <summary>
+    /// One Tile ScriptableObject per unique sprite, reused across every cell that
+    /// needs it (e.g. every plain Ocean tile shares one Tile instance).
+    /// </summary>
+    private Tile GetOrCreateTile(Sprite sprite)
+    {
+        if (_tileCache.TryGetValue(sprite, out var cached))
+            return cached;
+
+        var tile = ScriptableObject.CreateInstance<Tile>();
+        tile.sprite = sprite;
+        tile.colliderType = Tile.ColliderType.None;
+        _tileCache[sprite] = tile;
+        return tile;
     }
 
     private static Color TileColorFor(TileType type)
     {
         int idx = (int)type;
         return idx >= 0 && idx < TileColors.Length ? TileColors[idx] : Color.magenta;
-    }
-
-    private static int SortOrderFor(TileType type)
-    {
-        switch (type)
-        {
-            case TileType.Ocean:   return -20;
-            case TileType.Shore:   return -10;
-            default:               return -5;
-        }
     }
 
     // Max distance in tiles from an IronMine for Steelworks placement
@@ -164,15 +213,12 @@ public class IslandTilemapRenderer : MonoBehaviour
         switch (buildingType)
         {
             case BuildingType.Shipyard:
-                // Shipyard on Shore or Land — must also be near Ocean (checked in IsValidPlacement)
                 return tile == TileType.Shore || tile == TileType.Land;
 
             case BuildingType.Steelworks:
-                // Steelworks on Land — must be near IronMine (proximity check in IsValidPlacement)
                 return tile == TileType.Land || tile == TileType.Forest;
 
             case BuildingType.Sawmill:
-                // Sawmill on Land or Forest — must be near Forest (proximity check in IsValidPlacement)
                 return tile == TileType.Land || tile == TileType.Forest;
 
             case BuildingType.HuntersHut:

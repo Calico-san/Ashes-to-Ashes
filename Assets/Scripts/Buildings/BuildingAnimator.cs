@@ -17,33 +17,10 @@ public class BuildingAnimator : MonoBehaviour
     [SerializeField] private Color        _fallbackConstructionColor = new Color(0.55f, 0.45f, 0.20f);
     [SerializeField] private Color        _fallbackBuiltColor        = Color.white;
 
-    // Postavlja se u Setup() iz ArtWidthFor(). Komponenta se dodaje kroz AddComponent
-    // u runtimeu, pa vrijednost upisana u Inspectoru ne bi prezivjela Play — mijenjaj
-    // brojeve u tablici ispod.
-    private float _artWidth      = 1f;
+    // Postavlja se u Setup(). Komponenta se dodaje kroz AddComponent u runtimeu,
+    // pa vrijednost upisana u Inspectoru ne bi prezivjela Play.
+    private float _artWidth      = BalanceConfig.BuildingPlacementSize;
     private float _artHalfHeight = 0.5f;
-
-    /// <summary>
-    /// Vizualna sirina zgrade u poljima. Otisak za validaciju i koliziju ostaje 1x1
-    /// (BalanceConfig.BuildingPlacementSize) — ovo je cisto izgled, po uzoru na Frostpunk
-    /// gdje zgrada vizualno prelazi preko svog otiska.
-    /// Visina se ne postavlja rucno; racuna se iz omjera stranica arta.
-    /// </summary>
-    private static float ArtWidthFor(BuildingType type)
-    {
-        switch (type)
-        {
-            case BuildingType.Shipyard:     return 3.0f;   // harbor       144x112
-            case BuildingType.TownHall:     return 2.5f;   // house         32x32
-            case BuildingType.Sawmill:      return 2.0f;   // sawmill       80x64
-            case BuildingType.Steelworks:   return 2.0f;   // steelworks    80x64
-            case BuildingType.Fiberworks:   return 2.0f;   // fiberworks    80x48
-            case BuildingType.Cookhouse:    return 2.0f;   // cookhouse     64x64
-            case BuildingType.ScoutStation: return 1.5f;   // scoutstation  64x96 — visok i uzak
-            case BuildingType.HuntersHut:   return 1.5f;   // huntershut    48x32
-            default:                        return 2.0f;
-        }
-    }
 
     // ---- Progress bar (world space, shown during construction) ----
     private GameObject     _progressBarBg;
@@ -71,7 +48,7 @@ public class BuildingAnimator : MonoBehaviour
     {
         _buildingType       = type;
         _fallbackBuiltColor = fallbackBuiltColor;
-        _artWidth           = ArtWidthFor(type);
+        _artWidth           = BalanceConfig.BuildingPlacementSize;
         _sr = GetComponent<SpriteRenderer>();
 
         BuildProgressBar();
@@ -139,7 +116,7 @@ public class BuildingAnimator : MonoBehaviour
             UsesArt    = true;
             _sr.sprite = art;
             _sr.color  = Color.white;              // placeholder tinta bi zaprljala pixel art
-            SpriteFit.FitWidth(_sr, _artWidth);    // PPU-neovisno, cuva omjer stranica
+            SpriteFit.FitInside(_sr, _artWidth);   // cijela zgrada stane u svoj 1x1 otisak
             _artHalfHeight = _sr.size.y * 0.5f;
         }
         else
@@ -155,9 +132,17 @@ public class BuildingAnimator : MonoBehaviour
         }
 
         PlaceOverlays();
+
+        // Dodjela sprite-a uz Sliced draw mode natjera Unity da upise prirodnu velicinu
+        // sprite-a (pikseli / PPU) u transform.localScale — za construction_building
+        // 48x64 @ PPU 16 to je (3, 4), sto je mnozilo vec ispravno skaliran sr.size i
+        // cinilo zgradu ~3x3 polja. Otisak je uvijek 1x1, pa ga vracamo odmah ovdje.
+        // Mora biti NAKON PlaceOverlays jer i ono racuna polozaje u lokalnom prostoru.
+        float f = BalanceConfig.BuildingPlacementSize;
+        transform.localScale = new Vector3(f, f, 1f);
     }
 
-    /// <summary>Traka napretka i lebdeca oznaka idu iznad arta, ne iznad polja.</summary>
+    /// <summary>Traka napretka ide iznad arta, ne iznad polja.</summary>
     private void PlaceOverlays()
     {
         float top = _artHalfHeight + 0.15f;
@@ -166,10 +151,6 @@ public class BuildingAnimator : MonoBehaviour
             _progressBarBg.transform.localPosition = new Vector3(0f, top, -0.1f);
         if (_progressBarFill != null)
             _progressBarFill.transform.localPosition = new Vector3(-BAR_WIDTH * 0.5f, top, -0.2f);
-
-        var label = GetComponentInChildren<TMPro.TextMeshPro>();
-        if (label != null)
-            label.transform.localPosition = new Vector3(0f, top + 0.20f, 0f);
     }
 
     private void BuildProgressBar()

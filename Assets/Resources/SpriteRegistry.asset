@@ -15,21 +15,49 @@ MonoBehaviour:
   TileOcean: {fileID: 1407615122, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   TileShore: {fileID: -966269095, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   TileLand: {fileID: 145928239, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  TileForest: {fileID: 0}
+  TileForest: {fileID: 21300000, guid: fe533c079accfcc45986b54807513a3f, type: 3}
   TileIronMine: {fileID: 1590986552, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  TileVolcano: {fileID: 1590986552, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanN: {fileID: 403224047, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanE: {fileID: 762336029, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanS: {fileID: 932376730, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanW: {fileID: 1327361289, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanNE: {fileID: 1071812869, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanSE: {fileID: 905860839, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanSW: {fileID: -455864088, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreOceanNW: {fileID: 667731071, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  ShoreLandN: {fileID: 1474933774, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
-  ShoreLandE: {fileID: 1688499704, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
-  ShoreLandS: {fileID: -1393029847, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
-  ShoreLandW: {fileID: 43270190, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  TileVolcano: {fileID: 523661519, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  OceanFrames:
+  - {fileID: 1407615122, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  - {fileID: 1335502241, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  - {fileID: 1294746213, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  - {fileID: -1344273188, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  OceanFps: 1
+  ShoreOceanEdges:
+  - {fileID: -1366872002, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: 1397481886, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: 1781946460, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -1851439742, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -480562839, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -1516575297, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -1829475025, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -611327876, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -1867816975, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: 1025247554, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -2006336410, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -1044687916, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: 1063906230, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -791886462, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: 671305648, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  - {fileID: -92910365, guid: b5d6c496bef0a7a41b0c8b22868be100, type: 3}
+  ShoreLandEdges:
+  - {fileID: 1474933774, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 1688499704, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: -1393029847, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 43270190, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 1062955314, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 1416721184, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 321614433, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: -1891209312, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: -1744052914, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: -1001241472, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 659521206, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: -1971529427, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 1559588423, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 868542383, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: 946031253, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  - {fileID: -908296374, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
   VolcanoFrames:
   - {fileID: 790823014, guid: ff270735ac9fca241a26793977a8480a, type: 3}
   - {fileID: 580060535, guid: ff270735ac9fca241a26793977a8480a, type: 3}
@@ -47,7 +75,7 @@ MonoBehaviour:
   CookhouseConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
   ShipyardConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
   HuntersHutConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
-  ScoutStationConstruction: {fileID: 0}
+  ScoutStationConstruction: {fileID: 21300000, guid: bbf35c323807b0b4f8cb597482a941a0, type: 3}
   TownHallBuilt: {fileID: 21300000, guid: 66675e87886532d4a85befb9b2cd27f7, type: 3}
   SawmillBuilt: {fileID: 21300000, guid: 67a1f1daf800cdc4aa67ec2b2b29a8a4, type: 3}
   SteelworksBuilt: {fileID: 21300000, guid: 1e32a76fa0cc48f42bb425f8cc5ea48d, type: 3}

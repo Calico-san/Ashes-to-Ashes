@@ -40,55 +40,30 @@ public class SpriteRegistry : ScriptableObject
         }
     }
 
-    // ---- Rub Shore -> Ocean ----
-    // Smjer u nazivu je smjer u kojem se nalazi OCEAN, gledano s tog Shore polja.
-    [Header("Rub Shore -> Ocean (voda na toj strani)")]
-    public Sprite ShoreOceanN;
-    public Sprite ShoreOceanE;
-    public Sprite ShoreOceanS;
-    public Sprite ShoreOceanW;
+    // ---- Animirani ocean ----
+    [Header("Ocean — animacija (ostavi prazno za staticni TileOcean)")]
+    [Tooltip("Frameovi animacije oceana. Najmanje 2, tipicno 4. Prazno = koristi se staticni TileOcean.")]
+    public Sprite[] OceanFrames;
+    [Tooltip("Brzina animacije oceana u frameovima po sekundi. 1.5–3 djeluje kao mirno more.")]
+    public float OceanFps = 2f;
 
-    [Header("Rub Shore -> Ocean (vanjski kut)")]
-    public Sprite ShoreOceanNE;
-    public Sprite ShoreOceanSE;
-    public Sprite ShoreOceanSW;
-    public Sprite ShoreOceanNW;
+    /// <summary>True ako je ocean animiran (ima barem dva framea).</summary>
+    public bool HasOceanAnimation => OceanFrames != null && OceanFrames.Length >= 2;
 
-    public Sprite GetShoreOceanEdge(EdgeDir dir)
-    {
-        switch (dir)
-        {
-            case EdgeDir.N:  return ShoreOceanN;
-            case EdgeDir.E:  return ShoreOceanE;
-            case EdgeDir.S:  return ShoreOceanS;
-            case EdgeDir.W:  return ShoreOceanW;
-            case EdgeDir.NE: return ShoreOceanNE;
-            case EdgeDir.SE: return ShoreOceanSE;
-            case EdgeDir.SW: return ShoreOceanSW;
-            case EdgeDir.NW: return ShoreOceanNW;
-            default:         return null;
-        }
-    }
+    // ---- Prijelazi na Shore poljima ----
+    // Indeks u nizu je 4-bitna maska susjeda: N=1, E=2, S=4, W=8.
+    // Popunjava se desnim klikom na asset -> "Popuni rubne setove iz sheetova".
+    [Header("Prijelaz Shore -> Ocean (16 komada, indeks = maska susjednog oceana)")]
+    public Sprite[] ShoreOceanEdges = new Sprite[16];
 
-    // ---- Rub Shore -> Land ----
-    // Smjer u nazivu je smjer u kojem se nalazi KOPNO.
-    [Header("Rub Shore -> Land (trava na toj strani)")]
-    public Sprite ShoreLandN;
-    public Sprite ShoreLandE;
-    public Sprite ShoreLandS;
-    public Sprite ShoreLandW;
+    [Header("Prijelaz Shore -> Land (16 komada, indeks = maska susjednog kopna)")]
+    public Sprite[] ShoreLandEdges = new Sprite[16];
 
-    public Sprite GetShoreLandEdge(EdgeDir dir)
-    {
-        switch (dir)
-        {
-            case EdgeDir.N: return ShoreLandN;
-            case EdgeDir.E: return ShoreLandE;
-            case EdgeDir.S: return ShoreLandS;
-            case EdgeDir.W: return ShoreLandW;
-            default:        return null;
-        }
-    }
+    public Sprite GetShoreOceanEdge(int mask) => Pick(ShoreOceanEdges, mask);
+    public Sprite GetShoreLandEdge(int mask)  => Pick(ShoreLandEdges,  mask);
+
+    private static Sprite Pick(Sprite[] set, int mask)
+        => set != null && mask >= 0 && mask < set.Length ? set[mask] : null;
 
     // ---- Volcano (jedan veliki animirani objekt, ne tile) ----
     [Header("Volcano — animated object")]
@@ -226,4 +201,51 @@ public class SpriteRegistry : ScriptableObject
             default:                        return GetBuilt(type);
         }
     }
+
+#if UNITY_EDITOR
+    // ---- Editor pomagalo ----
+    // Rucno slaganje 32 sprite-a u dva niza je i sporo i sklono gresci: Project
+    // prozor sortira abecedno (_0, _1, _10, _11, ...) pa visestruko povlacenje
+    // odjednom da krivi redoslijed. Ovo ih ucita i sortira brojcano.
+
+    private const string ShoreOceanSheet = "Assets/Sprites/tiles-shore-ocean-16.png";
+    private const string ShoreLandSheet  = "Assets/Sprites/tiles-shore-land-16.png";
+
+    [ContextMenu("Popuni rubne setove iz sheetova")]
+    private void AutoFillEdgeSets()
+    {
+        ShoreOceanEdges = LoadOrdered(ShoreOceanSheet);
+        ShoreLandEdges  = LoadOrdered(ShoreLandSheet);
+
+        Debug.Log($"[SpriteRegistry] Ucitano {ShoreOceanEdges.Length} + {ShoreLandEdges.Length} rubnih komada.");
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.AssetDatabase.SaveAssets();
+    }
+
+    private static Sprite[] LoadOrdered(string path)
+    {
+        var all  = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+        var list = new System.Collections.Generic.List<Sprite>();
+
+        foreach (var obj in all)
+            if (obj is Sprite s) list.Add(s);
+
+        if (list.Count == 0)
+        {
+            Debug.LogError($"[SpriteRegistry] Nema izrezanih sprite-ova u {path}. " +
+                           "Postavi Sprite Mode na Multiple i izrezi na 16x16.");
+            return new Sprite[16];
+        }
+
+        list.Sort((a, b) => TrailingNumber(a.name).CompareTo(TrailingNumber(b.name)));
+        return list.ToArray();
+    }
+
+    /// <summary>Broj iza zadnje donje crte u nazivu, npr. "tiles-shore-ocean-16_11" -> 11.</summary>
+    private static int TrailingNumber(string name)
+    {
+        int i = name.LastIndexOf('_');
+        return i >= 0 && int.TryParse(name.Substring(i + 1), out int n) ? n : 0;
+    }
+#endif
 }

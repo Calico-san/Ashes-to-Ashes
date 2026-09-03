@@ -88,7 +88,6 @@ public class BuildingInstance : MonoBehaviour
         DisplayName = displayName;
         OutputType  = outputType;
         IsShipyard       = isShipyard;
-        Size             = size;
         BuildingTypeEnum = buildingType != BuildingType.Cookhouse
             ? buildingType
             : BuildingTypeFromResource(outputType, isShipyard);
@@ -97,8 +96,17 @@ public class BuildingInstance : MonoBehaviour
             MaxWorkers = BalanceConfig.HuntersHutMaxWorkers;
         else
             MaxWorkers = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
+        // Otisak zgrade je po dizajnu UVIJEK 1x1 polje (BalanceConfig.BuildingPlacementSize).
+        // Proslijedeni `size` se namjerno ignorira: dolazio je iz tri razlicita izvora
+        // (TryPlaceBuilding, CompleteBuild, ApplyLoadData), a onaj iz spremljene igre je
+        // mogao nositi zastarjele vrijednosti iz starijih verzija (npr. 3x4), koje su
+        // zavrsavale kao localScale i mnozile velicinu sprite-a — zgrada bi izgledala
+        // 3x3 polja iako je sr.size bio ispravnih 1x0.8. Jedan izvor istine to sprjecava.
+        float footprint = BalanceConfig.BuildingPlacementSize;
+        Size = new Vector2(footprint, footprint);
+
         transform.position   = position;
-        transform.localScale = new Vector3(size.x, size.y, 1f);
+        transform.localScale = new Vector3(footprint, footprint, 1f);
 
         // Kad postoji pravi sprite, tinta mora biti bijela — inace placeholder
         // boja tipa zgrade zaprlja pixel art.
@@ -188,6 +196,21 @@ public class BuildingInstance : MonoBehaviour
     private void Update()
     {
         _animator?.SetProducing(WorkersInside > 0 && !IsTownHall);
+    }
+
+    /// <summary>
+    /// Osigurac nad velicinom. Glavni popravak je u BuildingAnimator.SetState, koje
+    /// vraca scale odmah nakon sto ga Unity prepise prirodnom velicinom sprite-a.
+    /// Ovo hvata eventualni preostali slucaj (npr. buduce stanje koje ne prolazi
+    /// kroz SetState) i ne ispisuje nista da ne zatrpava Console.
+    /// </summary>
+    private void LateUpdate()
+    {
+        float   f        = BalanceConfig.BuildingPlacementSize;
+        Vector3 expected = new Vector3(f, f, 1f);
+
+        if ((transform.localScale - expected).sqrMagnitude > 0.000001f)
+            transform.localScale = expected;
     }
 
     /// <summary>Assign worker instantly without walk animation. Used on game load.</summary>

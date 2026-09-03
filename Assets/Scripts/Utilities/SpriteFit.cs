@@ -23,17 +23,20 @@ public static class SpriteFit
     }
 
     /// <summary>
-    /// Sirina sprite-a postaje <paramref name="targetWidth"/> lokalnih jedinica,
-    /// visina se skalira po originalnom omjeru stranica (art se ne deformira).
+    /// Cijeli sprite stane unutar kvadrata stranice <paramref name="box"/> lokalnih
+    /// jedinica, uz cuvanje omjera stranica. Sira strana dotakne rub, uza ostavi
+    /// prazninu — art nikad ne prelazi zadani okvir.
     /// </summary>
-    public static void FitWidth(SpriteRenderer sr, float targetWidth = 1f)
+    public static void FitInside(SpriteRenderer sr, float box = 1f)
     {
         if (sr == null || sr.sprite == null) return;
         var rect = sr.sprite.rect;
-        if (rect.width <= 0f) return;
+        if (rect.width <= 0f || rect.height <= 0f) return;
+
+        float scale = box / Mathf.Max(rect.width, rect.height);
 
         sr.drawMode = SpriteDrawMode.Sliced;
-        sr.size     = new Vector2(targetWidth, targetWidth * (rect.height / rect.width));
+        sr.size     = new Vector2(rect.width * scale, rect.height * scale);
     }
 
     /// <summary>Vraca renderer u obicni nacin — koristi se za placeholder kvadrate.</summary>

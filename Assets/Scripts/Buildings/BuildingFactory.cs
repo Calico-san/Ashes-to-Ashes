@@ -11,11 +11,6 @@ using UnityEngine;
 /// </summary>
 public static class BuildingFactory
 {
-    private const float LabelHeight    = 0.85f;
-    private const float TownHallLabelY = 0.65f;
-    private const float LabelFontSize  = 1.8f;
-    private const int   LabelSortOrder = 20;
-
     /// <summary>Display name, output resource and tint for a building type.</summary>
     public static (string name, ResourceType type, Color color) Meta(BuildingType t)
     {
@@ -50,25 +45,6 @@ public static class BuildingFactory
         if (type == BuildingType.TownHall)
             building.SetTownHall(true);
 
-        AttachLabel(go.transform, displayName,
-            type == BuildingType.TownHall ? TownHallLabelY : LabelHeight);
-
         return building;
-    }
-
-    /// <summary>Floating white name label above a building.</summary>
-    private static void AttachLabel(Transform parent, string text, float localY)
-    {
-        var lbl = new GameObject(text + "Label");
-        lbl.transform.SetParent(parent, false);
-        lbl.transform.localPosition = new Vector3(0f, localY, 0f);
-
-        var tmp = lbl.AddComponent<TMPro.TextMeshPro>();
-        tmp.text                    = text;
-        tmp.fontSize                = LabelFontSize;
-        tmp.alignment               = TMPro.TextAlignmentOptions.Center;
-        tmp.color                   = Color.white;
-        tmp.sortingOrder            = LabelSortOrder;
-        tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
     }
 }

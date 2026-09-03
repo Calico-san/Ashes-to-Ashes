@@ -33,10 +33,15 @@ public class BuildSlot : MonoBehaviour
     public void Initialize(GameController game, Vector3 position, Vector2 size)
     {
         _game    = game;
-        Size     = size;
+
+        // Isti razlog kao u BuildingInstance.Initialize — otisak je uvijek 1x1,
+        // proslijedeni `size` se ignorira da zastarjela vrijednost iz spremljene
+        // igre ne bi zavrsila kao localScale i napuhala gradiliste.
+        float footprint = BalanceConfig.BuildingPlacementSize;
+        Size     = new Vector2(footprint, footprint);
 
         transform.position   = position;
-        transform.localScale = new Vector3(size.x, size.y, 1f);
+        transform.localScale = new Vector3(footprint, footprint, 1f);
 
         _normalColor      = new Color(0.28f, 0.28f, 0.28f, 0.55f);
         _selectedColor    = new Color(0.55f, 0.55f, 0.30f, 0.80f);
@@ -59,8 +64,20 @@ public class BuildSlot : MonoBehaviour
 
     private void Update()
     {
+        GuardScale();
+
         if (_animator == null || State != SlotState.UnderConstruction) return;
         _animator.SetConstructionProgress(ConstructionProgress);
+    }
+
+    /// <summary>Osigurac — isti razlog kao BuildingInstance.LateUpdate.</summary>
+    private void GuardScale()
+    {
+        float   f        = BalanceConfig.BuildingPlacementSize;
+        Vector3 expected = new Vector3(f, f, 1f);
+
+        if ((transform.localScale - expected).sqrMagnitude > 0.000001f)
+            transform.localScale = expected;
     }
 
     // ---- Selection ----

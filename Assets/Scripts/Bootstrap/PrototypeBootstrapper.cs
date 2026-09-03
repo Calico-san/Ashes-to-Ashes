@@ -102,6 +102,10 @@ public class PrototypeBootstrapper : MonoBehaviour
         }
         renderer.Initialize(map);
 
+        // Details/Objects vizualni slojevi za Tomislava — na ISTOM Gridu kao Ground,
+        // pa mora doci nakon Initialize() jer tada renderer.WorldGrid vec postoji.
+        UnityTilemapSetup.CreateDecorationLayers();
+
         // Vulkan je jedan veliki animirani objekt, ne tile. Vraca null ako karta
         // nema Volcano polja ili ako VolcanoFrames u SpriteRegistryju nisu popunjeni.
         VolcanoRenderer.Spawn(renderer.Map);
