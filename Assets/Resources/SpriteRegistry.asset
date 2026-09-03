@@ -17,7 +17,7 @@ MonoBehaviour:
   TileLand: {fileID: 145928239, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   TileForest: {fileID: 21300000, guid: fe533c079accfcc45986b54807513a3f, type: 3}
   TileIronMine: {fileID: 1590986552, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  TileVolcano: {fileID: 523661519, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
+  TileVolcano: {fileID: 21300000, guid: fe533c079accfcc45986b54807513a3f, type: 3}
   OceanFrames:
   - {fileID: 1407615122, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   - {fileID: 1335502241, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
