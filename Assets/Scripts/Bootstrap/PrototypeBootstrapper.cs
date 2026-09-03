@@ -10,6 +10,8 @@ using UnityEngine.InputSystem.UI;
 /// </summary>
 public class PrototypeBootstrapper : MonoBehaviour
 {
+    private EventManager eventManager;
+
     // PrototypeBootstrapper must exist as a GameObject in the Game scene.
     // Add it via: Hierarchy → Create Empty → Add Component → PrototypeBootstrapper
     // It will call Boot() automatically on Awake every time the scene loads.
@@ -19,6 +21,11 @@ public class PrototypeBootstrapper : MonoBehaviour
         Debug.Log($"[Bootstrapper] Awake — scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
         Application.targetFrameRate = 120;
         Boot();
+    }
+
+    private void Update()
+    {
+        eventManager?.Update();
     }
 
     private void Boot()
@@ -72,6 +79,10 @@ public class PrototypeBootstrapper : MonoBehaviour
             uiController.Build(gameController, mainCamera);
         else
             Debug.LogWarning("[Bootstrapper] UIController not found. Run Ashes → Setup Scene.");
+
+        // ---- Events ----
+        eventManager = new EventManager();
+        eventManager.Initialize(gameController);
 
         // ---- Selection Controller ----
         if (selection != null)

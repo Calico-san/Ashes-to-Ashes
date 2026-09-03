@@ -21,6 +21,10 @@ public class UIController : MonoBehaviour
     [SerializeField] private Button          _speed2Btn;
     [SerializeField] private Button          _speed3Btn;
 
+    // ---- Hope ----
+    [Header("Hope")]
+    [SerializeField] private HopeBar         _hopeBar;
+
     // ---- Bottom bar ----
     [Header("Bottom Bar")]
     [SerializeField] private TextMeshProUGUI _populationText; // "Population: X  ..."
@@ -124,6 +128,7 @@ public class UIController : MonoBehaviour
         if (game == null) return;
         _game = game; // ensure _game is set even before Build() is called
         RefreshTopBar(game);
+        _hopeBar?.SetHope(game.Hope);
         RefreshBottomBar(game);
         RefreshRightPanel(game, selBuilding, selShip, selSlot);
         RefreshSpeedButtons(game.SpeedMultiplier);

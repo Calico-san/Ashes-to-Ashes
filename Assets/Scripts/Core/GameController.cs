@@ -22,6 +22,9 @@ public class GameController : MonoBehaviour
     [SerializeField] private int ships   = 0;
     [SerializeField] private int rawFood = 0;
 
+    [Header("Hope")]
+    [SerializeField, Range(0f, 100f)] private float hope = 100f;
+
     [Header("Time")]
     [SerializeField] private float simulationMinutesPerSecond = 3.0f; // 8 min/day at 1x
 
@@ -62,6 +65,7 @@ public class GameController : MonoBehaviour
     public int   Rope             => rope;
     public int   Ships            => ships;
     public int   RawFood          => rawFood;
+    public float Hope             => hope;
     public int   Day              => _day;
     public int   Hour             => Mathf.FloorToInt(_simulatedMinutes / 60f) % 24;
     public int   Minute           => Mathf.FloorToInt(_simulatedMinutes) % 60;
@@ -378,6 +382,16 @@ public class GameController : MonoBehaviour
         RefreshUI();
         return true;
     }
+
+    // ---- Hope ----
+
+    public void SetHope(float value)
+    {
+        hope = Mathf.Clamp(value, 0f, 100f);
+        RefreshUI();
+    }
+
+    public void ChangeHope(float amount) => SetHope(hope + amount);
 
     // ---- Time control ----
 
