@@ -46,6 +46,8 @@ public class GameController : MonoBehaviour
     private float _hourAccumulator;
     private int   _day             = 1;
     private int   _speedMultiplier = 1;
+    private const float DAY_START_MINUTES = 6f * 60f; // 06:00
+    private const float DAY_END_MINUTES = 9f * 60f; // trenutno 9:00 radi testiranja inače 20:00
 
     // ---- Workers ----
     private int _freeWorkers;
@@ -116,10 +118,12 @@ public class GameController : MonoBehaviour
             TickHour();
         }
 
-        if (_simulatedMinutes >= 24f * 60f)
+        if (_simulatedMinutes >= DAY_END_MINUTES)
         {
-            _simulatedMinutes -= 24f * 60f;
             _day++;
+            _simulatedMinutes = DAY_START_MINUTES + (_simulatedMinutes - DAY_END_MINUTES);
+            _hourAccumulator = _simulatedMinutes % 60f;
+            _speedMultiplier = 0;
             OnNewDay(_day);
         }
 
