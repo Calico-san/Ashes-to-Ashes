@@ -9,6 +9,7 @@ public class BuildingInstance : MonoBehaviour
 {
     // ---- Public state ----
     public string       DisplayName  { get; private set; }
+    public string _baseDisplayName;
     public ResourceType OutputType   { get; private set; }
     public bool         IsShipyard   { get; private set; }
     public bool         IsTownHall      { get; private set; }
@@ -85,6 +86,7 @@ public class BuildingInstance : MonoBehaviour
         bool isShipyard = false, BuildingType buildingType = BuildingType.Cookhouse)
     {
         _game       = game;
+        _baseDisplayName = displayName;
         DisplayName = displayName;
         OutputType  = outputType;
         IsShipyard       = isShipyard;
@@ -229,7 +231,7 @@ public class BuildingInstance : MonoBehaviour
         int active = WorkersInside;
         if (active <= 0) return;
 
-        float bonus = EngineerBonus;
+        float bonus = EngineerBonus * ProductionMultiplier;
 
         if (IsShipyard) { TickShipyard(active, bonus); return; }
 
@@ -357,5 +359,17 @@ public class BuildingInstance : MonoBehaviour
     {
         // Engineers stand slightly above workers, tinted differently
         return transform.position + new Vector3(-0.45f + index * 0.22f, 0.58f, 0f);
+    }
+
+    // ---- Upgrade state ----
+    private int _upgradeLevel = 0;
+    public int UpgradeLevel => _upgradeLevel;
+
+    public float ProductionMultiplier => 1.0f + (_upgradeLevel * (BalanceConfig.UpgradeProductionBonus - 1.0f));
+
+    public void UpgradeBuilding()
+    {
+        _upgradeLevel++;
+        DisplayName = _baseDisplayName + $" (Level {_upgradeLevel})";
     }
 }

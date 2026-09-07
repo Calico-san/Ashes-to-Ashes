@@ -57,7 +57,7 @@ public static class BalanceConfig
     public const int CookhouseWoodCost      = 10;
     public const int CookhouseSteelCost     = 5;
     public const int CookhouseClothCost     = 0;
-    public const int CookhouseBuildHours    = 3;
+    public const int CookhouseBuildHours    = 1; //Bilo je 3, trenutno za testiranje 1
 
     public const int ShipyardWoodCost       = 40;
     public const int ShipyardSteelCost      = 15;
@@ -85,6 +85,12 @@ public static class BalanceConfig
     public const int   ScoutStationWoodCost    = 10;
     public const int   ScoutStationSteelCost   = 5;
     public const int   ScoutStationBuildHours  = 4;
+
+    // ---- Building Upgrade Costs ----
+    public const int UpgradeWoodCost = 1;
+    public const int UpgradeSteelCost = 1;
+    public const int UpgradeClothCost = 1;
+    public const float UpgradeProductionBonus = 1.2f;
 
 
 }

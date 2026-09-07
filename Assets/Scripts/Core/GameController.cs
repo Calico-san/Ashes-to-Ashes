@@ -219,17 +219,40 @@ public class GameController : MonoBehaviour
     public bool TryUpgradeSelectedBuilding()
     {
         if (_selectedBuilding == null) return false;
-        // TODO Mislav: implement upgrade logic
-        Debug.Log($"[GameController] Upgrade requested for {_selectedBuilding.DisplayName}");
-        return false;
+
+        // Can't upgrade Shipyard or Town Hall
+        if (_selectedBuilding.IsShipyard || _selectedBuilding.IsTownHall) return false;
+
+        // Check resources
+        if (!CanAffordUpgrade(_selectedBuilding)) return false;
+
+        // Deduct cost
+        wood -= BalanceConfig.UpgradeWoodCost;
+        steel -= BalanceConfig.UpgradeSteelCost;
+        cloth -= BalanceConfig.UpgradeClothCost;
+
+        // Apply upgrade
+        _selectedBuilding.UpgradeBuilding();
+
+        Debug.Log($"[GameController] {_selectedBuilding.DisplayName} upgraded!");
+        RefreshUI();
+        return true;
     }
 
     /// <summary>True if player can afford upgrade for this building.</summary>
     public bool CanAffordUpgrade(BuildingInstance building)
     {
         if (building == null) return false;
-        // TODO Mislav: check upgrade cost from BalanceConfig
-        return false;
+        if (building.IsShipyard || building.IsTownHall) return false;
+
+        // Check if building is already max upgraded (optional: set a max level)
+        if (building.UpgradeLevel >= 3) return false; // Max 3 upgrades
+
+        return HasResources(
+            BalanceConfig.UpgradeWoodCost,
+            BalanceConfig.UpgradeSteelCost,
+            BalanceConfig.UpgradeClothCost
+        );
     }
 
     public bool AssignEngineerToSelectedBuilding()
