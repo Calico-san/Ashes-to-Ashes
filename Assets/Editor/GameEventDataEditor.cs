@@ -27,6 +27,7 @@ public class GameEventDataEditor : Editor
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("TriggerDay"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("TriggerHour"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("RepeatEveryDay"));
         }
         else
         {

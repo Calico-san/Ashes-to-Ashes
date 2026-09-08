@@ -10,6 +10,9 @@ public enum EventTriggerType
 [CreateAssetMenu(fileName = "New Game Event", menuName = "Ashes/Game Event")]
 public class GameEventData : ScriptableObject
 {
+    public const int FirstTriggerHour = 6;
+    public const int LastTriggerHour = 20;
+
     public string Title;
 
     [TextArea(3, 8)]
@@ -20,7 +23,8 @@ public class GameEventData : ScriptableObject
     public EventTriggerType TriggerType = EventTriggerType.ExactDay;
 
     [Min(1)] public int TriggerDay = 1;
-    [Range(0, 23)] public int TriggerHour = 8;
+    [Range(FirstTriggerHour, LastTriggerHour)] public int TriggerHour = 8;
+    public bool RepeatEveryDay;
 
     [Min(1)] public int FirstDay = 1;
     [Min(1)] public int LastDay = 1;
@@ -29,27 +33,56 @@ public class GameEventData : ScriptableObject
 
     private int scheduledDay;
     private int scheduledHour;
+    private int lastTriggeredDay;
 
     public void PrepareTrigger()
     {
         HasTriggered = false;
+        lastTriggeredDay = -1;
 
         if (TriggerType == EventTriggerType.ExactDay)
         {
             scheduledDay = Mathf.Max(1, TriggerDay);
-            scheduledHour = Mathf.Clamp(TriggerHour, 0, 23);
+            scheduledHour = Mathf.Clamp(TriggerHour, FirstTriggerHour, LastTriggerHour);
             return;
         }
 
         int firstDay = Mathf.Max(1, FirstDay);
         int lastDay = Mathf.Max(firstDay, LastDay);
         scheduledDay = UnityEngine.Random.Range(firstDay, lastDay + 1);
-        scheduledHour = 8;
+        scheduledHour = UnityEngine.Random.Range(FirstTriggerHour, LastTriggerHour);
     }
 
     public bool IsReady(int day, int hour)
     {
-        return day > scheduledDay || (day == scheduledDay && hour >= scheduledHour);
+        if (hour < FirstTriggerHour || hour > LastTriggerHour)
+        {
+            return false;
+        }
+
+        if (RepeatEveryDay)
+        {
+            return day >= scheduledDay && hour >= scheduledHour && lastTriggeredDay != day;
+        }
+
+        if (HasTriggered)
+        {
+            return false;
+        }
+
+        return day == scheduledDay && hour >= scheduledHour;
+    }
+
+    public void MarkTriggered(int day)
+    {
+        if (RepeatEveryDay)
+        {
+            lastTriggeredDay = day;
+        }
+        else
+        {
+            HasTriggered = true;
+        }
     }
 }
 

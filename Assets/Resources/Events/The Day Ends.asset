@@ -10,23 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
-  m_Name: The island is doomed
+  m_Name: The Day Ends
   m_EditorClassIdentifier: Assembly-CSharp::GameEventData
-  Title: 'The Island is Doomed '
-  Message: 'The volcano has awoken from its slumber. Now we must race against time
-    to save our lives from impending doom.
+  Title: The Day Ends
+  Message: 'The workers have finished their labour for today, heading home before
+    the sun sets.
 
 
-    Our only option is to build ships
-    and evacuate.'
+    We are doing our best.'
   Options:
-  - Label: God help us
-    Explanation: Hope falls greatly.
-    ChangesHope: 1
-    HopeChange: -80
+  - Label: Tomorrow is a New Day
+    Explanation: 
+    ChangesHope: 0
+    HopeChange: 0
   TriggerType: 0
   TriggerDay: 1
-  TriggerHour: 8
-  RepeatEveryDay: 0
+  TriggerHour: 20
+  RepeatEveryDay: 1
   FirstDay: 1
   LastDay: 1

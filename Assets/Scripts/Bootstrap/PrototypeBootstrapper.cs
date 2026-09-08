@@ -83,6 +83,7 @@ public class PrototypeBootstrapper : MonoBehaviour
         // ---- Events ----
         eventManager = new EventManager();
         eventManager.Initialize(gameController);
+        gameController.DayEnding += eventManager.TryOpenEvent;
 
         // ---- Selection Controller ----
         if (selection != null)

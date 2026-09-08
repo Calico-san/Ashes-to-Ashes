@@ -31,21 +31,33 @@ public class EventManager
 
     public void Update()
     {
-        if (gameController == null || UniversalPopup.Instance == null || UniversalPopup.Instance.IsOpen)
+        if (gameController == null)
         {
             return;
         }
 
+        TryOpenEvent(gameController.Day, gameController.Hour);
+    }
+
+    public bool TryOpenEvent(int day, int hour)
+    {
+        if (UniversalPopup.Instance == null || UniversalPopup.Instance.IsOpen)
+        {
+            return false;
+        }
+
         foreach (GameEventData gameEvent in events)
         {
-            if (gameEvent.HasTriggered || !gameEvent.IsReady(gameController.Day, gameController.Hour))
+            if (!gameEvent.IsReady(day, hour))
             {
                 continue;
             }
 
-            gameEvent.HasTriggered = true;
+            gameEvent.MarkTriggered(day);
             UniversalPopup.Instance.OpenEvent(gameEvent);
-            break;
+            return true;
         }
+
+        return false;
     }
 }

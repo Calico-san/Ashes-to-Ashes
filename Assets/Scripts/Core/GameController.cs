@@ -47,7 +47,7 @@ public class GameController : MonoBehaviour
     private int   _day             = 1;
     private int   _speedMultiplier = 1;
     private const float DAY_START_MINUTES = 6f * 60f; // 06:00
-    private const float DAY_END_MINUTES = 9f * 60f; // trenutno 9:00 radi testiranja inače 20:00
+    private const float DAY_END_MINUTES = 20f * 60f; // 20:00
 
     // ---- Workers ----
     private int _freeWorkers;
@@ -76,6 +76,8 @@ public class GameController : MonoBehaviour
     public Vector3 WorkerSpawnPoint { get; private set; }
     public Sprite  WorkerSprite     { get; private set; }
     public Sprite  EngineerSprite   { get; private set; }
+
+    public event Func<int, int, bool> DayEnding;
 
     public IReadOnlyList<BuildingInstance> Buildings  => _buildings;
     public IReadOnlyList<BuildSlot>        BuildSlots => _buildSlots;
@@ -120,11 +122,19 @@ public class GameController : MonoBehaviour
 
         if (_simulatedMinutes >= DAY_END_MINUTES)
         {
-            _day++;
-            _simulatedMinutes = DAY_START_MINUTES + (_simulatedMinutes - DAY_END_MINUTES);
+            _simulatedMinutes = DAY_END_MINUTES;
             _hourAccumulator = _simulatedMinutes % 60f;
-            _speedMultiplier = 0;
-            OnNewDay(_day);
+
+            if (DayEnding?.Invoke(_day, Hour) == true)
+            {
+                RefreshUI();
+                return;
+            }
+
+            _day++;
+            _simulatedMinutes = DAY_START_MINUTES;
+            _hourAccumulator = _simulatedMinutes % 60f;
+            _speedMultiplier = 1;
         }
 
         RefreshUI();
@@ -422,7 +432,7 @@ public class GameController : MonoBehaviour
 
     // ---- Time control ----
 
-    public void SetSpeed(int speed) { _speedMultiplier = Mathf.Clamp(speed, 0, 3); RefreshUI(); }
+    public void SetSpeed(int speed) { _speedMultiplier = Mathf.Clamp(speed, 0, 5); RefreshUI(); }
 
     // ---- Save / Load ----
 
@@ -622,16 +632,6 @@ public class GameController : MonoBehaviour
     }
 
     // ---- Private ----
-
-    private void OnNewDay(int day)
-    {
-        UniversalPopup.Instance?.OpenPopup($"Day {day}", 
-            "A new day has begun. Check your resources and plan your next moves.");
-        // Team managers hook in here when ready:
-        // EventManager.Instance?.OnDayPassed(day);
-        // VolcanoManager.Instance?.OnDayPassed(day);
-        // ObjectiveManager.Instance?.CheckObjectives();
-    }
 
     private void TickHour()
     {

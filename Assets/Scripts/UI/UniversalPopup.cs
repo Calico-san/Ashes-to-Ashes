@@ -34,15 +34,6 @@ public class UniversalPopup : MonoBehaviour
         panelObject.SetActive(false);
     }
 
-    public void OpenPopup(string title, string message, string buttonLabel = "Continue")
-    {
-        GameEventData popupEvent = ScriptableObject.CreateInstance<GameEventData>();
-        popupEvent.Title = title;
-        popupEvent.Message = message;
-        popupEvent.Options = new[] { new GameEventOption(buttonLabel, "", false, 0f) };
-        ShowPopup(popupEvent, false);
-    }
-
     public void OpenEvent(GameEventData gameEvent)
     {
         ShowPopup(gameEvent, true);

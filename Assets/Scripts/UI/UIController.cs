@@ -20,6 +20,13 @@ public class UIController : MonoBehaviour
     [SerializeField] private Button          _speed1Btn;
     [SerializeField] private Button          _speed2Btn;
     [SerializeField] private Button          _speed3Btn;
+    [SerializeField] private Sprite          _activeSpeedSprite;
+
+    private Sprite _pauseNormalSprite;
+    private Sprite _speed1NormalSprite;
+    private Sprite _speed2NormalSprite;
+    private Sprite _speed3NormalSprite;
+    private bool _speedSpritesSaved;
 
     // ---- Hope ----
     [Header("Hope")]
@@ -94,7 +101,7 @@ public class UIController : MonoBehaviour
         _pauseBtn? .onClick.AddListener(() => _game.SetSpeed(0));
         _speed1Btn?.onClick.AddListener(() => _game.SetSpeed(1));
         _speed2Btn?.onClick.AddListener(() => _game.SetSpeed(2));
-        _speed3Btn?.onClick.AddListener(() => _game.SetSpeed(3));
+        _speed3Btn?.onClick.AddListener(() => _game.SetSpeed(5));
 
         // Wire assign/remove buttons (labels updated in Refresh)
         _assignBtn?   .onClick.AddListener(() => _game.AssignWorkerToSelectedBuilding());
@@ -352,12 +359,31 @@ public class UIController : MonoBehaviour
 
     private void RefreshSpeedButtons(int speed)
     {
-        Highlight(_pauseBtn,  speed == 0);
-        Highlight(_speed1Btn, speed == 1);
-        Highlight(_speed2Btn, speed == 2);
-        // No 3x — Frostpunk style: pause, 1x, 2x only
-        if (_speed3Btn != null) _speed3Btn.gameObject.SetActive(false);
+        SaveSpeedSprites();
+        SetSpeedSprite(_pauseBtn, _pauseNormalSprite, speed == 0);
+        SetSpeedSprite(_speed1Btn, _speed1NormalSprite, speed == 1);
+        SetSpeedSprite(_speed2Btn, _speed2NormalSprite, speed == 2);
+        SetSpeedSprite(_speed3Btn, _speed3NormalSprite, speed == 5);
     }
+
+    private void SaveSpeedSprites()
+    {
+        if (_speedSpritesSaved) return;
+
+        _pauseNormalSprite = _pauseBtn?.image.sprite;
+        _speed1NormalSprite = _speed1Btn?.image.sprite;
+        _speed2NormalSprite = _speed2Btn?.image.sprite;
+        _speed3NormalSprite = _speed3Btn?.image.sprite;
+        _speedSpritesSaved = true;
+    }
+
+    private void SetSpeedSprite(Button button, Sprite normalSprite, bool active)
+    {
+        if (button == null) return;
+
+        button.image.sprite = active ? _activeSpeedSprite : normalSprite;
+    }
+
 
     // -------------------------------------------------------
     // Helpers
@@ -442,14 +468,6 @@ public class UIController : MonoBehaviour
         if (t != null) t.text = text;
     }
 
-    private static void Highlight(Button btn, bool on)
-    {
-        if (btn == null) return;
-        btn.GetComponent<Image>().color = on
-            ? new Color(0.20f, 0.46f, 0.24f)
-            : new Color(0.20f, 0.20f, 0.20f, 0.95f);
-    }
-
     private static Button CreateShipRowButton(Transform parent)
     {
         var go  = new GameObject("ShipRow", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -498,7 +516,7 @@ public class UIController : MonoBehaviour
         _pauseBtn? .onClick.AddListener(() => _game.SetSpeed(0));
         _speed1Btn?.onClick.AddListener(() => _game.SetSpeed(1));
         _speed2Btn?.onClick.AddListener(() => _game.SetSpeed(2));
-        _speed3Btn?.onClick.AddListener(() => _game.SetSpeed(3));
+        _speed3Btn?.onClick.AddListener(() => _game.SetSpeed(5));
         _assignBtn?   .onClick.AddListener(() => _game.AssignWorkerToSelectedBuilding());
         _removeBtn?   .onClick.AddListener(() => _game.RemoveWorkerFromSelectedBuilding());
         _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
