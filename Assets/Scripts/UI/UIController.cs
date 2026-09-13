@@ -33,10 +33,6 @@ public class UIController : MonoBehaviour
     [Header("Hope")]
     [SerializeField] private HopeBar         _hopeBar;
 
-    // ---- Bottom bar ----
-    [Header("Bottom Bar")]
-    [SerializeField] private TextMeshProUGUI _populationText; // "Population: X  ..."
-
     // ---- Right panel ----
     [Header("Right Panel")]
     [SerializeField] private GameObject      _rightPanel;
@@ -137,7 +133,6 @@ public class UIController : MonoBehaviour
         _game = game; // ensure _game is set even before Build() is called
         RefreshTopBar(game);
         _hopeBar?.SetHope(game.Hope);
-        RefreshBottomBar(game);
         RefreshRightPanel(game, selBuilding, selShip, selSlot);
         RefreshSpeedButtons(game.SpeedMultiplier);
         _buildPanel?.Refresh(game);
@@ -159,19 +154,6 @@ public class UIController : MonoBehaviour
 
         if (_resourcesRightText != null)
             _resourcesRightText.text = $"Raw Food: {game.RawFood}   Food: {game.Food}";
-    }
-
-    // -------------------------------------------------------
-    // Bottom bar
-    // -------------------------------------------------------
-
-    private void RefreshBottomBar(GameController game)
-    {
-        if (_populationText == null) return;
-        float foodPerDay = EconomyCalculator.FoodConsumptionPerDay(game.AdultPopulation, game.Children);
-        _populationText.text =
-            $"Population: {game.TotalPopulation}   Children: {game.Children}   " +
-            $"Workers: {game.FreeWorkers}   Engineers: {game.FreeEngineers}   Food/day: -{foodPerDay:F0}";
     }
 
     // -------------------------------------------------------
@@ -508,7 +490,6 @@ public class UIController : MonoBehaviour
         _mainCamera = cam;
 
         BuildTopBarFromCode(canvasTransform);
-        BuildBottomBarFromCode(canvasTransform);
         BuildRightPanelFromCode(canvasTransform);
 
         var buildPanelGO = new GameObject("BuildPanel");
@@ -557,19 +538,6 @@ public class UIController : MonoBehaviour
         _speed1Btn = MakeBtn(bar, "1x", null, 28, 18);
         _speed2Btn = MakeBtn(bar, "2x", null, 28, 18);
         _speed3Btn = MakeBtn(bar, "3x", null, 28, 18);
-    }
-
-    private void BuildBottomBarFromCode(Transform parent)
-    {
-        var bar = MakePanel(parent, "BottomBar", new Vector2(0,0), new Vector2(1,0), Vector2.zero, new Vector2(0,22));
-        var hg  = bar.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hg.padding = new RectOffset(10,10,4,4);
-        hg.childAlignment = TextAnchor.MiddleLeft;
-        hg.childControlWidth = hg.childControlHeight = true;
-        hg.childForceExpandWidth = false; hg.childForceExpandHeight = true;
-        _populationText = MakeTMP(bar, "Population", 10, TextAlignmentOptions.MidlineLeft);
-        _populationText.textWrappingMode = TextWrappingModes.NoWrap;
-        LE(_populationText.gameObject, flexW: 1);
     }
 
     private void BuildRightPanelFromCode(Transform parent)

@@ -458,6 +458,64 @@ public class GameController : MonoBehaviour
         return true;
     }
 
+    public int GetManpower(ManpowerType type)
+        => type == ManpowerType.Workers ? AdultPopulation - engineers : engineers;
+
+    public bool TryConsumeManpower(ManpowerType type, int amount)
+    {
+        if (amount <= 0) return true;
+        if (GetManpower(type) < amount) return false;
+
+        int remaining = amount;
+        if (type == ManpowerType.Workers)
+        {
+            int freeWorkersToConsume = Mathf.Min(_freeWorkers, remaining);
+            _freeWorkers -= freeWorkersToConsume;
+            remaining -= freeWorkersToConsume;
+            foreach (BuildingInstance building in _buildings)
+                while (remaining > 0 && building != null && building.RemoveWorker())
+                {
+                    _freeWorkers--;
+                    remaining--;
+                }
+        }
+        else
+        {
+            int freeEngineersToConsume = Mathf.Min(_freeEngineers, remaining);
+            _freeEngineers -= freeEngineersToConsume;
+            remaining -= freeEngineersToConsume;
+            foreach (BuildingInstance building in _buildings)
+                while (remaining > 0 && building != null && building.RemoveEngineer())
+                {
+                    _freeEngineers--;
+                    remaining--;
+                }
+        }
+
+        totalPopulation -= amount;
+        if (type == ManpowerType.Engineers)
+            engineers -= amount;
+
+        RefreshUI();
+        return true;
+    }
+
+    public void AddManpower(ManpowerType type, int amount)
+    {
+        if (amount <= 0) return;
+
+        totalPopulation += amount;
+        if (type == ManpowerType.Workers)
+            _freeWorkers += amount;
+        else
+        {
+            engineers += amount;
+            _freeEngineers += amount;
+        }
+
+        RefreshUI();
+    }
+
     // ---- Hope ----
 
     public void SetHope(float value)
@@ -490,6 +548,7 @@ public class GameController : MonoBehaviour
             RawFood          = rawFood,
             TotalPopulation  = totalPopulation,
             Children         = children,
+            Engineers        = engineers,
             FreeWorkers      = _freeWorkers,
             FreeEngineers    = _freeEngineers,
         };
@@ -569,6 +628,7 @@ public class GameController : MonoBehaviour
         rawFood           = data.RawFood;
         totalPopulation   = data.TotalPopulation;
         children          = data.Children;
+        if (data.Engineers >= 0) engineers = data.Engineers;
         _freeWorkers      = data.FreeWorkers;
         _freeEngineers    = data.FreeEngineers;
 

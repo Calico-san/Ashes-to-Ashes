@@ -175,6 +175,8 @@ public class UniversalPopup : MonoBehaviour
             gameController.ChangeHope(option.HopeChange);
         }
 
+        option.ApplyRewards(gameController);
+
         ClosePopup();
     }
 

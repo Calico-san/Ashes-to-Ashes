@@ -12,7 +12,20 @@ public enum EventOptionRequirementType
 {
     None,
     Building,
-    ResourceAmount
+    ResourceAmount,
+    Manpower
+}
+
+public enum EventOptionRewardType
+{
+    ResourceAmount,
+    Manpower
+}
+
+public enum ManpowerType
+{
+    Workers,
+    Engineers
 }
 
 [CreateAssetMenu(fileName = "New Game Event", menuName = "Ashes/Game Event")]
@@ -118,6 +131,7 @@ public class GameEventOption
     public float HopeChange;
 
     public List<EventOptionRequirement> Requirements = new();
+    public List<EventOptionReward> Rewards = new();
 
     [HideInInspector] public EventOptionRequirementType RequirementType;
     [HideInInspector] public BuildingType RequiredBuilding;
@@ -138,6 +152,7 @@ public class GameEventOption
         if (game == null) return false;
 
         var resourceCosts = new Dictionary<ResourceType, int>();
+        var manpowerCosts = new Dictionary<ManpowerType, int>();
         foreach (EventOptionRequirement requirement in Requirements)
         {
             if (requirement == null || requirement.Type == EventOptionRequirementType.None) continue;
@@ -148,10 +163,17 @@ public class GameEventOption
                 resourceCosts.TryGetValue(requirement.Resource, out int currentCost);
                 resourceCosts[requirement.Resource] = currentCost + requirement.Amount;
             }
+            if (requirement.Type == EventOptionRequirementType.Manpower)
+            {
+                manpowerCosts.TryGetValue(requirement.Manpower, out int currentCost);
+                manpowerCosts[requirement.Manpower] = currentCost + requirement.Amount;
+            }
         }
 
         foreach (KeyValuePair<ResourceType, int> cost in resourceCosts)
             if (GetResourceAmount(game, cost.Key) < cost.Value) return false;
+        foreach (KeyValuePair<ManpowerType, int> cost in manpowerCosts)
+            if (game.GetManpower(cost.Key) < cost.Value) return false;
 
         return true;
     }
@@ -164,8 +186,24 @@ public class GameEventOption
         foreach (EventOptionRequirement requirement in Requirements)
             if (requirement != null && requirement.Type == EventOptionRequirementType.ResourceAmount)
                 game.TryConsumeResource(requirement.Resource, requirement.Amount);
+            else if (requirement != null && requirement.Type == EventOptionRequirementType.Manpower)
+                game.TryConsumeManpower(requirement.Manpower, requirement.Amount);
 
         return true;
+    }
+
+    public void ApplyRewards(GameController game)
+    {
+        if (game == null || Rewards == null) return;
+
+        foreach (EventOptionReward reward in Rewards)
+        {
+            if (reward == null || reward.Amount <= 0) continue;
+            if (reward.Type == EventOptionRewardType.ResourceAmount)
+                game.AddResource(reward.Resource, reward.Amount);
+            else if (reward.Type == EventOptionRewardType.Manpower)
+                game.AddManpower(reward.Manpower, reward.Amount);
+        }
     }
 
     public void MigrateLegacyRequirement()
@@ -204,6 +242,7 @@ public class EventOptionRequirement
     public EventOptionRequirementType Type;
     public BuildingType Building;
     public ResourceType Resource;
+    public ManpowerType Manpower;
     [Min(1)] public int Amount = 1;
 
     public bool HasRequiredBuilding(GameController game)
@@ -213,4 +252,13 @@ public class EventOptionRequirement
 
         return false;
     }
+}
+
+[Serializable]
+public class EventOptionReward
+{
+    public EventOptionRewardType Type;
+    public ResourceType Resource;
+    public ManpowerType Manpower;
+    [Min(1)] public int Amount = 1;
 }

@@ -23,9 +23,11 @@ MonoBehaviour:
     HopeChange: 10
     Requirements:
     - Type: 2
-      Building: 0
+      Building: 3
       Resource: 3
+      Manpower: 0
       Amount: 30
+    Rewards: []
     RequirementType: 2
     RequiredBuilding: 0
     RequiredResourceType: 3
@@ -38,7 +40,9 @@ MonoBehaviour:
     - Type: 2
       Building: 0
       Resource: 3
+      Manpower: 0
       Amount: 15
+    Rewards: []
     RequirementType: 2
     RequiredBuilding: 0
     RequiredResourceType: 3
@@ -48,6 +52,7 @@ MonoBehaviour:
     ChangesHope: 1
     HopeChange: -10
     Requirements: []
+    Rewards: []
     RequirementType: 0
     RequiredBuilding: 0
     RequiredResourceType: 3

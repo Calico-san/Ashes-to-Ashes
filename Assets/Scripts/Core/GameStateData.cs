@@ -31,6 +31,7 @@ public class GameStateData
     // ---- Population ----
     public int      TotalPopulation;
     public int      Children;
+    public int      Engineers = -1;
     public int      FreeWorkers;
     public int      FreeEngineers;
 
