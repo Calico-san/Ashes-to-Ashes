@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac12b2a20b9168f4ba562adf963c03eb, type: 3}
   m_Name: Objectives
   m_EditorClassIdentifier: Assembly-CSharp::ObjectiveCampaign
+  startAfterEvent: {fileID: 11400000, guid: 3a4d812a9fb2450a90c5d12f738e7cbc, type: 2}
   phases:
   - title: 'Getting Started '
     objectives:
@@ -23,6 +24,11 @@ MonoBehaviour:
     - title: Build a Sawmill
       type: 0
       targetValue: 1
+      buildingType: 1
+      resourceType: 0
+    - title: Raise Hope
+      type: 2
+      targetValue: 50
       buildingType: 1
       resourceType: 0
   - title: TESTING

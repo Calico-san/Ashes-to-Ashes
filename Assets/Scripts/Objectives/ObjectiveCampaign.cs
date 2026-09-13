@@ -5,8 +5,10 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Objectives", menuName = "Ashes/Objective Campaign")]
 public class ObjectiveCampaign : ScriptableObject
 {
+    [SerializeField] private GameEventData startAfterEvent;
     [SerializeField] private List<ObjectivePhase> phases = new();
 
+    public GameEventData StartAfterEvent => startAfterEvent;
     public IReadOnlyList<ObjectivePhase> Phases => phases;
 }
 

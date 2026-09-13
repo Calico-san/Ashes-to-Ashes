@@ -20,7 +20,8 @@ MonoBehaviour:
     Explanation: Hope falls.
     ChangesHope: 1
     HopeChange: -20
-    RequirementType: 2
+    Requirements: []
+    RequirementType: 0
     RequiredBuilding: 0
     RequiredResourceType: 2
     RequiredResourceAmount: 1

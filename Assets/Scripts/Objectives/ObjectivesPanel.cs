@@ -32,11 +32,13 @@ public class ObjectivesPanel : MonoBehaviour
     {
         if (objectivesText == null || objectiveManager == null) return;
 
-        if (objectiveManager.ActivePhase == null)
+        if (!objectiveManager.CampaignStarted || objectiveManager.CampaignFinished || objectiveManager.ActivePhase == null)
         {
             gameObject.SetActive(false);
             return;
         }
+
+        gameObject.SetActive(true);
 
         var text = new StringBuilder();
         text.Append(objectiveManager.ActivePhaseTitle.ToUpperInvariant());

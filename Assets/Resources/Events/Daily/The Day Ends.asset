@@ -23,7 +23,8 @@ MonoBehaviour:
     Explanation: 
     ChangesHope: 0
     HopeChange: 0
-    RequirementType: 1
+    Requirements: []
+    RequirementType: 0
     RequiredBuilding: 0
     RequiredResourceType: 0
     RequiredResourceAmount: 0

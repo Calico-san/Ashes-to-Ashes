@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -12,6 +13,7 @@ public class UniversalPopup : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     public static UniversalPopup Instance { get; private set; }
+    public static event Action<GameEventData> EventClosed;
     public bool IsOpen => panelObject.activeSelf;
 
     private readonly List<Button> optionButtons = new();
@@ -74,6 +76,7 @@ public class UniversalPopup : MonoBehaviour
 
     public void ClosePopup()
     {
+        GameEventData closedEvent = currentEvent;
         HideExplanation();
         panelObject.SetActive(false);
 
@@ -82,6 +85,8 @@ public class UniversalPopup : MonoBehaviour
             gameController.SetSpeed(speedBeforeEvent);
             timePaused = false;
         }
+
+        EventClosed?.Invoke(closedEvent);
     }
 
     private void SetupOptions(int optionCount)
@@ -115,7 +120,17 @@ public class UniversalPopup : MonoBehaviour
             TextMeshProUGUI optionLabel = optionButton.GetComponentInChildren<TextMeshProUGUI>();
             optionLabel.text = option.Label;
             optionLabel.fontSize = 16f;
-            optionButton.interactable = option.MeetsRequirements(gameController);
+            bool canChoose = option.MeetsRequirements(gameController);
+            optionButton.interactable = canChoose;
+            optionLabel.color = canChoose
+                ? Color.white
+                : new Color(0.68f, 0.68f, 0.68f, 1f);
+
+            Image buttonImage = optionButton.GetComponent<Image>();
+            if (buttonImage != null)
+                buttonImage.color = canChoose
+                    ? Color.white
+                    : new Color(0.68f, 0.68f, 0.68f, 0.9f);
 
             RectTransform buttonTransform = optionButton.GetComponent<RectTransform>();
             buttonTransform.sizeDelta = new Vector2(260f, 32f);
@@ -153,7 +168,7 @@ public class UniversalPopup : MonoBehaviour
     {
         GameEventOption option = currentEvent.Options[optionIndex];
 
-        if (!option.TryPayRequirement(gameController)) return;
+        if (!option.TryPayRequirements(gameController)) return;
 
         if (option.ChangesHope && gameController != null)
         {

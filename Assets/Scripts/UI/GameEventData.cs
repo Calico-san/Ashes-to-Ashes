@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum EventTriggerType
@@ -44,6 +45,10 @@ public class GameEventData : ScriptableObject
 
     public void PrepareTrigger()
     {
+        if (Options != null)
+            foreach (GameEventOption option in Options)
+                option?.MigrateLegacyRequirement();
+
         HasTriggered = false;
         lastTriggeredDay = -1;
 
@@ -91,6 +96,14 @@ public class GameEventData : ScriptableObject
             HasTriggered = true;
         }
     }
+
+    private void OnValidate()
+    {
+        if (Options == null) return;
+
+        foreach (GameEventOption option in Options)
+            option?.MigrateLegacyRequirement();
+    }
 }
 
 [Serializable]
@@ -104,10 +117,12 @@ public class GameEventOption
     public bool ChangesHope;
     public float HopeChange;
 
-    public EventOptionRequirementType RequirementType;
-    public BuildingType RequiredBuilding;
-    public ResourceType RequiredResourceType;
-    [Min(1)] public int RequiredResourceAmount = 1;
+    public List<EventOptionRequirement> Requirements = new();
+
+    [HideInInspector] public EventOptionRequirementType RequirementType;
+    [HideInInspector] public BuildingType RequiredBuilding;
+    [HideInInspector] public ResourceType RequiredResourceType;
+    [HideInInspector] public int RequiredResourceAmount = 1;
 
     public GameEventOption(string label, string explanation, bool changesHope, float hopeChange)
     {
@@ -119,45 +134,83 @@ public class GameEventOption
 
     public bool MeetsRequirements(GameController game)
     {
-        if (RequirementType == EventOptionRequirementType.None) return true;
+        if (Requirements == null || Requirements.Count == 0) return true;
         if (game == null) return false;
 
-        if (RequirementType == EventOptionRequirementType.Building)
+        var resourceCosts = new Dictionary<ResourceType, int>();
+        foreach (EventOptionRequirement requirement in Requirements)
         {
-            bool hasBuilding = false;
-            foreach (BuildingInstance building in game.Buildings)
+            if (requirement == null || requirement.Type == EventOptionRequirementType.None) continue;
+            if (requirement.Type == EventOptionRequirementType.Building && !requirement.HasRequiredBuilding(game))
+                return false;
+            if (requirement.Type == EventOptionRequirementType.ResourceAmount)
             {
-                if (building != null && building.BuildingTypeEnum == RequiredBuilding)
-                {
-                    hasBuilding = true;
-                    break;
-                }
+                resourceCosts.TryGetValue(requirement.Resource, out int currentCost);
+                resourceCosts[requirement.Resource] = currentCost + requirement.Amount;
             }
-            return hasBuilding;
         }
 
-        if (RequirementType == EventOptionRequirementType.ResourceAmount)
-        {
-            int amount = RequiredResourceType switch
-            {
-                ResourceType.Food => game.Food,
-                ResourceType.Wood => game.Wood,
-                ResourceType.Steel => game.Steel,
-                ResourceType.Cloth => game.Cloth,
-                ResourceType.Rope => game.Rope,
-                ResourceType.Ships => game.Ships,
-                _ => 0
-            };
-            return amount >= RequiredResourceAmount;
-        }
+        foreach (KeyValuePair<ResourceType, int> cost in resourceCosts)
+            if (GetResourceAmount(game, cost.Key) < cost.Value) return false;
 
-        return false;
+        return true;
     }
 
-    public bool TryPayRequirement(GameController game)
+    public bool TryPayRequirements(GameController game)
     {
         if (!MeetsRequirements(game)) return false;
-        if (RequirementType != EventOptionRequirementType.ResourceAmount) return true;
-        return game.TryConsumeResource(RequiredResourceType, RequiredResourceAmount);
+        if (Requirements == null) return true;
+
+        foreach (EventOptionRequirement requirement in Requirements)
+            if (requirement != null && requirement.Type == EventOptionRequirementType.ResourceAmount)
+                game.TryConsumeResource(requirement.Resource, requirement.Amount);
+
+        return true;
+    }
+
+    public void MigrateLegacyRequirement()
+    {
+        Requirements ??= new List<EventOptionRequirement>();
+        if (Requirements.Count > 0 || RequirementType == EventOptionRequirementType.None) return;
+
+        Requirements.Add(new EventOptionRequirement
+        {
+            Type = RequirementType,
+            Building = RequiredBuilding,
+            Resource = RequiredResourceType,
+            Amount = Mathf.Max(1, RequiredResourceAmount)
+        });
+        RequirementType = EventOptionRequirementType.None;
+    }
+
+    private static int GetResourceAmount(GameController game, ResourceType type)
+    {
+        return type switch
+        {
+            ResourceType.Food => game.Food,
+            ResourceType.Wood => game.Wood,
+            ResourceType.Steel => game.Steel,
+            ResourceType.Cloth => game.Cloth,
+            ResourceType.Rope => game.Rope,
+            ResourceType.Ships => game.Ships,
+            _ => 0
+        };
+    }
+}
+
+[Serializable]
+public class EventOptionRequirement
+{
+    public EventOptionRequirementType Type;
+    public BuildingType Building;
+    public ResourceType Resource;
+    [Min(1)] public int Amount = 1;
+
+    public bool HasRequiredBuilding(GameController game)
+    {
+        foreach (BuildingInstance building in game.Buildings)
+            if (building != null && building.BuildingTypeEnum == Building) return true;
+
+        return false;
     }
 }

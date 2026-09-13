@@ -10,11 +10,15 @@ public class ObjectiveManager : MonoBehaviour
     private readonly List<ObjectiveProgress> activeObjectives = new();
     private GameController gameController;
     private int activePhaseIndex = -1;
+    private bool campaignStarted;
+    private bool campaignFinished;
 
     public ObjectivePhase ActivePhase => activePhaseIndex >= 0 && campaign != null
         && activePhaseIndex < campaign.Phases.Count ? campaign.Phases[activePhaseIndex] : null;
     public string ActivePhaseTitle => ActivePhase != null ? ActivePhase.Title : string.Empty;
     public IReadOnlyList<ObjectiveProgress> ActiveObjectives => activeObjectives;
+    public bool CampaignStarted => campaignStarted;
+    public bool CampaignFinished => campaignFinished;
 
     public event Action ObjectivesChanged;
 
@@ -23,13 +27,18 @@ public class ObjectiveManager : MonoBehaviour
         gameController = game;
         activeObjectives.Clear();
         activePhaseIndex = -1;
+        campaignStarted = false;
+        campaignFinished = false;
 
         if (campaign == null)
             campaign = Resources.Load<ObjectiveCampaign>("Objectives");
 
         if (campaign == null) return;
 
-        ActivateNextPhase();
+        if (campaign.StartAfterEvent == null)
+            StartCampaign();
+        else
+            UniversalPopup.EventClosed += HandleEventClosed;
     }
 
     private void Update()
@@ -45,6 +54,7 @@ public class ObjectiveManager : MonoBehaviour
 
         if (campaign == null || activePhaseIndex >= campaign.Phases.Count)
         {
+            campaignFinished = true;
             ObjectivesChanged?.Invoke();
             enabled = false;
             return;
@@ -70,6 +80,25 @@ public class ObjectiveManager : MonoBehaviour
 
         EvaluateActiveObjectives();
         ObjectivesChanged?.Invoke();
+    }
+
+    private void StartCampaign()
+    {
+        campaignStarted = true;
+        ActivateNextPhase();
+    }
+
+    private void HandleEventClosed(GameEventData closedEvent)
+    {
+        if (campaignStarted || closedEvent != campaign.StartAfterEvent) return;
+
+        UniversalPopup.EventClosed -= HandleEventClosed;
+        StartCampaign();
+    }
+
+    private void OnDestroy()
+    {
+        UniversalPopup.EventClosed -= HandleEventClosed;
     }
 
     private void EvaluateActiveObjectives()

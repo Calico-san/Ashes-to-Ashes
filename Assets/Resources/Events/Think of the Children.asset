@@ -21,6 +21,11 @@ MonoBehaviour:
     Explanation: Hope rises.
     ChangesHope: 1
     HopeChange: 10
+    Requirements:
+    - Type: 2
+      Building: 0
+      Resource: 3
+      Amount: 30
     RequirementType: 2
     RequiredBuilding: 0
     RequiredResourceType: 3
@@ -29,6 +34,11 @@ MonoBehaviour:
     Explanation: Hope rises slightly.
     ChangesHope: 1
     HopeChange: 5
+    Requirements:
+    - Type: 2
+      Building: 0
+      Resource: 3
+      Amount: 15
     RequirementType: 2
     RequiredBuilding: 0
     RequiredResourceType: 3
@@ -37,6 +47,7 @@ MonoBehaviour:
     Explanation: Hope falls
     ChangesHope: 1
     HopeChange: -10
+    Requirements: []
     RequirementType: 0
     RequiredBuilding: 0
     RequiredResourceType: 3

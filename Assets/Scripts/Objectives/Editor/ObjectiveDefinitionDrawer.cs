@@ -8,9 +8,12 @@ public class ObjectiveDefinitionDrawer : PropertyDrawer
     {
         EditorGUI.BeginProperty(position, label, property);
         Rect line = new(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+        SerializedProperty title = property.FindPropertyRelative("title");
 
-        EditorGUI.PropertyField(line, property.FindPropertyRelative("title"));
-        line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+        line.height = EditorGUI.GetPropertyHeight(title);
+        EditorGUI.PropertyField(line, title);
+        line.y += line.height + EditorGUIUtility.standardVerticalSpacing;
+        line.height = EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(line, property.FindPropertyRelative("type"));
         line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
         EditorGUI.PropertyField(line, property.FindPropertyRelative("targetValue"));
@@ -28,8 +31,10 @@ public class ObjectiveDefinitionDrawer : PropertyDrawer
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
         ObjectiveType type = (ObjectiveType)property.FindPropertyRelative("type").enumValueIndex;
-        int lineCount = type == ObjectiveType.BuildBuilding || type == ObjectiveType.ReachResourceAmount ? 4 : 3;
-        return lineCount * EditorGUIUtility.singleLineHeight
-             + (lineCount - 1) * EditorGUIUtility.standardVerticalSpacing;
+        int remainingLines = type == ObjectiveType.BuildBuilding || type == ObjectiveType.ReachResourceAmount ? 3 : 2;
+        return EditorGUI.GetPropertyHeight(property.FindPropertyRelative("title"))
+             + EditorGUIUtility.standardVerticalSpacing
+             + remainingLines * EditorGUIUtility.singleLineHeight
+             + (remainingLines - 1) * EditorGUIUtility.standardVerticalSpacing;
     }
 }
