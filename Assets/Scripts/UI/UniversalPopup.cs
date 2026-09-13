@@ -115,6 +115,7 @@ public class UniversalPopup : MonoBehaviour
             TextMeshProUGUI optionLabel = optionButton.GetComponentInChildren<TextMeshProUGUI>();
             optionLabel.text = option.Label;
             optionLabel.fontSize = 16f;
+            optionButton.interactable = option.MeetsRequirements(gameController);
 
             RectTransform buttonTransform = optionButton.GetComponent<RectTransform>();
             buttonTransform.sizeDelta = new Vector2(260f, 32f);
@@ -151,6 +152,8 @@ public class UniversalPopup : MonoBehaviour
     private void ChooseOption(int optionIndex)
     {
         GameEventOption option = currentEvent.Options[optionIndex];
+
+        if (!option.TryPayRequirement(gameController)) return;
 
         if (option.ChangesHope && gameController != null)
         {

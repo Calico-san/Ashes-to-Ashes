@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
+  m_Name: Think of the Children
+  m_EditorClassIdentifier: Assembly-CSharp::GameEventData
+  Title: Think of the Children
+  Message: 'A woman came asking if we could spare some cloth. She wishes to use it
+    to make some dolls for the children in her spare time. She understands we cannot
+    waste resources, but thinks this would greatly lift the childrens'' spirits. '
+  Options:
+  - Label: Give her 30 cloth
+    Explanation: Hope rises.
+    ChangesHope: 1
+    HopeChange: 10
+    RequirementType: 2
+    RequiredBuilding: 0
+    RequiredResourceType: 3
+    RequiredResourceAmount: 30
+  - Label: Give her 15 cloth
+    Explanation: Hope rises slightly.
+    ChangesHope: 1
+    HopeChange: 5
+    RequirementType: 2
+    RequiredBuilding: 0
+    RequiredResourceType: 3
+    RequiredResourceAmount: 15
+  - Label: I'm afraid we cannot spare any cloth
+    Explanation: Hope falls
+    ChangesHope: 1
+    HopeChange: -10
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 3
+    RequiredResourceAmount: 30
+  TriggerType: 0
+  TriggerDay: 1
+  TriggerHour: 10
+  RepeatEveryDay: 0
+  FirstDay: 5
+  LastDay: 8

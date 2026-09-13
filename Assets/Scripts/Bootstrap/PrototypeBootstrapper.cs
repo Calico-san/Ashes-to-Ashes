@@ -85,6 +85,20 @@ public class PrototypeBootstrapper : MonoBehaviour
         eventManager.Initialize(gameController);
         gameController.DayEnding += eventManager.TryOpenEvent;
 
+        var objectiveManager = FindFirstObjectByType<ObjectiveManager>();
+        if (objectiveManager == null)
+            objectiveManager = gameController.gameObject.AddComponent<ObjectiveManager>();
+        objectiveManager.Initialize(gameController);
+
+        var objectivesPanelObject = GameObject.Find("ObjectivesPanel");
+        if (objectivesPanelObject != null)
+        {
+            var objectivesPanel = objectivesPanelObject.GetComponent<ObjectivesPanel>();
+            if (objectivesPanel == null)
+                objectivesPanel = objectivesPanelObject.AddComponent<ObjectivesPanel>();
+            objectivesPanel.Initialize(objectiveManager);
+        }
+
         // ---- Selection Controller ----
         if (selection != null)
             selection.Initialize(gameController, mainCamera);

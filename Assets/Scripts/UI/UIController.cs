@@ -16,6 +16,7 @@ public class UIController : MonoBehaviour
     [Header("Top Bar")]
     [SerializeField] private TextMeshProUGUI _resourcesText;  // "Wood: X  Steel: X ..."
     [SerializeField] private TextMeshProUGUI _clockText;      // "Day X  HH:MM"
+    [SerializeField] private TextMeshProUGUI _resourcesRightText;
     [SerializeField] private Button          _pauseBtn;
     [SerializeField] private Button          _speed1Btn;
     [SerializeField] private Button          _speed2Btn;
@@ -151,10 +152,13 @@ public class UIController : MonoBehaviour
         if (_resourcesText != null)
             _resourcesText.text =
                 $"Wood: {game.Wood}   Steel: {game.Steel}   Cloth: {game.Cloth}" +
-                $"   Rope: {game.Rope}   Food: {game.Food}   Ships: {game.Ships}";
+                $"   Rope: {game.Rope}   Ships: {game.Ships}";
 
         if (_clockText != null)
             _clockText.text = $"Day {game.Day}  {game.Hour:00}:{game.Minute:00}";
+
+        if (_resourcesRightText != null)
+            _resourcesRightText.text = $"Raw Food: {game.RawFood}   Food: {game.Food}";
     }
 
     // -------------------------------------------------------
@@ -248,6 +252,9 @@ public class UIController : MonoBehaviour
         {
             float perW = sel.OutputPerWorkerPerHour;
             float tot  = sel.TotalOutputPerHour;
+            string outputName = sel.BuildingTypeEnum == BuildingType.HuntersHut
+                ? "Raw Food"
+                : sel.OutputType.ToString();
             SetTitle(sel.DisplayName);
             {
                 string engStr = sel.AssignedEngineers > 0
@@ -260,7 +267,7 @@ public class UIController : MonoBehaviour
                     (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
                     engStr + rawStr);
             }
-            SetOutputLine($"{sel.OutputType}/worker/h: {perW:F2}\n" +
+            SetOutputLine($"{outputName}/worker/h: {perW:F2}\n" +
                           $"Total/h: {tot:F2}  |  /day: {tot * 24f:F1}");
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
                        "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),

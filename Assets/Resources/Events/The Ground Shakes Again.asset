@@ -20,8 +20,13 @@ MonoBehaviour:
     Explanation: Hope falls.
     ChangesHope: 1
     HopeChange: -20
+    RequirementType: 2
+    RequiredBuilding: 0
+    RequiredResourceType: 2
+    RequiredResourceAmount: 1
   TriggerType: 1
   TriggerDay: 1
   TriggerHour: 10
+  RepeatEveryDay: 0
   FirstDay: 3
   LastDay: 5

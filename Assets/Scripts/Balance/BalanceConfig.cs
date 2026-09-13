@@ -5,7 +5,7 @@ public static class BalanceConfig
 
     // Population food consumption (per day)
     public const float AdultFoodPerDay         = 1.0f;
-    public const float ChildFoodPerDay         = 1.0f;  // same as adults
+    public const float ChildFoodPerDay         = 0.5f;
 
     // Building production (per worker per day)
     public const float SawmillWoodPerWorker    = 4.0f;  // 10 workers = 40 wood/day
@@ -26,7 +26,7 @@ public static class BalanceConfig
 
     // Ship capacity
     public const int   ShipFoodLoadStep    = 10;  // food per click
-    public const int   ShipMaxPassengers       = 50;
+    public const int   ShipMaxPassengers       = 100;
     public const int   ShipFoodRequired        = 750;
     public const int   ShipMaxSailors          = 5;
     public const int   ShipyardMaxWorkers      = 10;
@@ -75,7 +75,6 @@ public static class BalanceConfig
 
     // ---- Hunters Hut ----
     public const int   HuntersHutMaxWorkers   = 5;
-    public const float HuntersHutFoodPerWorker = 30f;  // 150 food/day at full capacity
     public const int   HuntersHutWoodCost      = 8;
     public const int   HuntersHutSteelCost     = 0;
     public const int   HuntersHutBuildHours    = 3;

@@ -7,6 +7,13 @@ public enum EventTriggerType
     DayRange
 }
 
+public enum EventOptionRequirementType
+{
+    None,
+    Building,
+    ResourceAmount
+}
+
 [CreateAssetMenu(fileName = "New Game Event", menuName = "Ashes/Game Event")]
 public class GameEventData : ScriptableObject
 {
@@ -97,11 +104,60 @@ public class GameEventOption
     public bool ChangesHope;
     public float HopeChange;
 
+    public EventOptionRequirementType RequirementType;
+    public BuildingType RequiredBuilding;
+    public ResourceType RequiredResourceType;
+    [Min(1)] public int RequiredResourceAmount = 1;
+
     public GameEventOption(string label, string explanation, bool changesHope, float hopeChange)
     {
         Label = label;
         Explanation = explanation;
         ChangesHope = changesHope;
         HopeChange = hopeChange;
+    }
+
+    public bool MeetsRequirements(GameController game)
+    {
+        if (RequirementType == EventOptionRequirementType.None) return true;
+        if (game == null) return false;
+
+        if (RequirementType == EventOptionRequirementType.Building)
+        {
+            bool hasBuilding = false;
+            foreach (BuildingInstance building in game.Buildings)
+            {
+                if (building != null && building.BuildingTypeEnum == RequiredBuilding)
+                {
+                    hasBuilding = true;
+                    break;
+                }
+            }
+            return hasBuilding;
+        }
+
+        if (RequirementType == EventOptionRequirementType.ResourceAmount)
+        {
+            int amount = RequiredResourceType switch
+            {
+                ResourceType.Food => game.Food,
+                ResourceType.Wood => game.Wood,
+                ResourceType.Steel => game.Steel,
+                ResourceType.Cloth => game.Cloth,
+                ResourceType.Rope => game.Rope,
+                ResourceType.Ships => game.Ships,
+                _ => 0
+            };
+            return amount >= RequiredResourceAmount;
+        }
+
+        return false;
+    }
+
+    public bool TryPayRequirement(GameController game)
+    {
+        if (!MeetsRequirements(game)) return false;
+        if (RequirementType != EventOptionRequirementType.ResourceAmount) return true;
+        return game.TryConsumeResource(RequiredResourceType, RequiredResourceAmount);
     }
 }

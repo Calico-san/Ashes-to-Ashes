@@ -23,6 +23,10 @@ MonoBehaviour:
     Explanation: 
     ChangesHope: 0
     HopeChange: 0
+    RequirementType: 1
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
   TriggerType: 0
   TriggerDay: 1
   TriggerHour: 20

@@ -420,6 +420,44 @@ public class GameController : MonoBehaviour
         return true;
     }
 
+    public bool TryConsumeResource(ResourceType type, int amount)
+    {
+        if (amount <= 0) return true;
+
+        switch (type)
+        {
+            case ResourceType.Food:
+                if (food < amount) return false;
+                food -= amount;
+                break;
+            case ResourceType.Wood:
+                if (wood < amount) return false;
+                wood -= amount;
+                break;
+            case ResourceType.Steel:
+                if (steel < amount) return false;
+                steel -= amount;
+                break;
+            case ResourceType.Cloth:
+                if (cloth < amount) return false;
+                cloth -= amount;
+                break;
+            case ResourceType.Rope:
+                if (rope < amount) return false;
+                rope -= amount;
+                break;
+            case ResourceType.Ships:
+                if (ships < amount) return false;
+                ships -= amount;
+                break;
+            default:
+                return false;
+        }
+
+        RefreshUI();
+        return true;
+    }
+
     // ---- Hope ----
 
     public void SetHope(float value)

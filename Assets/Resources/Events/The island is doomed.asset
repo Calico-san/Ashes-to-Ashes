@@ -24,6 +24,10 @@ MonoBehaviour:
     Explanation: Hope falls greatly.
     ChangesHope: 1
     HopeChange: -80
+    RequirementType: 1
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
   TriggerType: 0
   TriggerDay: 1
   TriggerHour: 8
