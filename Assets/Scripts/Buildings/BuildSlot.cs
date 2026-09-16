@@ -13,9 +13,25 @@ public class BuildSlot : MonoBehaviour
     public BuildingType     QueuedType        { get; private set; }
     public float            ConstructionHoursRemaining { get; private set; }
     public float            ConstructionHoursTotal     { get; private set; }
+
+    /// <summary>
+    /// Preostali sati ukljucujuci djelic tekuceg sata. ConstructionHoursRemaining
+    /// se smanjuje samo na satni tick, pa bi bez ovoga traka skakala u koracima
+    /// (Cookhouse od 1h nikad ne bi prikazao medustanje).
+    /// GameController.HourFraction je jedini izvor vremena — bez Time.deltaTime ovdje.
+    /// </summary>
+    public float HoursRemainingSmooth
+    {
+        get
+        {
+            float fraction = _game != null ? _game.HourFraction : 0f;
+            return Mathf.Max(0f, ConstructionHoursRemaining - fraction);
+        }
+    }
+
     public float            ConstructionProgress =>
         ConstructionHoursTotal > 0
-            ? 1f - ConstructionHoursRemaining / ConstructionHoursTotal
+            ? Mathf.Clamp01(1f - HoursRemainingSmooth / ConstructionHoursTotal)
             : 0f;
 
     public Vector3 Position => transform.position;

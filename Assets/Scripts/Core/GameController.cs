@@ -14,10 +14,13 @@ public class GameController : MonoBehaviour
     [SerializeField] private int engineers       = 165; // 25% of adults
 
     [Header("Starting Resources")]
+    // Skalirano zajedno s troskovima gradnje (×7): 560 drva i dalje kupuje osam
+    // Sawmillova, 140 celika i dalje jedan Shipyard plus jednu manju zgradu.
+    // Hrana je nepromijenjena jer potrosnja populacije nije skalirana.
     [SerializeField] private int food  = 500;
-    [SerializeField] private int wood  = 80;
-    [SerializeField] private int steel = 20;
-    [SerializeField] private int cloth = 15;
+    [SerializeField] private int wood  = 560;
+    [SerializeField] private int steel = 140;
+    [SerializeField] private int cloth = 105;
     [SerializeField] private int rope  = 0;
     [SerializeField] private int ships   = 0;
     [SerializeField] private int rawFood = 0;
@@ -26,7 +29,7 @@ public class GameController : MonoBehaviour
     [SerializeField, Range(0f, 100f)] private float hope = 100f;
 
     [Header("Time")]
-    [SerializeField] private float simulationMinutesPerSecond = 3.0f; // 8 min/day at 1x
+    [SerializeField] private float simulationMinutesPerSecond = 3.0f;
 
     // ---- References ----
     private UIController _ui;
@@ -46,12 +49,15 @@ public class GameController : MonoBehaviour
     private float _hourAccumulator;
     private int   _day             = 1;
     private int   _speedMultiplier = 1;
-    private const float DAY_START_MINUTES = 6f * 60f; // 06:00
-    private const float DAY_END_MINUTES = 20f * 60f; // 20:00
+    // Granice dana zive u BalanceConfigu jer o njima ovisi HoursPerDay, kojim
+    // EconomyCalculator dijeli sve stope. Dvije kopije bi tiho razisle ekonomiju.
+    private const float DAY_START_MINUTES = BalanceConfig.DayStartMinutes; // 06:00
+    private const float DAY_END_MINUTES   = BalanceConfig.DayEndMinutes;   // 20:00
 
     // ---- Workers ----
     private int _freeWorkers;
     private int _freeEngineers;
+    private int _evacuatedSouls;
 
     // ---- Public properties ----
     public int   TotalPopulation  => totalPopulation;
@@ -73,6 +79,16 @@ public class GameController : MonoBehaviour
     public int   Minute           => Mathf.FloorToInt(_simulatedMinutes) % 60;
     public int   SpeedMultiplier  => _speedMultiplier;
     public float SimulatedMinutes => _simulatedMinutes;
+
+    /// <summary>
+    /// Djelic tekuceg sata (0..1). Cita ga BuildSlot da traka napretka tece glatko
+    /// umjesto da skace na svakom satnom ticku. Jedini izvor vremena u igri.
+    /// </summary>
+    public float HourFraction => Mathf.Clamp01(_hourAccumulator / 60f);
+
+    /// <summary>Duse koje su vec otplovile s otoka — konacni rezultat igre.</summary>
+    public int EvacuatedSouls => _evacuatedSouls;
+
     public Vector3 WorkerSpawnPoint { get; private set; }
     public Sprite  WorkerSprite     { get; private set; }
     public Sprite  EngineerSprite   { get; private set; }
@@ -90,6 +106,85 @@ public class GameController : MonoBehaviour
         return null;
     }
 
+    // -------------------------------------------------------
+    // Evidencija populacije — cita ju Town Hall ploca
+    // -------------------------------------------------------
+
+    /// <summary>Radnici rasporedeni po zgradama (bez slobodnih).</summary>
+    public int EmployedWorkers
+    {
+        get
+        {
+            int n = 0;
+            foreach (var b in _buildings) if (b != null) n += b.AssignedWorkers;
+            return n;
+        }
+    }
+
+    /// <summary>Inzenjeri rasporedeni po zgradama (bez slobodnih).</summary>
+    public int EmployedEngineers
+    {
+        get
+        {
+            int n = 0;
+            foreach (var b in _buildings) if (b != null) n += b.AssignedEngineers;
+            return n;
+        }
+    }
+
+    /// <summary>Duše ukrcane na brodove koji su još u luci.</summary>
+    public int BoardedPassengers
+    {
+        get
+        {
+            int n = 0;
+            foreach (var s in _ships) if (s != null && !s.IsSailing) n += s.Passengers;
+            return n;
+        }
+    }
+
+    /// <summary>Djeca ukrcana na brodove koji su još u luci.</summary>
+    public int BoardedChildren
+    {
+        get
+        {
+            int n = 0;
+            foreach (var s in _ships) if (s != null && !s.IsSailing) n += s.PassengerChildren;
+            return n;
+        }
+    }
+
+    /// <summary>
+    /// Djeca koja se još mogu ukrcati. Ukrcana djeca ostaju u `children` i dalje
+    /// jedu dok brod ne isplovi, pa se moraju odbiti ovdje umjesto pri ukrcaju.
+    /// </summary>
+    public int AvailableChildren => Mathf.Max(0, children - BoardedChildren);
+
+    public float FoodConsumedPerDay
+        => EconomyCalculator.FoodConsumptionPerDay(AdultPopulation, children);
+
+    /// <summary>
+    /// Dnevna proizvodnja kuhane hrane iz svih zgrada koje ju stvarno isporucuju.
+    /// Hunter's Hut je izuzet — njegov OutputType je Food, ali proizvodi RawFood.
+    /// </summary>
+    public float FoodProducedPerDay
+    {
+        get
+        {
+            float perHour = 0f;
+            foreach (var b in _buildings)
+            {
+                if (b == null || b.IsTownHall) continue;
+                if (b.BuildingTypeEnum == BuildingType.HuntersHut) continue;
+                if (b.OutputType != ResourceType.Food) continue;
+                perHour += b.TotalOutputPerHour;
+            }
+            return perHour * BalanceConfig.HoursPerDay;
+        }
+    }
+
+    public float NetFoodPerDay => FoodProducedPerDay - FoodConsumedPerDay;
+
     // ---- Init ----
 
     public void Initialize(UIController ui, Sprite workerSprite, Vector3 spawnPoint)
@@ -101,6 +196,7 @@ public class GameController : MonoBehaviour
         _freeEngineers    = engineers;
         EngineerSprite    = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(0.3f, 0.7f, 1f, 1f));
         _simulatedMinutes = 8f * 60f; // start at 08:00
+        _hourAccumulator  = 0f;
         RefreshUI();
     }
 
@@ -119,6 +215,8 @@ public class GameController : MonoBehaviour
             _hourAccumulator -= 60f;
             TickHour();
         }
+
+        ProcessShipDepartures();
 
         if (_simulatedMinutes >= DAY_END_MINUTES)
         {
@@ -292,7 +390,6 @@ public class GameController : MonoBehaviour
 
         var size      = new Vector2(BalanceConfig.BuildingPlacementSize,
                                     BalanceConfig.BuildingPlacementSize);
-        bool shipyard = type == BuildingType.Shipyard;
 
         var validator = PlacementValidator.Instance;
         if (validator != null && !validator.IsValidForType(worldPosition, size, type))
@@ -321,58 +418,92 @@ public class GameController : MonoBehaviour
         return TryPlaceBuilding(type, _selectedSlot.Position);
     }
 
-    // ---- Ship actions ----
+    // -------------------------------------------------------
+    // Ship actions
+    // Mornari su uklonjeni — brod trazi samo putnike i hranu.
+    // -------------------------------------------------------
 
-    public bool AssignSailorToSelectedShip()
+    /// <summary>
+    /// Ukrca do <paramref name="count"/> duša. Prvo idu djeca: ona ne rade, pa ih
+    /// evakuacija ne kosta radne snage. Tek kad djece nestane, krecu odrasli iz
+    /// bazena slobodnih radnika.
+    ///
+    /// Ukrcani se oduzimaju iz totalPopulation — inace bi i dalje jeli, sto je
+    /// ranije bio slucaj (oduzimao se samo _freeWorkers).
+    /// Vraca stvarno ukrcani broj.
+    /// </summary>
+    public int AddPassengersToSelectedShip(int count)
     {
-        bool ok = _selectedShip != null && _selectedShip.TryAssignSailor();
-        if (ok) RefreshUI();
-        return ok;
+        if (_selectedShip == null || count <= 0 || _selectedShip.IsSailing) return 0;
+
+        int space = _selectedShip.FreeSpace;
+        if (space <= 0) return 0;
+
+        int toBoard          = Mathf.Min(count, space);
+        int childrenBoarding = Mathf.Min(toBoard, AvailableChildren);
+        int adultsBoarding   = Mathf.Min(toBoard - childrenBoarding, _freeWorkers);
+        int total            = childrenBoarding + adultsBoarding;
+        if (total <= 0) return 0;
+
+        _selectedShip.BoardPassengers(childrenBoarding, adultsBoarding);
+
+        // Ukrcani odrasli prestaju biti raspoloziva radna snaga, ali populacija se
+        // ne mijenja — dok je brod u luci ljudi su i dalje na otoku i jedu.
+        // Populacija pada tek pri isplovljavanju (ProcessShipDepartures).
+        _freeWorkers -= adultsBoarding;
+
+        RefreshUI();
+        return total;
     }
 
-    public bool RemoveSailorFromSelectedShip()
+    /// <summary>Iskrca do <paramref name="count"/> putnika natrag u radnu snagu.</summary>
+    public int RemovePassengersFromSelectedShip(int count)
     {
-        bool ok = _selectedShip != null && _selectedShip.RemoveSailor();
-        if (ok) RefreshUI();
-        return ok;
+        if (_selectedShip == null || count <= 0 || _selectedShip.IsSailing) return 0;
+
+        _selectedShip.DisembarkPassengers(count, out int ch, out int ad);
+        int total = ch + ad;
+        if (total <= 0) return 0;
+
+        _freeWorkers += ad;   // djeca nisu ni bila u bazenu
+
+        RefreshUI();
+        return total;
     }
 
-    public bool AddPassengerToSelectedShip()
+    /// <summary>Ukrca jedan korak hrane (BalanceConfig.ShipFoodLoadStep).</summary>
+    public bool LoadFoodToSelectedShip() => LoadFoodToSelectedShip(BalanceConfig.ShipFoodLoadStep);
+
+    /// <summary>Napuni brod do punog zahtjeva koliko zaliha dopusta.</summary>
+    public bool LoadAllFoodToSelectedShip()
+        => _selectedShip != null && LoadFoodToSelectedShip(_selectedShip.FoodMissing);
+
+    /// <summary>
+    /// Jedino mjesto na kojem se hrana skida sa skladista pri ukrcaju.
+    /// ShipInstance namjerno ne dira GameController — ranije su oba oduzimala
+    /// istu kolicinu, pa je klik od 10 skidao 20 hrane.
+    /// </summary>
+    private bool LoadFoodToSelectedShip(int requested)
     {
-        if (_selectedShip == null || _freeWorkers <= 0) return false;
-        if (_selectedShip.Passengers >= _selectedShip.MaxPassengers) return false;
-        _selectedShip.BoardPassengers(1);
-        _freeWorkers--;
+        if (_selectedShip == null || requested <= 0) return false;
+
+        int amount = Mathf.Min(_selectedShip.LoadableFood(requested), food);
+        if (amount <= 0) return false;
+
+        food -= amount;
+        _selectedShip.LoadFood(amount);
         RefreshUI();
         return true;
-    }
-
-    public bool RemovePassengerFromSelectedShip()
-    {
-        if (_selectedShip == null || _selectedShip.Passengers <= 0) return false;
-        _selectedShip.DisembarkPassengers(1);
-        _freeWorkers++;
-        RefreshUI();
-        return true;
-    }
-
-    public bool LoadFoodToSelectedShip()
-    {
-        if (_selectedShip == null) return false;
-        int step = BalanceConfig.ShipFoodLoadStep;
-        if (food < step || _selectedShip.FoodLoaded >= _selectedShip.RequiredFood) return false;
-        int loaded = _selectedShip.LoadFood(step);
-        food -= loaded;
-        RefreshUI();
-        return loaded > 0;
     }
 
     public bool UnloadFoodFromSelectedShip()
     {
         if (_selectedShip == null || _selectedShip.FoodLoaded <= 0) return false;
-        int step = Mathf.Min(BalanceConfig.ShipFoodLoadStep, _selectedShip.FoodLoaded);
-        _selectedShip.UnloadFood(step);
-        food += step;
+
+        int unloaded = _selectedShip.UnloadFood(BalanceConfig.ShipFoodLoadStep);
+        if (unloaded <= 0) return false;
+
+        food += unloaded;
         RefreshUI();
         return true;
     }
@@ -551,6 +682,7 @@ public class GameController : MonoBehaviour
             Engineers        = engineers,
             FreeWorkers      = _freeWorkers,
             FreeEngineers    = _freeEngineers,
+            EvacuatedSouls   = _evacuatedSouls,
         };
 
         foreach (var b in _buildings)
@@ -563,8 +695,8 @@ public class GameController : MonoBehaviour
                 ResourceTypeName         = b.OutputType.ToString(),
                 PositionX                = b.transform.position.x,
                 PositionY                = b.transform.position.y,
-                // Zadrzano radi kompatibilnosti sa SaveVersion 1.0; zapisuje se
-                // konstanta jer se pri ucitavanju ionako vise ne cita.
+                // Zadrzano radi kompatibilnosti sa starim zapisima; pri ucitavanju
+                // se ionako vise ne cita.
                 SizeX                    = BalanceConfig.BuildingPlacementSize,
                 SizeY                    = BalanceConfig.BuildingPlacementSize,
                 AssignedWorkers          = b.AssignedWorkers,
@@ -573,6 +705,7 @@ public class GameController : MonoBehaviour
                 IsTownHall               = b.IsTownHall,
                 ShipProgress             = b.ShipProgress,
                 ShipCount                = b.ShipCount,
+                KeelLaid                 = b.KeelLaid,
             });
         }
 
@@ -597,16 +730,18 @@ public class GameController : MonoBehaviour
 
         foreach (var ship in _ships)
         {
-            if (ship == null) continue;
+            if (ship == null || ship.IsSailing) continue;   // brod u odlasku se ne sprema
             data.ShipList.Add(new ShipData
             {
-                ShipNumber      = ship.ShipNumber,
-                PositionX       = ship.transform.position.x,
-                PositionY       = ship.transform.position.y,
-                AssignedSailors = ship.AssignedSailors,
-                Passengers      = ship.Passengers,
-                FoodLoaded      = ship.FoodLoaded,
-                HasVisual       = ship.HasVisual,
+                ShipNumber        = ship.ShipNumber,
+                PositionX         = ship.transform.position.x,
+                PositionY         = ship.transform.position.y,
+                AssignedSailors   = 0,                       // mornari uklonjeni
+                Passengers        = ship.Passengers,
+                PassengerChildren = ship.PassengerChildren,
+                PassengerAdults   = ship.PassengerAdults,
+                FoodLoaded        = ship.FoodLoaded,
+                HasVisual         = ship.HasVisual,
             });
         }
 
@@ -618,6 +753,7 @@ public class GameController : MonoBehaviour
         // Restore primitives
         _day              = data.Day;
         _simulatedMinutes = data.SimulatedMinutes;
+        _hourAccumulator  = _simulatedMinutes % 60f;
         _speedMultiplier  = data.SpeedMultiplier;
         food              = data.Food;
         wood              = data.Wood;
@@ -631,6 +767,7 @@ public class GameController : MonoBehaviour
         if (data.Engineers >= 0) engineers = data.Engineers;
         _freeWorkers      = data.FreeWorkers;
         _freeEngineers    = data.FreeEngineers;
+        _evacuatedSouls   = data.EvacuatedSouls;
 
         // Destroy existing dynamic objects
         foreach (var b in _buildings)
@@ -663,14 +800,15 @@ public class GameController : MonoBehaviour
             var type = Enum.TryParse<BuildingType>(bd.BuildingTypeName, out var bt)
                 ? bt : BuildingType.Sawmill;
 
-            // SizeX/SizeY iz zapisa se namjerno ignoriraju. Stariji zapisi nose
-            // velicine koje su dolazile iz prirodne velicine sprite-a (npr. 3x4 =
-            // construction_building 48x64 @ PPU 16); one su zavrsavale kao
-            // localScale i mnozile vec ispravno skaliran sprite, pa je zgrada
-            // izgledala 3x3 polja. Otisak je uvijek 1x1 — vidi BuildingInstance.
+            // SizeX/SizeY iz zapisa se namjerno ignoriraju — otisak je uvijek 1x1.
             var building = BuildingFactory.Create(this, type,
                 new Vector3(bd.PositionX, bd.PositionY, 0f),
                 Vector2.one * BalanceConfig.BuildingPlacementSize);
+
+            // Brodogradiliste: vrati napredak i stanje kobilice (O5 — ranije se gubilo,
+            // a s fiksnom naplatom to bi bio gubitak cijelog troska broda).
+            if (building.IsShipyard)
+                building.RestoreShipyardState(bd.ShipProgress, bd.ShipCount, bd.KeelLaid);
 
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
@@ -704,8 +842,15 @@ public class GameController : MonoBehaviour
             var go   = new GameObject($"Ship_{sd.ShipNumber}");
             var ship = go.AddComponent<ShipInstance>();
             ship.Initialize(this, sd.ShipNumber,
-                new Vector3(sd.PositionX, sd.PositionY, 0f), sd.HasVisual);
-            ship.RestoreState(sd.AssignedSailors, sd.Passengers, sd.FoodLoaded);
+                new Vector3(sd.PositionX, sd.PositionY, 0f), true,
+                Mathf.Max(8, 60 - (sd.ShipNumber - 1) * 4));
+
+            // Zapisi verzije 1.0 nemaju podjelu po dobi — sve se tada vraca kao odrasli.
+            int ch = sd.PassengerChildren;
+            int ad = sd.PassengerAdults;
+            if (ch + ad == 0 && sd.Passengers > 0) ad = sd.Passengers;
+
+            ship.RestoreState(ch, ad, sd.FoodLoaded);
             RegisterShip(ship);
         }
 
@@ -730,6 +875,39 @@ public class GameController : MonoBehaviour
     }
 
     // ---- Private ----
+
+    /// <summary>
+    /// Brod koji je spreman krece sam — igrac ga ne mora slati. Cim je otisao
+    /// dovoljno daleko, brise se, a njegovi putnici su trajno evakuirani.
+    /// </summary>
+    private void ProcessShipDepartures()
+    {
+        for (int i = _ships.Count - 1; i >= 0; i--)
+        {
+            var ship = _ships[i];
+            if (ship == null) { _ships.RemoveAt(i); continue; }
+
+            if (!ship.IsSailing && ship.IsReadyToSail)
+            {
+                // Tek sada duse napustaju otok: populacija pada, djeca izlaze iz
+                // brojaca, a potrosnja hrane se smanjuje. Do ovog trenutka su
+                // ukrcani i dalje jeli.
+                totalPopulation -= ship.Passengers;
+                children        -= ship.PassengerChildren;
+                _evacuatedSouls += ship.Passengers;
+
+                ship.BeginSail();
+                if (_selectedShip == ship) _selectedShip = null;
+            }
+
+            if (ship.HasLeft)
+            {
+                if (_selectedShip == ship) _selectedShip = null;
+                _ships.RemoveAt(i);
+                Destroy(ship.gameObject);
+            }
+        }
+    }
 
     private void TickHour()
     {

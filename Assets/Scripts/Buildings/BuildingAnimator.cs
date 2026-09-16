@@ -26,7 +26,8 @@ public class BuildingAnimator : MonoBehaviour
     private GameObject     _progressBarBg;
     private GameObject     _progressBarFill;
     private SpriteRenderer _progressFillSR;
-    private const float    BAR_WIDTH    = 1.2f;
+    // Sirina je 1.0 = tocno otisak zgrade; 1.2 je prelazilo u susjedno polje.
+    private const float    BAR_WIDTH    = 1.0f;
     private const float    BAR_HEIGHT   = 0.12f;
     private const float    BAR_OFFSET_Y = 0.72f;
 
@@ -74,14 +75,16 @@ public class BuildingAnimator : MonoBehaviour
 
         if (_progressFillSR != null)
         {
-            float clampedW = Mathf.Clamp01(progress) * BAR_WIDTH;
-            _progressBarFill.transform.localScale = new Vector3(clampedW, BAR_HEIGHT, 1f);
+            // Ispuna ima pivot (0, 0.5), pa skaliranje po x raste iskljucivo udesno
+            // od lijevog ruba pozadine. Pozicija je fiksna — ne pomice se s napretkom.
+            float clamped = Mathf.Clamp01(progress);
+            _progressBarFill.transform.localScale = new Vector3(clamped * BAR_WIDTH, BAR_HEIGHT, 1f);
 
             // Color shifts green -> yellow -> orange as progress increases
             _progressFillSR.color = Color.Lerp(
                 new Color(0.20f, 0.75f, 0.25f),
                 new Color(0.90f, 0.55f, 0.10f),
-                progress);
+                clamped);
         }
     }
 
@@ -147,6 +150,9 @@ public class BuildingAnimator : MonoBehaviour
     {
         float top = _artHalfHeight + 0.15f;
 
+        // Pozadina je centrirana (pivot 0.5), ispuna je usidrena na njezin lijevi rub
+        // (pivot 0) — zato razliciti x. Ovdje se postavlja samo pozicija; sirinu
+        // ispune mijenja iskljucivo SetConstructionProgress.
         if (_progressBarBg != null)
             _progressBarBg.transform.localPosition = new Vector3(0f, top, -0.1f);
         if (_progressBarFill != null)
@@ -155,7 +161,12 @@ public class BuildingAnimator : MonoBehaviour
 
     private void BuildProgressBar()
     {
-        // Background (dark bar)
+        // Idempotentno: Setup() se na BuildSlotu zove dvaput (placeholder tip u
+        // Initialize, pa stvarni tip u StartConstruction/RestoreConstruction).
+        // Bez ove provjere svaki poziv stvarao je novi par GameObjecta.
+        if (_progressBarBg != null && _progressBarFill != null) return;
+
+        // Background (dark bar) — pivot u sredini
         _progressBarBg = new GameObject("ProgressBar_BG");
         _progressBarBg.transform.SetParent(transform);
         _progressBarBg.transform.localPosition = new Vector3(0f, BAR_OFFSET_Y, -0.1f);
@@ -166,7 +177,7 @@ public class BuildingAnimator : MonoBehaviour
         bgSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(new Color(0.15f, 0.15f, 0.15f, 0.85f));
         bgSR.sortingOrder = 10;
 
-        // Fill (colored bar — scaled on x axis, pivot at left edge)
+        // Fill — pivot na LIJEVOM rubu (0, 0.5) da skaliranje po x raste samo udesno
         _progressBarFill = new GameObject("ProgressBar_Fill");
         _progressBarFill.transform.SetParent(transform);
         _progressBarFill.transform.localPosition = new Vector3(-BAR_WIDTH * 0.5f, BAR_OFFSET_Y, -0.2f);
@@ -174,7 +185,8 @@ public class BuildingAnimator : MonoBehaviour
         _progressBarFill.transform.localScale    = new Vector3(0f, BAR_HEIGHT, 1f);
 
         _progressFillSR = _progressBarFill.AddComponent<SpriteRenderer>();
-        _progressFillSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(Color.green);
+        _progressFillSR.sprite = SimpleShapeFactory.CreateFilledSquareSprite(
+            Color.green, new Vector2(0f, 0.5f));
         _progressFillSR.sortingOrder = 11;
 
         HideProgressBar();

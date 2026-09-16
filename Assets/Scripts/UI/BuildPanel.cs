@@ -375,14 +375,13 @@ public class BuildPanel : MonoBehaviour
         return isArt ? sprite : SimpleShapeFactory.CreateFilledSquareSprite(Color.white);
     }
 
+    /// <summary>
+    /// Naziv za prikaz dolazi iz BuildingFactory.Meta — jedan izvor istine.
+    /// Prije se vracalo type.ToString(), pa je gumb pisao "HuntersHut" i
+    /// "ScoutStation", dok je ploca zgrade za istu zgradu pisala "Hunters Hut".
+    /// </summary>
     private static string BuildingDisplayName(BuildingType type)
-    {
-        switch (type)
-        {
-            case BuildingType.Fiberworks: return "Fiberworks";
-            default:                      return type.ToString();
-        }
-    }
+        => BuildingFactory.Meta(type).name;
 
     private static string CostString(BuildingCost cost)
     {

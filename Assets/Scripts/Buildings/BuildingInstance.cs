@@ -42,22 +42,51 @@ public class BuildingInstance : MonoBehaviour
     }
 
     // Production info (read by UI)
-    public float OutputPerWorkerPerHour =>
+    // Stopa i ukupan izlaz su cijeli brojevi — vidi EconomyCalculator.
+    public int OutputPerWorkerPerHour =>
         BuildingTypeEnum == BuildingType.HuntersHut
-            ? BalanceConfig.RawFoodPerWorkerPerDay / 24f   // Hunter's Hut outputs Raw Food, not cooked Food
+            ? EconomyCalculator.RawFoodPerWorkerPerHour()   // Hunter's Hut outputs Raw Food, not cooked Food
             : EconomyCalculator.ProductionPerWorkerPerHour(OutputType);
     public float EngineerBonus => HasEngineer
         ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
         : 1.0f;
-    public float TotalOutputPerHour     => OutputPerWorkerPerHour * WorkersInside * EngineerBonus;
+    public int TotalOutputPerHour =>
+        EconomyCalculator.TotalOutputPerHour(OutputPerWorkerPerHour, WorkersInside,
+                                             EngineerBonus * ProductionMultiplier);
 
-    // Shipyard info (read by UI)
-    public float ShipProgress         => _shipProgress;
-    public int   ShipCount            => _shipCount;
-    public int   ShipWoodPerCycle     => EconomyCalculator.ShipWoodCost(WorkersInside);
-    public int   ShipSteelPerCycle    => EconomyCalculator.ShipSteelCost(WorkersInside);
-    public int   ShipClothPerCycle    => EconomyCalculator.ShipClothCost(WorkersInside);
-    public int   ShipRopePerCycle     => EconomyCalculator.ShipRopeCost(WorkersInside);
+    /// <summary>
+    /// Drugi izlazni resurs zgrade, ili null ako ga nema. Zasad samo Fiberworks
+    /// (Cloth + Rope). Rope se proizvodio u ProduceHourly, ali ga TotalOutputPerHour
+    /// nije obuhvacao pa ga UI nije imao odakle procitati — resurs je rastao bez
+    /// ijednog vidljivog izvora.
+    /// Logika ostaje ovdje, a ne u UIControlleru, da UI ne pocne poznavati formule.
+    /// </summary>
+    public ResourceType? SecondaryOutputType =>
+        BuildingTypeEnum == BuildingType.Fiberworks ? ResourceType.Rope : (ResourceType?)null;
+
+    public int SecondaryOutputPerWorkerPerHour =>
+        SecondaryOutputType.HasValue
+            ? EconomyCalculator.ProductionPerWorkerPerHour(SecondaryOutputType.Value)
+            : 0;
+
+    public int SecondaryTotalPerHour =>
+        EconomyCalculator.TotalOutputPerHour(SecondaryOutputPerWorkerPerHour, WorkersInside,
+                                             EngineerBonus * ProductionMultiplier);
+
+    // ---- Shipyard info (read by UI) ----
+    public float ShipProgress        => _shipProgress;
+    public int   ShipCount           => _shipCount;
+
+    /// <summary>True kad je fiksni trosak za tekuci brod vec placen.</summary>
+    public bool  KeelLaid            => _keelLaid;
+
+    public float ShipProgressPercent => BalanceConfig.ShipProgressRequired > 0f
+        ? _shipProgress / BalanceConfig.ShipProgressRequired * 100f
+        : 0f;
+
+    /// <summary>Procjena preostalih sati igre; -1 kad nema radnika.</summary>
+    public float ShipHoursRemaining =>
+        EconomyCalculator.ShipHoursRemaining(_shipProgress, WorkersInside, EngineerBonus);
 
     // ---- Private ----
     private readonly List<WorkerAgent>  _workers     = new();
@@ -73,11 +102,7 @@ public class BuildingInstance : MonoBehaviour
     private GameController     _game;
     private float                       _shipProgress;
     private int                         _shipCount;
-
-    // Fractional production carry-over: banks whole units, keeps the remainder
-    // so sub-1.0/hour rates (e.g. Steelworks 0.083/worker/h) survive rounding.
-    private float                       _outputAccumulator;   // primary output
-    private float                       _ropeAccumulator;     // Fiberworks secondary output (Rope)
+    private bool                        _keelLaid;
 
     // ---- Init ----
 
@@ -231,58 +256,41 @@ public class BuildingInstance : MonoBehaviour
         int active = WorkersInside;
         if (active <= 0) return;
 
-        float bonus = EngineerBonus * ProductionMultiplier;
+        float multiplier = EngineerBonus * ProductionMultiplier;
 
-        if (IsShipyard) { TickShipyard(active, bonus); return; }
+        if (IsShipyard) { TickShipyard(active, multiplier); return; }
 
         // Hunter's Hut — produces Raw Food at its own per-worker rate
         if (BuildingTypeEnum == BuildingType.HuntersHut)
         {
-            int raw = Bank(ref _outputAccumulator, OutputPerWorkerPerHour * active * bonus);
+            int raw = EconomyCalculator.TotalOutputPerHour(OutputPerWorkerPerHour, active, multiplier);
             if (raw > 0) _game.AddRawFood(raw);
             return;
         }
 
-        // Fiberworks — produces both Cloth and Rope from their BalanceConfig rates
+        // Fiberworks — produces both Cloth and Rope from the same workers
         if (OutputType == ResourceType.Cloth)
         {
-            float clothRate = EconomyCalculator.ProductionPerWorkerPerHour(ResourceType.Cloth);
-            float ropeRate  = EconomyCalculator.ProductionPerWorkerPerHour(ResourceType.Rope);
-            int cloth = Bank(ref _outputAccumulator, active * clothRate * bonus);
-            int rope  = Bank(ref _ropeAccumulator,  active * ropeRate  * bonus);
+            int cloth = EconomyCalculator.TotalOutputPerHour(OutputPerWorkerPerHour, active, multiplier);
+            int rope  = EconomyCalculator.TotalOutputPerHour(SecondaryOutputPerWorkerPerHour, active, multiplier);
             if (cloth > 0) _game.AddResource(ResourceType.Cloth, cloth);
             if (rope  > 0) _game.AddResource(ResourceType.Rope,  rope);
             return;
         }
-
-        // Standard single-output buildings (Sawmill, Steelworks, Cookhouse, ...)
-        float perHour = OutputPerWorkerPerHour * active * bonus;
 
         if (BuildingTypeEnum == BuildingType.Cookhouse)
         {
             // Consume raw food — CookhouseRawFoodPerWorker per worker per hour
             int rawNeeded   = Mathf.RoundToInt(active * BalanceConfig.CookhouseRawFoodPerWorker);
             int rawConsumed = _game.ConsumeRawFood(rawNeeded);
-            float multiplier = rawConsumed >= rawNeeded
+            multiplier *= rawConsumed >= rawNeeded
                 ? BalanceConfig.CookhouseNormalMultiplier
                 : BalanceConfig.CookhouseLowMultiplier;
-            perHour *= multiplier;
         }
 
-        int output = Bank(ref _outputAccumulator, perHour);
+        // Standard single-output buildings (Sawmill, Steelworks, Cookhouse, ...)
+        int output = EconomyCalculator.TotalOutputPerHour(OutputPerWorkerPerHour, active, multiplier);
         if (output > 0) _game.AddResource(OutputType, output);
-    }
-
-    /// <summary>
-    /// Adds fractional per-hour production to the accumulator and returns only the
-    /// whole units ready to bank; the remainder carries over to the next hour.
-    /// </summary>
-    private static int Bank(ref float accumulator, float amount)
-    {
-        accumulator += amount;
-        int whole = Mathf.FloorToInt(accumulator);
-        accumulator -= whole;
-        return whole;
     }
 
     // ---- Selection ----
@@ -293,41 +301,126 @@ public class BuildingInstance : MonoBehaviour
     /// <summary>Mark as Town Hall — disables worker assignment and production.</summary>
     public void SetTownHall(bool value) => IsTownHall = value;
 
+    /// <summary>Restore shipyard progress from a save (O5 — ranije se gubilo).</summary>
+    public void RestoreShipyardState(float progress, int shipCount, bool keelLaid)
+    {
+        _shipProgress = progress;
+        _shipCount    = shipCount;
+        _keelLaid     = keelLaid;
+    }
+
     // ---- Private ----
 
+    /// <summary>
+    /// Brodogradnja: broj radnika odreduje ISKLJUCIVO brzinu, trosak je fiksan
+    /// po brodu i naplacuje se jednokratno pri polaganju kobilice.
+    ///
+    /// Ranije se svaki sat naplacivalo po aktivnom radniku, pa je ukupna cijena
+    /// broda ovisila o broju radnika i trajanju gradnje (1 radnik = 20 cloth,
+    /// 10 radnika = 10 cloth za isti brod). Igrac to nije mogao ni vidjeti ni
+    /// planirati jer je panel prikazivao samo "Cost/tick".
+    /// </summary>
     private void TickShipyard(int activeWorkers, float bonus = 1f)
     {
-        int wood  = EconomyCalculator.ShipWoodCost(activeWorkers);
-        int steel = EconomyCalculator.ShipSteelCost(activeWorkers);
-        int cloth = EconomyCalculator.ShipClothCost(activeWorkers);
-        int rope  = EconomyCalculator.ShipRopeCost(activeWorkers);
+        // Kobilica: naplati fiksni trosak jednom po brodu. "Sve ili nista" —
+        // ako nedostaje ijedan resurs, ne trosi se nista i napredak stoji.
+        if (!_keelLaid)
+        {
+            if (!_game.HasResources(BalanceConfig.ShipWoodCost,
+                                    BalanceConfig.ShipSteelCost,
+                                    BalanceConfig.ShipClothCost,
+                                    BalanceConfig.ShipRopeCost)) return;
 
-        if (!_game.HasResources(wood, steel, cloth, rope)) return;
+            _game.ConsumeShipResources(BalanceConfig.ShipWoodCost,
+                                       BalanceConfig.ShipSteelCost,
+                                       BalanceConfig.ShipClothCost,
+                                       BalanceConfig.ShipRopeCost);
+            _keelLaid = true;
+        }
 
-        _game.ConsumeShipResources(wood, steel, cloth, rope);
-        _shipProgress += EconomyCalculator.ShipProgress(activeWorkers) * bonus;
+        _shipProgress += EconomyCalculator.ShipProgressPerHour(activeWorkers) * bonus;
 
+        // while, a ne if: jedan sat pri punom pogonu i inzenjerskom bonusu moze
+        // preskociti prag za vise od jednog broda.
         while (_shipProgress >= BalanceConfig.ShipProgressRequired)
         {
             _shipProgress -= BalanceConfig.ShipProgressRequired;
             _game.AddResource(ResourceType.Ships, 1);
             SpawnShip();
+            _keelLaid = false;   // sljedeci brod trazi novu naplatu
         }
     }
 
     private void SpawnShip()
     {
-        // First ship gets a visual near the shipyard.
-        // All subsequent ships are registered in the UI list only — no extra world objects.
-        Vector3 pos = new Vector3(transform.position.x, transform.position.y - 2.2f, 0f);
-
         var go   = new GameObject($"Ship_{_shipCount + 1}");
         var ship = go.AddComponent<ShipInstance>();
-        ship.Initialize(_game, _shipCount + 1, pos, _shipCount == 0);
+
+        // Svaki brod sada ima vizual. Prvi je najblizi brodogradilistu i crta se
+        // na vrhu; sljedeci se slazu kao lepeza karata prema pucini, pa im viri
+        // po jedan kut. Sortiranje pada s indeksom da poredak ostane citljiv.
+        ship.Initialize(_game, _shipCount + 1, ShipSlot(_shipCount), true,
+                        Mathf.Max(8, 60 - _shipCount * 4));
 
         _shipObjects.Add(go);
         _game.RegisterShip(ship);
         _shipCount++;
+    }
+
+    // ---- Razmjestaj brodova ----
+
+    private bool    _shipAnchorReady;
+    private Vector3 _shipAnchor;
+    private Vector2 _shipAway;   // od otoka prema pucini
+    private Vector2 _shipPerp;
+
+    /// <summary>
+    /// Pozicija i-tog broda: usidreno na najblize Ocean polje uz brodogradiliste,
+    /// pa svaki sljedeci pomaknut prema pucini i malo bocno — slaganje kao karte.
+    /// </summary>
+    private Vector3 ShipSlot(int index)
+    {
+        EnsureShipAnchor();
+        Vector2 offset = _shipAway * (index * 0.26f) + _shipPerp * (index * 0.11f);
+        return _shipAnchor + new Vector3(offset.x, offset.y, 0f);
+    }
+
+    /// <summary>
+    /// Trazi najblize Ocean polje oko brodogradilista. Pravilo postavljanja jamci
+    /// da ga ima u radijusu 1, ali se pretraga siri do 4 polja za slucaj da je
+    /// karta u meduvremenu precrtana.
+    /// </summary>
+    private void EnsureShipAnchor()
+    {
+        if (_shipAnchorReady) return;
+        _shipAnchorReady = true;
+
+        Vector3 origin = transform.position;
+        _shipAnchor    = origin + new Vector3(0f, -1.5f, 0f);   // fallback bez karte
+
+        var renderer = IslandTilemapRenderer.Instance;
+        if (renderer != null)
+        {
+            float best = float.MaxValue;
+            for (int dx = -4; dx <= 4; dx++)
+            for (int dy = -4; dy <= 4; dy++)
+            {
+                var candidate = new Vector2(origin.x + dx, origin.y + dy);
+                if (renderer.GetTileAtWorld(candidate) != TileType.Ocean) continue;
+
+                float d = (candidate - new Vector2(origin.x, origin.y)).sqrMagnitude;
+                if (d >= best) continue;
+                best        = d;
+                _shipAnchor = new Vector3(candidate.x, candidate.y, 0f);
+            }
+        }
+
+        Vector2 away = new Vector2(_shipAnchor.x - origin.x, _shipAnchor.y - origin.y);
+        _shipAway = away.sqrMagnitude > 0.0001f ? away.normalized : new Vector2(0f, -1f);
+        _shipPerp = new Vector2(-_shipAway.y, _shipAway.x);
+
+        // Pomak od obale da trup ne sjedi na rubnom polju kopna.
+        _shipAnchor += new Vector3(_shipAway.x, _shipAway.y, 0f) * 0.5f;
     }
 
     private void RepositionWorkers()

@@ -3,6 +3,15 @@ using UnityEngine;
 public static class SimpleShapeFactory
 {
     public static Sprite CreateFilledSquareSprite(Color color, int size = 64)
+        => CreateFilledSquareSprite(color, new Vector2(0.5f, 0.5f), size);
+
+    /// <summary>
+    /// Kvadrat sa zadanim pivotom. Pivot (0, 0.5) koristi ispuna trake napretka:
+    /// skaliranjem po x tada raste SAMO udesno od svoje pozicije. S pivotom
+    /// (0.5, 0.5) rasla je na obje strane, pa je preko pozadine bila vidljiva
+    /// samo desna polovica — traka je prikazivala pola stvarnog postotka.
+    /// </summary>
+    public static Sprite CreateFilledSquareSprite(Color color, Vector2 pivot, int size = 64)
     {
         var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
         var pixels = new Color[size * size];
@@ -16,7 +25,7 @@ public static class SimpleShapeFactory
         texture.SetPixels(pixels);
         texture.Apply();
 
-        return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        return Sprite.Create(texture, new Rect(0, 0, size, size), pivot, size);
     }
 
     public static Sprite CreateFilledTriangleSprite(Color color, int size = 64)

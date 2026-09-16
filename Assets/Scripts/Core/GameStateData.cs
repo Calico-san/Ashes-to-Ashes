@@ -11,7 +11,10 @@ using UnityEngine;
 public class GameStateData
 {
     // ---- Meta ----
-    public string   SaveVersion  = "1.0";
+    // 1.1 — dodan KeelLaid (fiksni trosak broda) i podjela putnika na djecu/odrasle.
+    //       Stari zapisi (1.0) se i dalje ucitavaju: nova polja dobiju default,
+    //       a AssignedSailors se ignorira jer mornari vise ne postoje.
+    public string   SaveVersion  = "1.1";
     public string   SaveDateTime;          // ISO 8601, informational only
 
     // ---- Time ----
@@ -34,6 +37,8 @@ public class GameStateData
     public int      Engineers = -1;
     public int      FreeWorkers;
     public int      FreeEngineers;
+    /// <summary>Duse koje su vec otplovile — brodovi u odlasku se ne spremaju.</summary>
+    public int      EvacuatedSouls;
 
     // ---- Buildings ----
     public List<BuildingData>  Buildings  = new List<BuildingData>();
@@ -65,6 +70,8 @@ public class BuildingData
     // Shipyard-specific
     public float    ShipProgress;
     public int      ShipCount;
+    /// <summary>Je li fiksni trosak za brod u izradi vec placen.</summary>
+    public bool     KeelLaid;
 }
 
 // -------------------------------------------------------
@@ -89,8 +96,12 @@ public class ShipData
     public int      ShipNumber;
     public float    PositionX;
     public float    PositionY;
+    /// <summary>Zadrzano radi kompatibilnosti s 1.0; uvijek se pise 0 i ne cita se.</summary>
     public int      AssignedSailors;
+    /// <summary>Ukupno putnika — zadrzano radi kompatibilnosti i za fallback iz 1.0.</summary>
     public int      Passengers;
+    public int      PassengerChildren;
+    public int      PassengerAdults;
     public int      FoodLoaded;
     public bool     HasVisual;
 }

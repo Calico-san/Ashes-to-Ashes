@@ -45,6 +45,16 @@ public class UIController : MonoBehaviour
     [SerializeField] private Button          _removeEngBtn;
     [SerializeField] private Button          _upgradeBtn;
 
+    // ---- Town Hall (evidencija populacije) ----
+    // Town Hall nije proizvodna zgrada — ne zaposljava nego izvjestava, pa ima
+    // vlastiti kontejner umjesto da posuduje plocu proizvodnih zgrada. Time
+    // gumbi za inzenjere i nadogradnju u njemu fizicki ne postoje, a ne gase se.
+    // MISLAV — balon POPULATION iz donjeg desnog kuta moze van iz scene;
+    // ti podaci sad zive ovdje.
+    [Header("Town Hall")]
+    [SerializeField] private GameObject      _townHallContainer;
+    [SerializeField] private TextMeshProUGUI _townHallText;
+
     // ---- Ship list (Shipyard panel) ----
     [Header("Ship List")]
     [SerializeField] private GameObject      _shipListContainer;  // parent for ship row buttons
@@ -56,12 +66,14 @@ public class UIController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _shipDetailTitle;
     [SerializeField] private TextMeshProUGUI _shipDetailInfo;
     [SerializeField] private Button          _shipDetailBack;
-    [SerializeField] private Button          _shipDetailAssign;
-    [SerializeField] private Button          _shipDetailRemove;
+    [SerializeField] private Button          _shipDetailAssign;   // prenamijenjeno: + putnici
+    [SerializeField] private Button          _shipDetailRemove;   // prenamijenjeno: − putnici
     [SerializeField] private Button          _addPassengerBtn;
     [SerializeField] private Button          _removePassengerBtn;
+    [SerializeField] private Button          _boardAllBtn;        // opcionalno
     [SerializeField] private Button          _loadFoodBtn;
     [SerializeField] private Button          _unloadFoodBtn;
+    [SerializeField] private Button          _loadAllFoodBtn;     // opcionalno
 
     // ---- Build slot panel ----
     [Header("Build Slot")]
@@ -107,16 +119,25 @@ public class UIController : MonoBehaviour
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
         _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
 
-        // Wire ship detail buttons
-        _shipDetailBack?  .onClick.AddListener(() => _game.SelectShip(null));
-        _shipDetailAssign?.onClick.AddListener(() => _game.AssignSailorToSelectedShip());
-        _shipDetailRemove?.onClick.AddListener(() => _game.RemoveSailorFromSelectedShip());
+        WireShipButtons();
 
         // Initialize sub-panels
         _buildPanel?   .Build(game, GetComponentInParent<Canvas>()?.transform ?? transform, cam);
         _saveLoadPanel?.Build(game, GetComponentInParent<Canvas>()?.transform ?? transform);
 
         _rightPanel?.SetActive(false);
+    }
+
+    /// <summary>
+    /// Povezuje se samo "< Back". Gumbi za teret vise ne dolaze iz scene nego iz
+    /// EnsureCargoRows(), koji gradi dva kompaktna retka i sam ih poveze — ranije
+    /// su _addPassengerBtn, _loadFoodBtn i ostali imali natpis i interactable, ali
+    /// nikad nisu dobili onClick.
+    /// Povezivanje NE smije ici u Refresh(): on se izvrsava svaki frame.
+    /// </summary>
+    private void WireShipButtons()
+    {
+        _shipDetailBack?.onClick.AddListener(() => _game.SelectShip(null));
     }
 
     // Keep Build() as alias so Bootstrapper doesn't break before migration
@@ -132,6 +153,7 @@ public class UIController : MonoBehaviour
         if (game == null) return;
         _game = game; // ensure _game is set even before Build() is called
         RefreshTopBar(game);
+        ApplyInkColors();
         _hopeBar?.SetHope(game.Hope);
         RefreshRightPanel(game, selBuilding, selShip, selSlot);
         RefreshSpeedButtons(game.SpeedMultiplier);
@@ -141,6 +163,24 @@ public class UIController : MonoBehaviour
     // -------------------------------------------------------
     // Top bar
     // -------------------------------------------------------
+
+    /// <summary>
+    /// Ploca je svijetla, pa je svijetli tekst na njoj bio jedva citljiv.
+    /// Boje se postavljaju iz koda da ne ovise o tome sto je zapisano u sceni.
+    /// Natpisi gumba ostaju bijeli — gumbi imaju tamnu podlogu.
+    /// </summary>
+    private static readonly Color PanelInk      = new Color(0.08f, 0.07f, 0.06f);
+    private static readonly Color PanelInkSoft  = new Color(0.24f, 0.21f, 0.17f);
+
+    private void ApplyInkColors()
+    {
+        if (_titleText       != null) _titleText.color       = PanelInk;
+        if (_workerText      != null) _workerText.color      = PanelInkSoft;
+        if (_outputText      != null) _outputText.color      = PanelInk;
+        if (_townHallText    != null) _townHallText.color    = PanelInk;
+        if (_shipDetailTitle != null) _shipDetailTitle.color = PanelInk;
+        if (_shipDetailInfo  != null) _shipDetailInfo.color  = PanelInkSoft;
+    }
 
     private void RefreshTopBar(GameController game)
     {
@@ -160,6 +200,30 @@ public class UIController : MonoBehaviour
     // Right panel
     // -------------------------------------------------------
 
+    /// <summary>
+    /// Gasi sve opcionalne kontrole prije nego sto ih grana ponovno upali.
+    /// Bez ovoga gumbi zadrze stanje iz prethodne selekcije — zato su se inzenjeri
+    /// i nadogradnja pojavljivali u Town Hallu, gradilistu i brodu.
+    /// </summary>
+    private void ResetPanelControls()
+    {
+        if (_assignEngBtn    != null) _assignEngBtn.gameObject.SetActive(false);
+        if (_removeEngBtn    != null) _removeEngBtn.gameObject.SetActive(false);
+        if (_upgradeBtn      != null) _upgradeBtn.gameObject.SetActive(false);
+        if (_addPassengerBtn != null) _addPassengerBtn.gameObject.SetActive(false);
+        if (_removePassengerBtn != null) _removePassengerBtn.gameObject.SetActive(false);
+        if (_boardAllBtn     != null) _boardAllBtn.gameObject.SetActive(false);
+        if (_loadFoodBtn     != null) _loadFoodBtn.gameObject.SetActive(false);
+        if (_unloadFoodBtn   != null) _unloadFoodBtn.gameObject.SetActive(false);
+        if (_loadAllFoodBtn  != null) _loadAllFoodBtn.gameObject.SetActive(false);
+        if (_assignBtn       != null) _assignBtn.gameObject.SetActive(true);
+        if (_removeBtn       != null) _removeBtn.gameObject.SetActive(true);
+        if (_workerText      != null) _workerText.gameObject.SetActive(true);
+        if (_outputText      != null) _outputText.gameObject.SetActive(true);
+        SetOutputExpanded(false);
+        if (_cargoRows != null) _cargoRows.SetActive(false);
+    }
+
     private void RefreshRightPanel(GameController game,
         BuildingInstance sel, ShipInstance selShip, BuildSlot selSlot)
     {
@@ -175,53 +239,75 @@ public class UIController : MonoBehaviour
         {
             _shipListContainer?  .SetActive(false);
             _shipDetailContainer?.SetActive(false);
+            _townHallContainer?  .SetActive(false);
             _game.SelectShip(null);
             return;
         }
 
-        // Reset all sub-containers
+        // Reset all sub-containers and optional controls
         _shipListContainer?  .SetActive(false);
         _shipDetailContainer?.SetActive(false);
+        _townHallContainer?  .SetActive(false);
         if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
+        ResetPanelControls();
 
         if (showShipyard)
         {
-            float pct = sel.ShipProgress / BalanceConfig.ShipProgressRequired * 100f;
-            SetTitle("Shipyard");
-            SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}  Engineers: {sel.AssignedEngineers}/{sel.MaxEngineers}  |  {pct:F0}%");
-            SetOutputLine($"Cost/tick — Wood: {sel.ShipWoodPerCycle}  Steel: {sel.ShipSteelPerCycle}" +
-                          $"  Cloth: {sel.ShipClothPerCycle}  Rope: {sel.ShipRopePerCycle}" +
-                          $"\nShips built: {sel.ShipCount}");
-            SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
-                       "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
-                       sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
-                       sel.AssignedWorkers > 0);
-            SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
-                          sel.AssignedEngineers > 0);
-
             bool inDetail = selShip != null;
+
             _shipListContainer?  .SetActive(!inDetail);
             _shipDetailContainer?.SetActive(inDetail);
-            if (inDetail) RefreshShipDetail(game, selShip);
-            else          RefreshShipList(game);
+
+            if (inDetail)
+            {
+                // Dok je otvoren brod, sazetak brodogradilista i gumbi za radnike
+                // samo trose visinu — ploca inace ne stane na ekran. Povratak je
+                // jedan klik na "< Back".
+                SetTitle(selShip.DisplayName);
+                if (_workerText != null) _workerText.gameObject.SetActive(false);
+                if (_outputText != null) _outputText.gameObject.SetActive(false);
+                if (_assignBtn  != null) _assignBtn.gameObject.SetActive(false);
+                if (_removeBtn  != null) _removeBtn.gameObject.SetActive(false);
+
+                RefreshShipDetail(game, selShip);
+            }
+            else
+            {
+                SetTitle("Shipyard");
+                SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}" +
+                    (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
+                    (sel.AssignedEngineers > 0
+                        ? $"  | Eng: {sel.AssignedEngineers} +{(int)((sel.EngineerBonus - 1) * 100)}%"
+                        : ""));
+
+                // Fiksni trosak po brodu — radnici odreduju samo brzinu.
+                string eta = sel.ShipHoursRemaining >= 0f ? $"{sel.ShipHoursRemaining:F1}h" : "—";
+                SetOutputLine($"Cost: {ShipCostString()}  ({(sel.KeelLaid ? "paid" : "unpaid")})\n" +
+                              $"Progress: {sel.ShipProgressPercent:F0}%   ETA: {eta}\n" +
+                              $"Ships built: {sel.ShipCount}");
+
+                SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
+                           "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
+                           sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
+                           sel.AssignedWorkers > 0);
+                SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
+                              sel.AssignedEngineers > 0);
+
+                RefreshShipList(game);
+            }
         }
         else if (showTownHall)
         {
-            SetTitle("Town Hall");
-            SetWorkerLine("The heart of New Haven.");
-            SetOutputLine($"Population: {game.TotalPopulation}\n" +
-                          $"Children: {game.Children}\n" +
-                          $"Free workers: {game.FreeWorkers}");
-            SetButtons("", null, "", null, false, false);
+            RefreshTownHall(game);
         }
         else if (showSlot)
         {
             SetTitle("Under Construction");
             if (selSlot.State == BuildSlot.SlotState.UnderConstruction)
             {
-                SetWorkerLine(selSlot.QueuedType.ToString());
+                SetWorkerLine(BuildingFactory.Meta(selSlot.QueuedType).name);
                 SetOutputLine($"Progress: {selSlot.ConstructionProgress * 100f:F0}%\n" +
-                              $"Time left: {selSlot.ConstructionHoursRemaining:F0}h");
+                              $"Time left: {selSlot.HoursRemainingSmooth:F1}h");
             }
             else
             {
@@ -232,8 +318,6 @@ public class UIController : MonoBehaviour
         }
         else if (showBuilding)
         {
-            float perW = sel.OutputPerWorkerPerHour;
-            float tot  = sel.TotalOutputPerHour;
             string outputName = sel.BuildingTypeEnum == BuildingType.HuntersHut
                 ? "Raw Food"
                 : sel.OutputType.ToString();
@@ -249,8 +333,18 @@ public class UIController : MonoBehaviour
                     (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
                     engStr + rawStr);
             }
-            SetOutputLine($"{outputName}/worker/h: {perW:F2}\n" +
-                          $"Total/h: {tot:F2}  |  /day: {tot * 24f:F1}");
+
+            // Samo total/h. Stopa po radniku i "/day" su maknuti — "/day" je uz
+            // 14-satni dan ionako bio racunat s 24 i prikazivao krivu brojku.
+            string outLine = $"{outputName}/h: {sel.TotalOutputPerHour}";
+
+            // Fiberworks isporucuje i Rope; bez ovog retka resurs je rastao bez
+            // ijednog vidljivog izvora.
+            if (sel.SecondaryOutputType.HasValue)
+                outLine += $"\n{sel.SecondaryOutputType.Value}/h: {sel.SecondaryTotalPerHour}";
+
+            SetOutputLine(outLine);
+
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
                        "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
                        sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
@@ -262,19 +356,132 @@ public class UIController : MonoBehaviour
         else if (showShip)
         {
             SetTitle(selShip.DisplayName);
-            SetWorkerLine($"Sailors: {selShip.AssignedSailors} / {selShip.MaxSailors}" +
-                (selShip.SailorsInside > 0 ? $"  ({selShip.SailorsInside} aboard)" : ""));
-            SetOutputLine($"Passengers: {selShip.Passengers} / {selShip.MaxPassengers}\n" +
-                          $"Food loaded: {selShip.FoodLoaded} / {selShip.RequiredFood}\n" +
-                          (selShip.IsReadyToSail ? "Ready to sail!" : "Not ready to sail"));
-            SetButtons("+ Add sailor",    () => game.AssignSailorToSelectedShip(),
-                       "- Remove sailor", () => game.RemoveSailorFromSelectedShip(),
-                       selShip.AssignedSailors < selShip.MaxSailors && game.FreeWorkers > 0,
-                       selShip.AssignedSailors > 0);
-            SetShipPassengerButtons(selShip, game);
-            SetShipFoodButtons(selShip, game);
+            _shipDetailContainer?.SetActive(true);
+            if (_workerText != null) _workerText.gameObject.SetActive(false);
+            if (_outputText != null) _outputText.gameObject.SetActive(false);
+            if (_assignBtn  != null) _assignBtn.gameObject.SetActive(false);
+            if (_removeBtn  != null) _removeBtn.gameObject.SetActive(false);
+            RefreshShipDetail(game, selShip);
         }
     }
+
+    // -------------------------------------------------------
+    // Town Hall — evidencija populacije
+    // -------------------------------------------------------
+
+    private void RefreshTownHall(GameController game)
+    {
+        _townHallContainer?.SetActive(true);
+
+        SetTitle("Town Hall");
+
+        float  net      = game.NetFoodPerDay;
+        string netColor = net < 0f ? "#8C1D1D" : "#1E5B2A";
+
+        // Svaka stavka je vlastiti redak. Ranije su dvije stavke dijelile redak
+        // pa ih je omatanje teksta lomilo na proizvoljnim mjestima ("Workers:
+        // 307/115   Engineers: 165/0" u sredini retka).
+        var lines = new List<string>
+        {
+            "<b>Population</b>",
+            $"Souls on the island: {game.TotalPopulation}",
+            $"Children: {game.Children}",
+            $"Adults: {game.AdultPopulation}",
+            $"Workers free: {game.FreeWorkers}",
+            $"Workers working: {game.EmployedWorkers}",
+            $"Engineers free: {game.FreeEngineers}",
+            $"Engineers working: {game.EmployedEngineers}",
+            $"Boarded on ships: {game.BoardedPassengers}",
+            $"Evacuated: {game.EvacuatedSouls}",
+            "",
+            "<b>Food</b>",
+            $"Produced: {game.FoodProducedPerDay:F0} / day",
+            $"Consumed: {game.FoodConsumedPerDay:F0} / day",
+            $"Net: <color={netColor}>{net:+0;-0;0} / day</color>",
+            $"Stock: {game.Food}",
+        };
+
+        string text = string.Join("\n", lines);
+
+        if (_townHallText != null)
+        {
+            _townHallText.text = text;
+            // Vlastiti kontejner preuzima ispis — dva retka proizvodne ploce se gase.
+            if (_workerText != null) _workerText.gameObject.SetActive(false);
+            if (_outputText != null) _outputText.gameObject.SetActive(false);
+        }
+        else
+        {
+            // Fallback dok Mislav ne povuce _townHallText: sve ide u jedno polje,
+            // bez omatanja, uz privremeno povecanu visinu da 15 redaka stane.
+            // ResetPanelControls() vraca polje u izvorno stanje za ostale kontekste.
+            if (_workerText != null) _workerText.gameObject.SetActive(false);
+            SetOutputExpanded(true, lines.Count);
+            SetOutputLine(text);
+        }
+
+        // Town Hall ne zaposljava — gumbi za radnike se skrivaju, a inzenjeri i
+        // nadogradnja su vec ugaseni u ResetPanelControls().
+        if (_assignBtn != null) _assignBtn.gameObject.SetActive(false);
+        if (_removeBtn != null) _removeBtn.gameObject.SetActive(false);
+    }
+
+    // ---- Visina i omatanje retka izlaza ----
+    // Town Hall treba znatno vise redaka od proizvodne zgrade. Izvorne vrijednosti
+    // iz Inspectora se zapamte pri prvom koristenju i vrate cim se odabere nesto drugo.
+
+    private LayoutElement     _outputLE;
+    private float             _outputPrefH = -1f;
+    private float             _outputMinH  = -1f;
+    private TextWrappingModes _outputWrap  = TextWrappingModes.Normal;
+    private bool              _outputDefaultsCached;
+
+    private void CacheOutputDefaults()
+    {
+        if (_outputDefaultsCached || _outputText == null) return;
+        _outputLE = _outputText.GetComponent<LayoutElement>();
+        if (_outputLE != null)
+        {
+            _outputPrefH = _outputLE.preferredHeight;
+            _outputMinH  = _outputLE.minHeight;
+        }
+        _outputWrap           = _outputText.textWrappingMode;
+        _outputDefaultsCached = true;
+    }
+
+    private void SetOutputExpanded(bool expanded, int lineCount = 0)
+    {
+        if (_outputText == null) return;
+        CacheOutputDefaults();
+
+        if (expanded)
+        {
+            _outputText.textWrappingMode = TextWrappingModes.NoWrap;
+            if (_outputLE != null)
+            {
+                float h = lineCount * _outputText.fontSize * 1.35f + 8f;
+                _outputLE.preferredHeight = h;
+                _outputLE.minHeight       = h;
+            }
+        }
+        else
+        {
+            _outputText.textWrappingMode = _outputWrap;
+            if (_outputLE != null && _outputPrefH >= 0f)
+            {
+                _outputLE.preferredHeight = _outputPrefH;
+                _outputLE.minHeight       = _outputMinH;
+            }
+        }
+    }
+
+    // -------------------------------------------------------
+    // Ships
+    // -------------------------------------------------------
+
+    private static string ShipCostString()
+        => $"W:{BalanceConfig.ShipWoodCost}  S:{BalanceConfig.ShipSteelCost}" +
+           $"  C:{BalanceConfig.ShipClothCost}  R:{BalanceConfig.ShipRopeCost}";
 
     private void RefreshShipList(GameController game)
     {
@@ -318,7 +525,9 @@ public class UIController : MonoBehaviour
 
             var lbl = btn.GetComponentInChildren<TextMeshProUGUI>();
             if (lbl != null)
-                lbl.text = $"{ship.DisplayName}  —  Sailors: {ship.AssignedSailors}/{ship.MaxSailors}";
+                lbl.text = $"{ship.DisplayName}  —  P: {ship.Passengers}/{ship.MaxPassengers}" +
+                           $"  F: {ship.FoodLoaded}/{ship.RequiredFood}" +
+                           (ship.IsReadyToSail ? "  ✔" : "");
 
             int idx = i;
             btn.onClick.RemoveAllListeners();
@@ -331,19 +540,102 @@ public class UIController : MonoBehaviour
         if (ship == null) return;
         if (_shipDetailTitle != null) _shipDetailTitle.text = ship.DisplayName;
         if (_shipDetailInfo  != null)
-            _shipDetailInfo.text =
-                $"Sailors: {ship.AssignedSailors} / {ship.MaxSailors}\n" +
-                $"Passengers: {ship.Passengers} / {ship.MaxPassengers}\n" +
-                $"Food: {ship.FoodLoaded} / {ship.RequiredFood}\n" +
-                (ship.IsReadyToSail ? "Ready to sail!" : "Not ready");
+            _shipDetailInfo.text = ship.IsReadyToSail ? "Ready to sail!" : "Not ready to sail";
 
-        if (_shipDetailAssign != null)
-            _shipDetailAssign.interactable =
-                ship.AssignedSailors < ship.MaxSailors && game.FreeWorkers > 0;
-        if (_shipDetailRemove != null)
-            _shipDetailRemove.interactable = ship.AssignedSailors > 0;
-        SetShipPassengerButtons(ship, game);
-        SetShipFoodButtons(ship, game);
+        // Sve stare varijante gumba se gase — teret se vodi kroz dva kompaktna
+        // retka "Passengers [+] [-]" i "Food [+] [-]". Prije je ista akcija
+        // postojala u tri oblika (stari sailor gumbi, namjenski, pa jos "All").
+        HideLegacyCargoButtons();
+        EnsureCargoRows();
+
+        bool canBoard = ship.FreeSpace > 0 && !ship.IsSailing
+                     && (game.FreeWorkers > 0 || game.AvailableChildren > 0);
+
+        if (_cargoRows != null) _cargoRows.SetActive(true);
+        if (_passengerRowLabel != null)
+            _passengerRowLabel.text = $"Passengers  {ship.Passengers} / {ship.MaxPassengers}";
+        if (_foodRowLabel != null)
+            _foodRowLabel.text = $"Food  {ship.FoodLoaded} / {ship.RequiredFood}";
+
+        if (_passengerPlus  != null) _passengerPlus.interactable  = canBoard;
+        if (_passengerMinus != null) _passengerMinus.interactable = ship.Passengers > 0;
+        if (_foodPlus  != null) _foodPlus.interactable  = game.Food > 0 && ship.FoodMissing > 0;
+        if (_foodMinus != null) _foodMinus.interactable = ship.FoodLoaded > 0;
+    }
+
+    // ---- Kompaktni redci tereta ----
+
+    private GameObject      _cargoRows;
+    private TextMeshProUGUI _passengerRowLabel, _foodRowLabel;
+    private Button          _passengerPlus, _passengerMinus, _foodPlus, _foodMinus;
+
+    private void HideLegacyCargoButtons()
+    {
+        if (_shipDetailAssign   != null) _shipDetailAssign.gameObject.SetActive(false);
+        if (_shipDetailRemove   != null) _shipDetailRemove.gameObject.SetActive(false);
+        if (_addPassengerBtn    != null) _addPassengerBtn.gameObject.SetActive(false);
+        if (_removePassengerBtn != null) _removePassengerBtn.gameObject.SetActive(false);
+        if (_boardAllBtn        != null) _boardAllBtn.gameObject.SetActive(false);
+        if (_loadFoodBtn        != null) _loadFoodBtn.gameObject.SetActive(false);
+        if (_unloadFoodBtn      != null) _unloadFoodBtn.gameObject.SetActive(false);
+        if (_loadAllFoodBtn     != null) _loadAllFoodBtn.gameObject.SetActive(false);
+    }
+
+    private void EnsureCargoRows()
+    {
+        if (_cargoRows != null) return;
+
+        Transform parent = _shipDetailContainer != null ? _shipDetailContainer.transform
+                         : _rightPanel != null          ? _rightPanel.transform
+                         : transform;
+
+        _cargoRows = new GameObject("ShipCargoRows", typeof(RectTransform));
+        _cargoRows.transform.SetParent(parent, false);
+        // flexH: 0 — bez toga roditeljski VerticalLayoutGroup iz scene rastegne
+        // retke po visini i gumbi prestanu biti kvadratici.
+        LE(_cargoRows, prefH: 52, minH: 52, flexH: 0);
+        var vg = _cargoRows.AddComponent<VerticalLayoutGroup>();
+        vg.spacing = 4;
+        vg.childControlWidth = vg.childControlHeight = vg.childForceExpandWidth = true;
+        vg.childForceExpandHeight = false;
+
+        int pStep = BalanceConfig.ShipPassengerLoadStep;
+
+        MakeCargoRow(_cargoRows.transform, "Passengers",
+            out _passengerRowLabel, out _passengerPlus, out _passengerMinus);
+        _passengerPlus .onClick.AddListener(() => _game.AddPassengersToSelectedShip(pStep));
+        _passengerMinus.onClick.AddListener(() => _game.RemovePassengersFromSelectedShip(pStep));
+
+        MakeCargoRow(_cargoRows.transform, "Food",
+            out _foodRowLabel, out _foodPlus, out _foodMinus);
+        _foodPlus .onClick.AddListener(() => _game.LoadFoodToSelectedShip());
+        _foodMinus.onClick.AddListener(() => _game.UnloadFoodFromSelectedShip());
+    }
+
+    /// <summary>Jedan redak: natpis lijevo, pa dva mala kvadratna gumba + i -.</summary>
+    private void MakeCargoRow(Transform parent, string caption,
+        out TextMeshProUGUI label, out Button plus, out Button minus)
+    {
+        var row = new GameObject($"Row_{caption}", typeof(RectTransform));
+        row.transform.SetParent(parent, false);
+        LE(row, prefH: 24, minH: 24, flexH: 0);
+        var hg = row.AddComponent<HorizontalLayoutGroup>();
+        hg.spacing = 4;
+        hg.childAlignment = TextAnchor.MiddleLeft;
+        hg.childControlWidth = hg.childControlHeight = true;
+        hg.childForceExpandWidth  = false;
+        hg.childForceExpandHeight = false;   // inace gumbi narastu na visinu retka
+
+        label = MakeTMP(row.transform, "Label", 10, TextAlignmentOptions.MidlineLeft);
+        label.text  = caption;
+        label.color = PanelInk;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        LE(label.gameObject, flexW: 1, minW: 60);
+
+        plus  = MakeBtn(row.transform, "+", null, 20, 20);
+        minus = MakeBtn(row.transform, "-", null, 20, 20);
+        LE(plus.gameObject,  prefW: 20, minW: 20, prefH: 20, minH: 20, flexW: 0, flexH: 0);
+        LE(minus.gameObject, prefW: 20, minW: 20, prefH: 20, minH: 20, flexW: 0, flexH: 0);
     }
 
     private void RefreshSpeedButtons(int speed)
@@ -402,39 +694,6 @@ public class UIController : MonoBehaviour
         }
     }
 
-    private void SetShipPassengerButtons(ShipInstance ship, GameController game)
-    {
-        if (_addPassengerBtn != null)
-        {
-            _addPassengerBtn.gameObject.SetActive(true);
-            _addPassengerBtn.interactable = ship.Passengers < ship.MaxPassengers && game.FreeWorkers > 0;
-            SetLabel(_addPassengerBtn, $"+ Passenger ({ship.Passengers}/{ship.MaxPassengers})");
-        }
-        if (_removePassengerBtn != null)
-        {
-            _removePassengerBtn.gameObject.SetActive(true);
-            _removePassengerBtn.interactable = ship.Passengers > 0;
-            SetLabel(_removePassengerBtn, "- Passenger");
-        }
-    }
-
-    private void SetShipFoodButtons(ShipInstance ship, GameController game)
-    {
-        if (_loadFoodBtn != null)
-        {
-            _loadFoodBtn.gameObject.SetActive(true);
-            _loadFoodBtn.interactable = game.Food >= BalanceConfig.ShipFoodLoadStep
-                                      && ship.FoodLoaded < ship.RequiredFood;
-            SetLabel(_loadFoodBtn, $"+ Load Food ({ship.FoodLoaded}/{ship.RequiredFood})");
-        }
-        if (_unloadFoodBtn != null)
-        {
-            _unloadFoodBtn.gameObject.SetActive(true);
-            _unloadFoodBtn.interactable = ship.FoodLoaded > 0;
-            SetLabel(_unloadFoodBtn, "- Unload Food");
-        }
-    }
-
     private void SetUpgradeBtn(bool visible, bool enabled)
     {
         if (_upgradeBtn == null) return;
@@ -445,10 +704,16 @@ public class UIController : MonoBehaviour
 
     private void SetEngButtons(bool assignEnabled, bool removeEnabled)
     {
-        if (_assignEngBtn != null) _assignEngBtn.interactable = assignEnabled;
-        if (_removeEngBtn != null) _removeEngBtn.interactable = removeEnabled;
-        if (_assignEngBtn != null) _assignEngBtn.gameObject.SetActive(true);
-        if (_removeEngBtn != null) _removeEngBtn.gameObject.SetActive(true);
+        if (_assignEngBtn != null)
+        {
+            _assignEngBtn.gameObject.SetActive(true);
+            _assignEngBtn.interactable = assignEnabled;
+        }
+        if (_removeEngBtn != null)
+        {
+            _removeEngBtn.gameObject.SetActive(true);
+            _removeEngBtn.interactable = removeEnabled;
+        }
     }
 
     private static void SetLabel(Button btn, string text)
@@ -510,9 +775,8 @@ public class UIController : MonoBehaviour
         _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
         _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
-        _shipDetailBack?  .onClick.AddListener(() => _game.SelectShip(null));
-        _shipDetailAssign?.onClick.AddListener(() => _game.AssignSailorToSelectedShip());
-        _shipDetailRemove?.onClick.AddListener(() => _game.RemoveSailorFromSelectedShip());
+
+        WireShipButtons();
 
         _rightPanel?.SetActive(false);
     }
@@ -562,12 +826,16 @@ public class UIController : MonoBehaviour
         Sep(rp.transform);
         _workerText = MakeTMP(rp.transform, "Workers", 10, TextAlignmentOptions.TopLeft);
         _workerText.color = new Color(0.85f,0.85f,0.85f);
-        LE(_workerText.gameObject, prefH:14, minH:14);
+        _workerText.textWrappingMode = TextWrappingModes.Normal;
+        LE(_workerText.gameObject, prefH:28, minH:14);
         _outputText = MakeTMP(rp.transform, "Output", 10, TextAlignmentOptions.TopLeft);
         _outputText.color = new Color(0.65f,0.82f,0.65f);
         _outputText.textWrappingMode = TextWrappingModes.Normal;
         LE(_outputText.gameObject, prefH:52, minH:52);
         Sep(rp.transform);
+
+        BuildTownHallFromCode(rp.transform);
+
         _assignBtn = MakeBtn(rp.transform, "+ Add worker", null, 166, 26);
         LE(_assignBtn.gameObject, prefH:26, minH:26);
         Gap(rp.transform, 4);
@@ -587,11 +855,30 @@ public class UIController : MonoBehaviour
         _rightPanel.SetActive(false);
     }
 
+    private void BuildTownHallFromCode(Transform parent)
+    {
+        var th = new GameObject("TownHallPanel", typeof(RectTransform));
+        th.transform.SetParent(parent, false);
+        LE(th, prefH:160, minH:20);
+        var vg = th.AddComponent<VerticalLayoutGroup>();
+        vg.spacing = 2; vg.childControlWidth = vg.childControlHeight = vg.childForceExpandWidth = true;
+        vg.childForceExpandHeight = false;
+        _townHallContainer = th;
+
+        _townHallText = MakeTMP(th.transform, "TownHallText", 10, TextAlignmentOptions.TopLeft);
+        _townHallText.color = new Color(0.88f, 0.86f, 0.72f);
+        _townHallText.textWrappingMode = TextWrappingModes.Normal;
+        _townHallText.richText = true;
+        LE(_townHallText.gameObject, prefH:150, minH:100);
+
+        _townHallContainer.SetActive(false);
+    }
+
     private void BuildShipDetailFromCode(Transform parent)
     {
         var sd = new GameObject("ShipDetail", typeof(RectTransform));
         sd.transform.SetParent(parent, false);
-        LE(sd, prefH:160, minH:20);
+        LE(sd, prefH:200, minH:20);
         var vg = sd.AddComponent<VerticalLayoutGroup>();
         vg.spacing = 5; vg.childControlWidth = vg.childControlHeight = vg.childForceExpandWidth = true;
         vg.childForceExpandHeight = false;
@@ -608,11 +895,9 @@ public class UIController : MonoBehaviour
         _shipDetailInfo.textWrappingMode = TextWrappingModes.Normal;
         LE(_shipDetailInfo.gameObject, prefH:48, minH:48);
         Sep(sd.transform);
-        _shipDetailAssign = MakeBtn(sd.transform, "+ Add sailor",    null, 166, 24);
-        LE(_shipDetailAssign.gameObject, prefH:24, minH:24);
-        Gap(sd.transform, 3);
-        _shipDetailRemove = MakeBtn(sd.transform, "- Remove sailor", null, 166, 24);
-        LE(_shipDetailRemove.gameObject, prefH:24, minH:24);
+
+        // Redci tereta (Passengers / Food) gradi EnsureCargoRows() pri prvom prikazu.
+
         _shipDetailContainer.SetActive(false);
     }
 
