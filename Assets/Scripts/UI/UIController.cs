@@ -45,16 +45,6 @@ public class UIController : MonoBehaviour
     [SerializeField] private Button          _removeEngBtn;
     [SerializeField] private Button          _upgradeBtn;
 
-    // ---- Town Hall (evidencija populacije) ----
-    // Town Hall nije proizvodna zgrada — ne zaposljava nego izvjestava, pa ima
-    // vlastiti kontejner umjesto da posuduje plocu proizvodnih zgrada. Time
-    // gumbi za inzenjere i nadogradnju u njemu fizicki ne postoje, a ne gase se.
-    // MISLAV — balon POPULATION iz donjeg desnog kuta moze van iz scene;
-    // ti podaci sad zive ovdje.
-    [Header("Town Hall")]
-    [SerializeField] private GameObject      _townHallContainer;
-    [SerializeField] private TextMeshProUGUI _townHallText;
-
     // ---- Ship list (Shipyard panel) ----
     [Header("Ship List")]
     [SerializeField] private GameObject      _shipListContainer;  // parent for ship row buttons
@@ -177,7 +167,6 @@ public class UIController : MonoBehaviour
         if (_titleText       != null) _titleText.color       = PanelInk;
         if (_workerText      != null) _workerText.color      = PanelInkSoft;
         if (_outputText      != null) _outputText.color      = PanelInk;
-        if (_townHallText    != null) _townHallText.color    = PanelInk;
         if (_shipDetailTitle != null) _shipDetailTitle.color = PanelInk;
         if (_shipDetailInfo  != null) _shipDetailInfo.color  = PanelInkSoft;
     }
@@ -239,7 +228,6 @@ public class UIController : MonoBehaviour
         {
             _shipListContainer?  .SetActive(false);
             _shipDetailContainer?.SetActive(false);
-            _townHallContainer?  .SetActive(false);
             _game.SelectShip(null);
             return;
         }
@@ -247,7 +235,6 @@ public class UIController : MonoBehaviour
         // Reset all sub-containers and optional controls
         _shipListContainer?  .SetActive(false);
         _shipDetailContainer?.SetActive(false);
-        _townHallContainer?  .SetActive(false);
         if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
         ResetPanelControls();
 
@@ -371,8 +358,6 @@ public class UIController : MonoBehaviour
 
     private void RefreshTownHall(GameController game)
     {
-        _townHallContainer?.SetActive(true);
-
         SetTitle("Town Hall");
 
         float  net      = game.NetFoodPerDay;
@@ -403,22 +388,12 @@ public class UIController : MonoBehaviour
 
         string text = string.Join("\n", lines);
 
-        if (_townHallText != null)
-        {
-            _townHallText.text = text;
-            // Vlastiti kontejner preuzima ispis — dva retka proizvodne ploce se gase.
-            if (_workerText != null) _workerText.gameObject.SetActive(false);
-            if (_outputText != null) _outputText.gameObject.SetActive(false);
-        }
-        else
-        {
-            // Fallback dok Mislav ne povuce _townHallText: sve ide u jedno polje,
-            // bez omatanja, uz privremeno povecanu visinu da 15 redaka stane.
-            // ResetPanelControls() vraca polje u izvorno stanje za ostale kontekste.
-            if (_workerText != null) _workerText.gameObject.SetActive(false);
-            SetOutputExpanded(true, lines.Count);
-            SetOutputLine(text);
-        }
+        // Town Hall koristi standardni tekst desnog panela. Visina se privremeno
+        // poveca kako bi svi redci stali; ResetPanelControls() je vraca za druge
+        // vrste selekcije.
+        if (_workerText != null) _workerText.gameObject.SetActive(false);
+        SetOutputExpanded(true, lines.Count);
+        SetOutputLine(text);
 
         // Town Hall ne zaposljava — gumbi za radnike se skrivaju, a inzenjeri i
         // nadogradnja su vec ugaseni u ResetPanelControls().
@@ -834,8 +809,6 @@ public class UIController : MonoBehaviour
         LE(_outputText.gameObject, prefH:52, minH:52);
         Sep(rp.transform);
 
-        BuildTownHallFromCode(rp.transform);
-
         _assignBtn = MakeBtn(rp.transform, "+ Add worker", null, 166, 26);
         LE(_assignBtn.gameObject, prefH:26, minH:26);
         Gap(rp.transform, 4);
@@ -853,25 +826,6 @@ public class UIController : MonoBehaviour
 
         BuildShipDetailFromCode(rp.transform);
         _rightPanel.SetActive(false);
-    }
-
-    private void BuildTownHallFromCode(Transform parent)
-    {
-        var th = new GameObject("TownHallPanel", typeof(RectTransform));
-        th.transform.SetParent(parent, false);
-        LE(th, prefH:160, minH:20);
-        var vg = th.AddComponent<VerticalLayoutGroup>();
-        vg.spacing = 2; vg.childControlWidth = vg.childControlHeight = vg.childForceExpandWidth = true;
-        vg.childForceExpandHeight = false;
-        _townHallContainer = th;
-
-        _townHallText = MakeTMP(th.transform, "TownHallText", 10, TextAlignmentOptions.TopLeft);
-        _townHallText.color = new Color(0.88f, 0.86f, 0.72f);
-        _townHallText.textWrappingMode = TextWrappingModes.Normal;
-        _townHallText.richText = true;
-        LE(_townHallText.gameObject, prefH:150, minH:100);
-
-        _townHallContainer.SetActive(false);
     }
 
     private void BuildShipDetailFromCode(Transform parent)
