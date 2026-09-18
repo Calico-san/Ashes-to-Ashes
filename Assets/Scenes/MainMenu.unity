@@ -434,6 +434,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.99607843
       objectReference: {fileID: 0}
+    - target: {fileID: 4523923295958703366, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5028766771088276451, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Transition
       value: 2
@@ -756,6 +760,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.9960785
       objectReference: {fileID: 0}
+    - target: {fileID: 4523923295958703366, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5028766771088276451, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Transition
       value: 2
@@ -972,6 +980,10 @@ PrefabInstance:
     - target: {fileID: 4523923295958703366, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Color.r
       value: 0.99607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 4523923295958703366, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5028766771088276451, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Transition
