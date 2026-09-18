@@ -44,6 +44,15 @@ public class PrototypeSelectionController : MonoBehaviour
         var building = hit.GetComponent<BuildingInstance>();
         if (building != null)
         {
+            // Town Hall se istim klikom i otvara i zatvara.
+            if (building.IsTownHall && Game.GetSelectedBuilding() == building)
+            {
+                Game.SelectShip(null);
+                Game.SelectSlot(null);
+                Game.SelectBuilding(null);
+                return;
+            }
+
             Game.SelectShip(null);
             Game.SelectSlot(null);
             Game.SelectBuilding(building);

@@ -46,16 +46,12 @@ public class BuildPanel : MonoBehaviour
         public Image           Icon;
         public TextMeshProUGUI NameLabel;
         public TextMeshProUGUI CostLabel;
-        public TextMeshProUGUI HoursLabel;
     }
 
     // ---- Scene refs ----
     [Header("Panel")]
-    [SerializeField] private GameObject       _panelRoot;
-    [SerializeField] private Button           _toggleBtn;
-    [SerializeField] private TextMeshProUGUI  _toggleBtnLabel;   // prazno ako gumb ima sprite ikonu
-    [SerializeField] private string           _toggleOpenLabel  = "[X]";
-    [SerializeField] private string           _toggleCloseLabel = "[B]";
+    [SerializeField] private GameObject _panelRoot;
+    [SerializeField] private Button     _toggleBtn;
 
     [Header("Gumbi zgrada")]
     [SerializeField] private BuildButtonRef[] _sceneBuildButtons;
@@ -114,7 +110,6 @@ public class BuildPanel : MonoBehaviour
         _ready     = true;
         _panelOpen = false;
         _panelRoot.SetActive(false);
-        RefreshToggleLabel();
     }
 
     private void WireToggle()
@@ -149,7 +144,6 @@ public class BuildPanel : MonoBehaviour
             // prvoj promjeni cijene ili naziva.
             if (entry.NameLabel  != null) entry.NameLabel.text  = BuildingFactory.Meta(entry.Type).name;
             if (entry.CostLabel  != null) entry.CostLabel.text  = CostString(cost);
-            if (entry.HoursLabel != null) entry.HoursLabel.text = $"{cost.Hours}h";
 
             if (entry.Icon != null)
             {
@@ -178,10 +172,26 @@ public class BuildPanel : MonoBehaviour
 
     private void Update()
     {
-        if (_pendingType == null) return;
-
         var mouse = Mouse.current;
         if (mouse == null) return;
+
+        // Kao desni panel: klik na svijet ili drugi dio UI-ja zatvara otvoreni
+        // build menu. Dok traje placement, klik na svijet pripada postavljanju
+        // zgrade pa panel ne zatvaramo prije nego sto se taj klik obradi.
+        if (_panelOpen && _pendingType == null && mouse.leftButton.wasPressedThisFrame)
+        {
+            Vector2 pointer = mouse.position.ReadValue();
+            var panelRect  = _panelRoot != null ? _panelRoot.transform as RectTransform : null;
+            var toggleRect = _toggleBtn != null ? _toggleBtn.transform as RectTransform : null;
+
+            if (!ContainsScreenPoint(panelRect, pointer) &&
+                !ContainsScreenPoint(toggleRect, pointer))
+            {
+                ClosePanel();
+            }
+        }
+
+        if (_pendingType == null) return;
 
         // Cancel on right click or Escape
         if (mouse.rightButton.wasPressedThisFrame ||
@@ -215,7 +225,7 @@ public class BuildPanel : MonoBehaviour
             if (_game.TryPlaceBuilding(_pendingType.Value, worldPos))
             {
                 _placedFrame = Time.frameCount;
-                CancelPlacement();
+                ClosePanel();
             }
         }
     }
@@ -244,16 +254,35 @@ public class BuildPanel : MonoBehaviour
     {
         if (_panelRoot == null) return;
 
-        _panelOpen = !_panelOpen;
-        _panelRoot.SetActive(_panelOpen);
-        if (!_panelOpen) CancelPlacement();
-        RefreshToggleLabel();
+        if (_panelOpen)
+        {
+            ClosePanel();
+            return;
+        }
+
+        _panelOpen = true;
+        _panelRoot.SetActive(true);
     }
 
-    private void RefreshToggleLabel()
+    private void ClosePanel()
     {
-        if (_toggleBtnLabel == null) return;   // gumb sa sprite ikonom nema natpis
-        _toggleBtnLabel.text = _panelOpen ? _toggleOpenLabel : _toggleCloseLabel;
+        if (_panelRoot == null) return;
+
+        _panelOpen = false;
+        _panelRoot.SetActive(false);
+        CancelPlacement();
+    }
+
+    private static bool ContainsScreenPoint(RectTransform rect, Vector2 screenPoint)
+    {
+        if (rect == null || !rect.gameObject.activeInHierarchy) return false;
+
+        var canvas = rect.GetComponentInParent<Canvas>();
+        var uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+
+        return RectTransformUtility.RectangleContainsScreenPoint(rect, screenPoint, uiCamera);
     }
 
     // -------------------------------------------------------

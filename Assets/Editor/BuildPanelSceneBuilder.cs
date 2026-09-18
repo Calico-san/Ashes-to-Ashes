@@ -32,16 +32,12 @@ public static class BuildPanelSceneBuilder
     private const float IconHeight    =  44f;
     private const float NameHeight    =  18f;
     private const float CostHeight    =  14f;
-    private const float HoursHeight   =  12f;
 
     // ---- Placeholder boje dok ne dode grafika ----
     private static readonly Color PanelColor   = new Color(0.06f, 0.06f, 0.06f, 0.93f);
     private static readonly Color ButtonColor  = new Color(0.18f, 0.18f, 0.18f, 0.95f);
     private static readonly Color ToggleColor  = new Color(0.15f, 0.15f, 0.15f, 0.95f);
     private static readonly Color CostColor    = new Color(0.70f, 0.85f, 0.70f);
-    private static readonly Color HoursColor   = new Color(0.60f, 0.60f, 0.60f);
-    private static readonly Color ToggleInk    = new Color(0.90f, 0.75f, 0.20f);
-
     [MenuItem("Tools/Ashes to Ashes/Build Panel/Slozi u sceni")]
     private static void BuildScene()
     {
@@ -69,17 +65,17 @@ public static class BuildPanelSceneBuilder
 
         DeletePrevious(canvas.transform);
 
-        var toggle = CreateToggleButton(canvas.transform, out TextMeshProUGUI toggleLabel);
+        var toggle = CreateToggleButton(canvas.transform);
         var panel  = CreatePanelRoot(canvas.transform);
 
         var refs = new (BuildingType type, Button btn, Image icon,
-                        TextMeshProUGUI name, TextMeshProUGUI cost, TextMeshProUGUI hours)
+                        TextMeshProUGUI name, TextMeshProUGUI cost)
                    [BuildPanel.BuildableTypes.Length];
 
         for (int i = 0; i < BuildPanel.BuildableTypes.Length; i++)
             refs[i] = CreateBuildButton(panel.transform, BuildPanel.BuildableTypes[i]);
 
-        WireComponent(panelScript, panel, toggle, toggleLabel, refs);
+        WireComponent(panelScript, panel, toggle, refs);
 
         panel.SetActive(false);   // panel pocinje zatvoren, kao i u runtimeu
 
@@ -104,14 +100,14 @@ public static class BuildPanelSceneBuilder
         }
     }
 
-    private static GameObject CreateToggleButton(Transform canvas, out TextMeshProUGUI label)
+    private static GameObject CreateToggleButton(Transform canvas)
     {
         var go = NewUIObject(ToggleName, canvas);
         var rt = go.GetComponent<RectTransform>();
         rt.anchorMin        = new Vector2(1f, 0f);
         rt.anchorMax        = new Vector2(1f, 0f);
         rt.pivot            = new Vector2(1f, 0f);
-        rt.anchoredPosition = new Vector2(-10f, 10f);
+        rt.anchoredPosition = new Vector2(-30f, 30f);
         rt.sizeDelta        = new Vector2(ToggleSize, ToggleSize);
 
         var img = go.AddComponent<Image>();
@@ -124,7 +120,6 @@ public static class BuildPanelSceneBuilder
         colors.pressedColor     = new Color(0.08f, 0.08f, 0.08f);
         btn.colors = colors;
 
-        label = CreateStretchedLabel(go.transform, "Label", "[B]", 18f, ToggleInk);
         return go;
     }
 
@@ -152,7 +147,7 @@ public static class BuildPanelSceneBuilder
         return go;
     }
 
-    private static (BuildingType, Button, Image, TextMeshProUGUI, TextMeshProUGUI, TextMeshProUGUI)
+    private static (BuildingType, Button, Image, TextMeshProUGUI, TextMeshProUGUI)
         CreateBuildButton(Transform parent, BuildingType type)
     {
         var go = NewUIObject($"Btn_{type}", parent);
@@ -191,10 +186,8 @@ public static class BuildPanelSceneBuilder
                                          11f, NameHeight,  Color.white);
         var costLbl  = CreateLayoutLabel(go.transform, "Cost",  "W:0",
                                           9f, CostHeight,  CostColor);
-        var hoursLbl = CreateLayoutLabel(go.transform, "Hours", "0h",
-                                          9f, HoursHeight, HoursColor);
 
-        return (type, btn, icon, nameLbl, costLbl, hoursLbl);
+        return (type, btn, icon, nameLbl, costLbl);
     }
 
     // -------------------------------------------------------
@@ -202,16 +195,14 @@ public static class BuildPanelSceneBuilder
     // -------------------------------------------------------
 
     private static void WireComponent(BuildPanel script, GameObject panel, GameObject toggle,
-        TextMeshProUGUI toggleLabel,
         (BuildingType type, Button btn, Image icon,
-         TextMeshProUGUI name, TextMeshProUGUI cost, TextMeshProUGUI hours)[] refs)
+         TextMeshProUGUI name, TextMeshProUGUI cost)[] refs)
     {
         Undo.RecordObject(script, "Povezi build panel");
 
         var so = new SerializedObject(script);
-        so.FindProperty("_panelRoot").objectReferenceValue      = panel;
-        so.FindProperty("_toggleBtn").objectReferenceValue      = toggle.GetComponent<Button>();
-        so.FindProperty("_toggleBtnLabel").objectReferenceValue = toggleLabel;
+        so.FindProperty("_panelRoot").objectReferenceValue = panel;
+        so.FindProperty("_toggleBtn").objectReferenceValue = toggle.GetComponent<Button>();
 
         var list = so.FindProperty("_sceneBuildButtons");
         list.arraySize = refs.Length;
@@ -225,7 +216,6 @@ public static class BuildPanelSceneBuilder
             e.FindPropertyRelative("Icon").objectReferenceValue        = refs[i].icon;
             e.FindPropertyRelative("NameLabel").objectReferenceValue   = refs[i].name;
             e.FindPropertyRelative("CostLabel").objectReferenceValue   = refs[i].cost;
-            e.FindPropertyRelative("HoursLabel").objectReferenceValue  = refs[i].hours;
         }
 
         so.ApplyModifiedProperties();
@@ -242,25 +232,6 @@ public static class BuildPanelSceneBuilder
         Undo.RegisterCreatedObjectUndo(go, $"Stvori {name}");
         go.transform.SetParent(parent, false);
         return go;
-    }
-
-    /// <summary>Natpis koji popunjava cijeli roditelj — za gumb s ikonom ili slovom.</summary>
-    private static TextMeshProUGUI CreateStretchedLabel(Transform parent, string name,
-        string text, float fontSize, Color color)
-    {
-        var go = NewUIObject(name, parent);
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero;
-        rt.offsetMax = Vector2.zero;
-
-        var tmp = go.AddComponent<TextMeshProUGUI>();
-        tmp.text      = text;
-        tmp.fontSize  = fontSize;
-        tmp.color     = color;
-        tmp.alignment = TextAlignmentOptions.Center;
-        return tmp;
     }
 
     /// <summary>Natpis u vertikalnom layoutu — visinu drzi LayoutElement.</summary>

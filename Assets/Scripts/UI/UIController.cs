@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -48,6 +50,9 @@ public class UIController : MonoBehaviour
     // Brodogradnja vise ne krece sama — igrac mora naruciti brod.
     [SerializeField] private Button          _buildShipBtn;
 
+    [Header("Right Panel Spacing")]
+    [SerializeField] private GameObject[]    _optionalSpacing;
+
     // Ikone za male gumbe tereta. Povuci iz "Sprite sheet for Basic Pack":
     //   _plusSprite  -> Sprite sheet for Basic Pack_35
     //   _minusSprite -> Sprite sheet for Basic Pack_60
@@ -90,6 +95,11 @@ public class UIController : MonoBehaviour
     [Header("Save/Load")]
     [SerializeField] private SaveLoadPanel   _saveLoadPanel;
 
+    // ---- Tutorial ----
+    [Header("Tutorial")]
+    [SerializeField] private GameObject      _tutorialPanel;
+    [SerializeField] private Button          _tutorialBtn;
+
     // ---- Runtime ----
     private readonly List<Button> _shipRowBtns = new();
     private GameController _game;
@@ -127,7 +137,69 @@ public class UIController : MonoBehaviour
         _buildPanel?   .Build(game, GetComponentInParent<Canvas>()?.transform ?? transform, cam);
         _saveLoadPanel?.Build(game, GetComponentInParent<Canvas>()?.transform ?? transform);
 
+        if (_tutorialBtn != null)
+        {
+            _tutorialBtn.onClick.RemoveAllListeners();
+            _tutorialBtn.onClick.AddListener(ToggleTutorialPanel);
+        }
+
         _rightPanel?.SetActive(false);
+        _tutorialPanel?.SetActive(false);
+    }
+
+    private void Update()
+    {
+        var mouse = Mouse.current;
+        if (!_initialized || mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+
+        Vector2 pointer = mouse.position.ReadValue();
+        var tutorialRect = _tutorialPanel != null ? _tutorialPanel.transform as RectTransform : null;
+        var tutorialBtnRect = _tutorialBtn != null ? _tutorialBtn.transform as RectTransform : null;
+
+        // Tutorial se zatvara klikom bilo gdje izvan ploce. Njegov gumb je
+        // iznimka jer sam ToggleTutorialPanel odlucuje treba li otvoriti ili zatvoriti.
+        if (_tutorialPanel != null && _tutorialPanel.activeSelf &&
+            !ContainsScreenPoint(tutorialRect, pointer) &&
+            !ContainsScreenPoint(tutorialBtnRect, pointer))
+        {
+            _tutorialPanel.SetActive(false);
+        }
+
+        // Klikove na svijet vec obraduje PrototypeSelectionController. Ovdje
+        // zatvaramo desnu plocu kada igrac klikne neki drugi dio UI-ja.
+        var rightPanelRect = _rightPanel != null ? _rightPanel.transform as RectTransform : null;
+        if (_rightPanel != null && _rightPanel.activeSelf &&
+            !ContainsScreenPoint(rightPanelRect, pointer) &&
+            EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            ClearSelection();
+        }
+    }
+
+    private void ToggleTutorialPanel()
+    {
+        if (_tutorialPanel != null)
+            _tutorialPanel.SetActive(!_tutorialPanel.activeSelf);
+    }
+
+    private void ClearSelection()
+    {
+        if (_game == null) return;
+        _game.SelectShip(null);
+        _game.SelectSlot(null);
+        _game.SelectBuilding(null);
+    }
+
+    private static bool ContainsScreenPoint(RectTransform rect, Vector2 screenPoint)
+    {
+        if (rect == null || !rect.gameObject.activeInHierarchy) return false;
+
+        var canvas = rect.GetComponentInParent<Canvas>();
+        var uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+
+        return RectTransformUtility.RectangleContainsScreenPoint(rect, screenPoint, uiCamera);
     }
 
     /// <summary>
@@ -316,6 +388,8 @@ public class UIController : MonoBehaviour
                 SetOutputLine("Use build panel [B] to place a building.");
             }
             SetButtons("", null, "", null, false, false);
+            if (_assignBtn != null) _assignBtn.gameObject.SetActive(false);
+            if (_removeBtn != null) _removeBtn.gameObject.SetActive(false);
         }
         else if (showBuilding)
         {
@@ -364,6 +438,16 @@ public class UIController : MonoBehaviour
             if (_removeBtn  != null) _removeBtn.gameObject.SetActive(false);
             RefreshShipDetail(game, selShip);
         }
+
+        SetOptionalSpacingVisible(!showTownHall && !showSlot && !showShip);
+    }
+
+    private void SetOptionalSpacingVisible(bool visible)
+    {
+        if (_optionalSpacing == null) return;
+        foreach (var element in _optionalSpacing)
+            if (element != null && element.activeSelf != visible)
+                element.SetActive(visible);
     }
 
     // -------------------------------------------------------

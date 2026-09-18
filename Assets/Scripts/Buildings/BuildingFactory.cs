@@ -21,7 +21,7 @@ public static class BuildingFactory
             case BuildingType.Fiberworks:   return ("Fiberworks",   ResourceType.Cloth, new Color(0.70f, 0.44f, 0.74f));
             case BuildingType.Cookhouse:    return ("Cookhouse",    ResourceType.Food,  new Color(0.82f, 0.53f, 0.20f));
             case BuildingType.Shipyard:     return ("Shipyard",     ResourceType.Ships, new Color(0.25f, 0.38f, 0.82f));
-            case BuildingType.HuntersHut:   return ("Hunters Hut",  ResourceType.Food,  new Color(0.55f, 0.35f, 0.15f));
+            case BuildingType.HuntersHut:   return ("Hunters' Hut", ResourceType.Food,  new Color(0.55f, 0.35f, 0.15f));
             case BuildingType.ScoutStation: return ("Scout Station", ResourceType.Food, new Color(0.20f, 0.50f, 0.50f));
             case BuildingType.TownHall:     return ("Town Hall",    ResourceType.Wood,  new Color(0.72f, 0.58f, 0.22f));
             default:                        return ("Building",     ResourceType.Wood,  Color.white);
