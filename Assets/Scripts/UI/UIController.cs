@@ -45,6 +45,17 @@ public class UIController : MonoBehaviour
     [SerializeField] private Button          _removeEngBtn;
     [SerializeField] private Button          _upgradeBtn;
 
+    // Brodogradnja vise ne krece sama — igrac mora naruciti brod.
+    [SerializeField] private Button          _buildShipBtn;
+
+    // Ikone za male gumbe tereta. Povuci iz "Sprite sheet for Basic Pack":
+    //   _plusSprite  -> Sprite sheet for Basic Pack_35
+    //   _minusSprite -> Sprite sheet for Basic Pack_60
+    // Ako ostanu prazni, gumbi ispisuju "+" i "-" kao tekst.
+    [Header("Ikone + / -")]
+    [SerializeField] private Sprite          _plusSprite;
+    [SerializeField] private Sprite          _minusSprite;
+
     // ---- Ship list (Shipyard panel) ----
     [Header("Ship List")]
     [SerializeField] private GameObject      _shipListContainer;  // parent for ship row buttons
@@ -108,6 +119,7 @@ public class UIController : MonoBehaviour
         _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
         _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
+        _buildShipBtn?.onClick.AddListener(() => _game.OrderShipOnSelectedBuilding());
 
         WireShipButtons();
 
@@ -199,6 +211,7 @@ public class UIController : MonoBehaviour
         if (_assignEngBtn    != null) _assignEngBtn.gameObject.SetActive(false);
         if (_removeEngBtn    != null) _removeEngBtn.gameObject.SetActive(false);
         if (_upgradeBtn      != null) _upgradeBtn.gameObject.SetActive(false);
+        if (_buildShipBtn    != null) _buildShipBtn.gameObject.SetActive(false);
         if (_addPassengerBtn != null) _addPassengerBtn.gameObject.SetActive(false);
         if (_removePassengerBtn != null) _removePassengerBtn.gameObject.SetActive(false);
         if (_boardAllBtn     != null) _boardAllBtn.gameObject.SetActive(false);
@@ -279,6 +292,7 @@ public class UIController : MonoBehaviour
                            sel.AssignedWorkers > 0);
                 SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
                               sel.AssignedEngineers > 0);
+                SetBuildShipBtn(sel);
 
                 RefreshShipList(game);
             }
@@ -360,30 +374,21 @@ public class UIController : MonoBehaviour
     {
         SetTitle("Town Hall");
 
-        float  net      = game.NetFoodPerDay;
-        string netColor = net < 0f ? "#8C1D1D" : "#1E5B2A";
-
-        // Svaka stavka je vlastiti redak. Ranije su dvije stavke dijelile redak
-        // pa ih je omatanje teksta lomilo na proizvoljnim mjestima ("Workers:
-        // 307/115   Engineers: 165/0" u sredini retka).
+        // Svaka stavka je vlastiti redak. Neto, zaliha, ukrcani i evakuirani su
+        // maknuti — zaliha stoji u gornjoj traci, a ostalo nije brojka po kojoj
+        // igrac odlucuje na ovoj ploci.
         var lines = new List<string>
         {
             "<b>Population</b>",
             $"Souls on the island: {game.TotalPopulation}",
             $"Children: {game.Children}",
             $"Adults: {game.AdultPopulation}",
-            $"Workers free: {game.FreeWorkers}",
-            $"Workers working: {game.EmployedWorkers}",
-            $"Engineers free: {game.FreeEngineers}",
-            $"Engineers working: {game.EmployedEngineers}",
-            $"Boarded on ships: {game.BoardedPassengers}",
-            $"Evacuated: {game.EvacuatedSouls}",
+            $"Workers: {game.EmployedWorkers} working / {game.FreeWorkers} free",
+            $"Engineers: {game.EmployedEngineers} working / {game.FreeEngineers} free",
             "",
             "<b>Food</b>",
             $"Produced: {game.FoodProducedPerDay:F0} / day",
             $"Consumed: {game.FoodConsumedPerDay:F0} / day",
-            $"Net: <color={netColor}>{net:+0;-0;0} / day</color>",
-            $"Stock: {game.Food}",
         };
 
         string text = string.Join("\n", lines);
@@ -482,8 +487,9 @@ public class UIController : MonoBehaviour
             }
             else
             {
-                // Fallback: create button in code if no prefab assigned
-                btn = CreateShipRowButton(_shipListContainer.transform);
+                // Bez prefaba se klonira gumb iz ploce, pa redak izgleda kao
+                // ostali gumbi umjesto kao tamna traka.
+                btn = CloneStyledButton(_shipListContainer.transform, "ShipRow", "", 166, 22, 9f);
             }
             _shipRowBtns.Add(btn);
         }
@@ -494,15 +500,15 @@ public class UIController : MonoBehaviour
             var btn  = _shipRowBtns[i];
             if (btn == null) continue;
 
-            btn.GetComponent<Image>().color = game.GetSelectedShip() == ship
-                ? new Color(0.22f, 0.46f, 0.26f)
-                : new Color(0.18f, 0.18f, 0.18f, 0.95f);
-
+            // Boja se vise ne prepisuje — gumb zadrzi sprite i boje iz scene.
+            // Odabrani redak se oznacava strelicom u natpisu.
+            bool selected = game.GetSelectedShip() == ship;
             var lbl = btn.GetComponentInChildren<TextMeshProUGUI>();
             if (lbl != null)
-                lbl.text = $"{ship.DisplayName}  —  P: {ship.Passengers}/{ship.MaxPassengers}" +
+                lbl.text = (selected ? "> " : "") +
+                           $"{ship.DisplayName}  P: {ship.Passengers}/{ship.MaxPassengers}" +
                            $"  F: {ship.FoodLoaded}/{ship.RequiredFood}" +
-                           (ship.IsReadyToSail ? "  ✔" : "");
+                           (ship.IsReadyToSail ? "  *" : "");
 
             int idx = i;
             btn.onClick.RemoveAllListeners();
@@ -514,8 +520,14 @@ public class UIController : MonoBehaviour
     {
         if (ship == null) return;
         if (_shipDetailTitle != null) _shipDetailTitle.text = ship.DisplayName;
-        if (_shipDetailInfo  != null)
-            _shipDetailInfo.text = ship.IsReadyToSail ? "Ready to sail!" : "Not ready to sail";
+        // Kad je brod spreman, umjesto poruke stoji gumb Sail.
+        bool ready = ship.IsReadyToSail && !ship.IsSailing;
+        if (_shipDetailInfo != null)
+        {
+            _shipDetailInfo.text = ship.IsSailing ? "Sailing…" : "Not ready to sail";
+            _shipDetailInfo.gameObject.SetActive(!ready);
+        }
+        if (_sailBtn != null) _sailBtn.gameObject.SetActive(ready);
 
         // Sve stare varijante gumba se gase — teret se vodi kroz dva kompaktna
         // retka "Passengers [+] [-]" i "Food [+] [-]". Prije je ista akcija
@@ -536,13 +548,24 @@ public class UIController : MonoBehaviour
         if (_passengerMinus != null) _passengerMinus.interactable = ship.Passengers > 0;
         if (_foodPlus  != null) _foodPlus.interactable  = game.Food > 0 && ship.FoodMissing > 0;
         if (_foodMinus != null) _foodMinus.interactable = ship.FoodLoaded > 0;
+
+        if (_fillShipBtn != null)
+        {
+            int foodFill = Mathf.Min(game.Food, ship.FoodMissing);
+            int peopleFill = Mathf.Min(ship.FreeSpace, game.FreeWorkers + game.AvailableChildren);
+
+            _fillShipBtn.interactable = foodFill > 0 || peopleFill > 0;
+            SetLabel(_fillShipBtn, _fillShipBtn.interactable
+                ? $"Fill ship  (+{peopleFill} ppl, +{foodFill} food)"
+                : "Fill ship");
+        }
     }
 
     // ---- Kompaktni redci tereta ----
 
     private GameObject      _cargoRows;
     private TextMeshProUGUI _passengerRowLabel, _foodRowLabel;
-    private Button          _passengerPlus, _passengerMinus, _foodPlus, _foodMinus;
+    private Button          _passengerPlus, _passengerMinus, _foodPlus, _foodMinus, _fillShipBtn, _sailBtn;
 
     private void HideLegacyCargoButtons()
     {
@@ -568,7 +591,7 @@ public class UIController : MonoBehaviour
         _cargoRows.transform.SetParent(parent, false);
         // flexH: 0 — bez toga roditeljski VerticalLayoutGroup iz scene rastegne
         // retke po visini i gumbi prestanu biti kvadratici.
-        LE(_cargoRows, prefH: 52, minH: 52, flexH: 0);
+        LE(_cargoRows, prefH: 110, minH: 110, flexH: 0);
         var vg = _cargoRows.AddComponent<VerticalLayoutGroup>();
         vg.spacing = 4;
         vg.childControlWidth = vg.childControlHeight = vg.childForceExpandWidth = true;
@@ -577,19 +600,34 @@ public class UIController : MonoBehaviour
         int pStep = BalanceConfig.ShipPassengerLoadStep;
 
         MakeCargoRow(_cargoRows.transform, "Passengers",
-            out _passengerRowLabel, out _passengerPlus, out _passengerMinus);
-        _passengerPlus .onClick.AddListener(() => _game.AddPassengersToSelectedShip(pStep));
+            out _passengerRowLabel, out _passengerMinus, out _passengerPlus);
         _passengerMinus.onClick.AddListener(() => _game.RemovePassengersFromSelectedShip(pStep));
+        _passengerPlus .onClick.AddListener(() => _game.AddPassengersToSelectedShip(pStep));
 
         MakeCargoRow(_cargoRows.transform, "Food",
-            out _foodRowLabel, out _foodPlus, out _foodMinus);
-        _foodPlus .onClick.AddListener(() => _game.LoadFoodToSelectedShip());
+            out _foodRowLabel, out _foodMinus, out _foodPlus);
         _foodMinus.onClick.AddListener(() => _game.UnloadFoodFromSelectedShip());
+        _foodPlus .onClick.AddListener(() => _game.LoadFoodToSelectedShip());
+
+        // Puni brod do kraja: prvo ljudi, pa hrana koliko je ima na skladistu.
+        // Redoslijed je bitan — ukrcani putnici ne diraju zalihu hrane, pa hrana
+        // koja ostane ide sva na brod.
+        _fillShipBtn = CloneStyledButton(_cargoRows.transform, "FillShip", "Fill ship", 166, 24);
+        _fillShipBtn.onClick.AddListener(() =>
+        {
+            _game.AddPassengersToSelectedShip(BalanceConfig.ShipMaxPassengers);
+            _game.LoadAllFoodToSelectedShip();
+        });
+
+        // Isplovljavanje je odluka igraca — gumb se pojavi tek kad je brod spreman.
+        _sailBtn = CloneStyledButton(_cargoRows.transform, "Sail", "Sail", 166, 24);
+        _sailBtn.onClick.AddListener(() => _game.SailSelectedShip());
+        _sailBtn.gameObject.SetActive(false);
     }
 
-    /// <summary>Jedan redak: natpis lijevo, pa dva mala kvadratna gumba + i -.</summary>
+    /// <summary>Jedan redak: natpis lijevo, pa mala kvadratna gumba [-] [+].</summary>
     private void MakeCargoRow(Transform parent, string caption,
-        out TextMeshProUGUI label, out Button plus, out Button minus)
+        out TextMeshProUGUI label, out Button minus, out Button plus)
     {
         var row = new GameObject($"Row_{caption}", typeof(RectTransform));
         row.transform.SetParent(parent, false);
@@ -607,10 +645,28 @@ public class UIController : MonoBehaviour
         label.textWrappingMode = TextWrappingModes.NoWrap;
         LE(label.gameObject, flexW: 1, minW: 60);
 
-        plus  = MakeBtn(row.transform, "+", null, 20, 20);
-        minus = MakeBtn(row.transform, "-", null, 20, 20);
-        LE(plus.gameObject,  prefW: 20, minW: 20, prefH: 20, minH: 20, flexW: 0, flexH: 0);
-        LE(minus.gameObject, prefW: 20, minW: 20, prefH: 20, minH: 20, flexW: 0, flexH: 0);
+        // Redoslijed je [-] pa [+]: oduzimanje lijevo, dodavanje desno.
+        minus = MakeStepBtn(row.transform, "Minus", _minusSprite, "-");
+        plus  = MakeStepBtn(row.transform, "Plus",  _plusSprite,  "+");
+    }
+
+    /// <summary>
+    /// Mali kvadratni gumb 20×20. Ako je ikona povucena u Inspectoru, koristi se
+    /// ona; inace se ispisuje znak kao tekst, pa panel radi i bez grafike.
+    /// </summary>
+    private Button MakeStepBtn(Transform parent, string name, Sprite icon, string fallback)
+    {
+        var btn = CloneStyledButton(parent, name, icon != null ? "" : fallback, 24, 22, 12f);
+
+        if (icon != null)
+        {
+            var img = btn.GetComponent<Image>();
+            img.sprite = icon;
+            img.color  = Color.white;
+            img.type   = Image.Type.Sliced;   // rubovi ikone se ne rastezu
+        }
+
+        return btn;
     }
 
     private void RefreshSpeedButtons(int speed)
@@ -669,6 +725,30 @@ public class UIController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// "Build ship" dok nema narudzbe, pa napredak dok se gradi. Gumb je ugasen
+    /// za sve osim brodogradilista (ResetPanelControls).
+    /// </summary>
+    private void SetBuildShipBtn(BuildingInstance shipyard)
+    {
+        if (_buildShipBtn == null) return;
+
+        _buildShipBtn.gameObject.SetActive(true);
+
+        if (!shipyard.ShipOrdered)
+        {
+            bool canOrder = shipyard.CanAffordShip;
+            _buildShipBtn.interactable = canOrder;
+            SetLabel(_buildShipBtn, canOrder ? "Build ship" : "Build ship (not enough resources)");
+            return;
+        }
+
+        _buildShipBtn.interactable = false;
+        SetLabel(_buildShipBtn, shipyard.KeelLaid
+            ? $"Building… {shipyard.ShipProgressPercent:F0}%"
+            : "Ordered — waiting for materials");
+    }
+
     private void SetUpgradeBtn(bool visible, bool enabled)
     {
         if (_upgradeBtn == null) return;
@@ -691,31 +771,66 @@ public class UIController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Gumb iz scene koji druge ploce koriste kao predlozak stila (SaveLoadPanel).
+    /// Null dok UIController nije povezan u Inspectoru.
+    /// </summary>
+    public Button StyleTemplate => _assignBtn;
+
+    /// <summary>
+    /// Sprite pozadine desne ploce, da druge ploce ne moraju imati vlastitu
+    /// referencu na istu grafiku. Null ako ploca nema sprite.
+    /// </summary>
+    public Sprite PanelBackground
+    {
+        get
+        {
+            if (_rightPanel == null) return null;
+            var img = _rightPanel.GetComponent<Image>();
+            return img != null ? img.sprite : null;
+        }
+    }
+
+    /// <summary>
+    /// Novi gumb koji izgleda kao ostali u ploci: klonira se postojeci gumb iz
+    /// scene (_assignBtn) pa preuzme njegov sprite, boje i font. Bez toga su
+    /// gumbi gradeni iz koda imali ravnu tamnu podlogu i strsili su medu
+    /// devetodijelnim sprajtovima iz scene.
+    /// </summary>
+    private Button CloneStyledButton(Transform parent, string name, string label,
+        float w, float h, float fontSize = 0f)
+    {
+        Button btn;
+
+        if (_assignBtn != null)
+        {
+            var go = Instantiate(_assignBtn.gameObject, parent);
+            go.name = $"Btn_{name}";
+            go.SetActive(true);
+            btn = go.GetComponent<Button>();
+            btn.onClick.RemoveAllListeners();
+        }
+        else
+        {
+            btn = MakeBtn(parent, label, null, w, h);   // fallback bez scene
+            btn.name = $"Btn_{name}";
+        }
+
+        SetLabel(btn, label);
+        if (fontSize > 0f)
+        {
+            var t = btn.GetComponentInChildren<TextMeshProUGUI>();
+            if (t != null) t.fontSize = fontSize;
+        }
+
+        LE(btn.gameObject, prefW: w, minW: w, prefH: h, minH: h, flexW: 0, flexH: 0);
+        return btn;
+    }
+
     private static void SetLabel(Button btn, string text)
     {
         var t = btn?.GetComponentInChildren<TextMeshProUGUI>();
         if (t != null) t.text = text;
-    }
-
-    private static Button CreateShipRowButton(Transform parent)
-    {
-        var go  = new GameObject("ShipRow", typeof(RectTransform), typeof(Image), typeof(Button));
-        go.transform.SetParent(parent, false);
-        var le  = go.AddComponent<LayoutElement>();
-        le.preferredHeight = 22f; le.minHeight = 22f;
-        go.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f, 0.95f);
-        var btn = go.GetComponent<Button>();
-
-        var lblGO = new GameObject("Label", typeof(RectTransform));
-        lblGO.transform.SetParent(go.transform, false);
-        var lrt = lblGO.GetComponent<RectTransform>();
-        lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
-        lrt.offsetMin = new Vector2(4, 2); lrt.offsetMax = new Vector2(-4, -2);
-        var t = lblGO.AddComponent<TextMeshProUGUI>();
-        t.fontSize = 9f; t.color = Color.white;
-        t.alignment = TextAlignmentOptions.MidlineLeft;
-        t.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-        return btn;
     }
 
     // -------------------------------------------------------

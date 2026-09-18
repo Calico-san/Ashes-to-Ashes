@@ -5,6 +5,13 @@ using UnityEngine.UI;
 
 public class SaveLoadPanel : MonoBehaviour
 {
+    // Predlozak stila. Povuci bilo koji gotov gumb iz scene (npr. Btn_Add worker)
+    // i svi gumbi ove ploce preuzet ce njegov sprite, boje i font. Ako ostane
+    // prazno, gradi se stari ravni tamni gumb iz koda.
+    [Header("Izgled")]
+    [SerializeField] private Button _buttonTemplate;
+    [SerializeField] private Sprite _panelSprite;   // neobavezno, 9-slice pozadina
+
     private GameObject              _overlay;
     private bool                    _open;
     private GameController _game;
@@ -20,8 +27,30 @@ public class SaveLoadPanel : MonoBehaviour
     public void Build(GameController game, Transform canvas)
     {
         _game = game;
+        ResolveButtonTemplate();
         BuildOverlay(canvas);
         _overlay.SetActive(false);
+    }
+
+    /// <summary>
+    /// Ako predlozak nije povucen u Inspectoru, uzima se gumb desne ploce preko
+    /// UIControllera. Bez toga bi ploca ostala u starom ravnom stilu samo zato
+    /// sto je scena spremljena prije nego je polje uopce postojalo — komponenta
+    /// tada u sceni nema nijednu serijaliziranu vrijednost.
+    /// </summary>
+    private void ResolveButtonTemplate()
+    {
+        if (_buttonTemplate != null && _panelSprite != null) return;
+
+        var ui = FindFirstObjectByType<UIController>();
+        if (ui != null)
+        {
+            if (_buttonTemplate == null) _buttonTemplate = ui.StyleTemplate;
+            if (_panelSprite    == null) _panelSprite    = ui.PanelBackground;
+        }
+
+        if (_buttonTemplate == null)
+            Debug.LogWarning("[SaveLoadPanel] Nema predloska gumba — ploca koristi stari izgled iz koda.", this);
     }
 
     private void Update()
@@ -102,35 +131,47 @@ public class SaveLoadPanel : MonoBehaviour
         pRT.anchorMin = pRT.anchorMax = pRT.pivot = new Vector2(0.5f, 0.5f);
         pRT.sizeDelta        = new Vector2(400f, 360f);
         pRT.anchoredPosition = Vector2.zero;
-        panel.AddComponent<Image>().color = new Color(0.08f, 0.08f, 0.08f, 0.97f);
+        var panelImg = panel.AddComponent<Image>();
+        if (_panelSprite != null)
+        {
+            panelImg.sprite = _panelSprite;
+            panelImg.type   = Image.Type.Sliced;   // rubovi se ne rastezu
+            panelImg.color  = Color.white;
+        }
+        else
+        {
+            panelImg.color = new Color(0.08f, 0.08f, 0.08f, 0.97f);
+        }
 
-        TMP(panel.transform,  "PAUSED", 17, Color.white,          0f, 0.88f, 1f, 1f);
-        Btn(panel.transform,  "Resume", () => { _game.SetSpeed(1); Close(); }, 0.1f, 0.82f, 0.9f, 0.97f);
-        TMP(panel.transform,  "SAVE",   10, new Color(.6f,.6f,.6f), 0f, 0.67f, 1f, 0.75f);
+        // Naslov i Resume su se preklapali: naslov je isao do 1.0, a gumb do 0.97.
+        TMP(panel.transform,  "PAUSED", 17, Color.white,          0f, 0.90f, 1f, 1f);
+        Btn(panel.transform,  "Resume", () => { _game.SetSpeed(1); Close(); }, 0.1f, 0.79f, 0.9f, 0.885f);
+        TMP(panel.transform,  "SAVE",   10, new Color(.6f,.6f,.6f), 0f, 0.68f, 1f, 0.76f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
             float x0 = 0.04f + i * 0.32f, x1 = x0 + 0.28f;
             int s = i;
-            var b = Btn(panel.transform, $"Slot {i+1}", () => OnSave(s), x0, 0.48f, x1, 0.67f);
+            var b = Btn(panel.transform, $"Slot {i+1}", () => OnSave(s), x0, 0.50f, x1, 0.68f);
             _saveLabels[i] = SetupSlotLabel(b);
         }
 
-        TMP(panel.transform, "LOAD", 10, new Color(.6f,.6f,.6f), 0f, 0.33f, 1f, 0.41f);
+        TMP(panel.transform, "LOAD", 10, new Color(.6f,.6f,.6f), 0f, 0.38f, 1f, 0.46f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
             float x0 = 0.04f + i * 0.32f, x1 = x0 + 0.28f;
             int s = i;
-            var b = Btn(panel.transform, $"Slot {i+1}", () => OnLoad(s), x0, 0.14f, x1, 0.33f);
+            var b = Btn(panel.transform, $"Slot {i+1}", () => OnLoad(s), x0, 0.20f, x1, 0.38f);
             _loadLabels[i] = SetupSlotLabel(b);
             _loadBtns[i]   = b;
         }
 
-        _feedbackText = TMP(panel.transform, "", 10, new Color(.4f,.9f,.4f), 0f, 0.05f, 1f, 0.14f);
+        _feedbackText = TMP(panel.transform, "", 10, new Color(.4f,.9f,.4f), 0f, 0.13f, 1f, 0.19f);
 
-        // Main Menu button at bottom
-        Btn(panel.transform, "Main Menu", () => OnMainMenu(), 0.25f, 0f, 0.75f, 0.05f);
+        // Main Menu na dnu — visina 0.10 ploce, isto kao Resume, umjesto
+        // prijasnjih 0.05 zbog kojih je gumb bio duplo nizi od ostalih.
+        Btn(panel.transform, "Main Menu", () => OnMainMenu(), 0.25f, 0.02f, 0.75f, 0.12f);
     }
 
     private static TextMeshProUGUI SetupSlotLabel(Button btn)
@@ -175,10 +216,17 @@ public class SaveLoadPanel : MonoBehaviour
         return t;
     }
 
-    private static Button Btn(Transform parent, string label,
+    /// <summary>
+    /// Gumb ploce. Ako je _buttonTemplate povucen, klonira se pa izgleda kao
+    /// ostali gumbi u igri; inace se gradi stari ravni tamni gumb.
+    /// </summary>
+    private Button Btn(Transform parent, string label,
         UnityEngine.Events.UnityAction cb,
         float x0, float y0, float x1, float y1)
     {
+        if (_buttonTemplate != null)
+            return CloneButton(parent, label, cb, x0, y0, x1, y1);
+
         var rt = ART(parent, "Btn_" + label, x0, y0, x1, y1, 4f, 4f, 4f, 4f);
         rt.gameObject.AddComponent<Image>().color = new Color(0.20f, 0.20f, 0.20f, 0.95f);
         var btn = rt.gameObject.AddComponent<Button>();
@@ -196,6 +244,40 @@ public class SaveLoadPanel : MonoBehaviour
         var t = lblGO.AddComponent<TextMeshProUGUI>();
         t.text = label; t.fontSize = 10f; t.color = Color.white;
         t.alignment = TextAlignmentOptions.Center;
+        return btn;
+    }
+
+    private Button CloneButton(Transform parent, string label,
+        UnityEngine.Events.UnityAction cb,
+        float x0, float y0, float x1, float y1)
+    {
+        var go = Instantiate(_buttonTemplate.gameObject, parent);
+        go.name = "Btn_" + label;
+        go.SetActive(true);
+
+        // Predlozak moze doci iz retka s layoutom; ovdje se pozicionira anchorima,
+        // pa bi LayoutElement samo smetao.
+        var le = go.GetComponent<LayoutElement>();
+        if (le != null) Destroy(le);
+
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(x0, y0);
+        rt.anchorMax = new Vector2(x1, y1);
+        rt.offsetMin = new Vector2(4f, 4f);
+        rt.offsetMax = new Vector2(-4f, -4f);
+
+        var btn = go.GetComponent<Button>();
+        btn.onClick.RemoveAllListeners();
+        btn.onClick.AddListener(cb);
+        btn.interactable = true;
+
+        var t = go.GetComponentInChildren<TextMeshProUGUI>();
+        if (t != null)
+        {
+            t.text     = label;
+            t.fontSize = 10f;
+        }
+
         return btn;
     }
 }

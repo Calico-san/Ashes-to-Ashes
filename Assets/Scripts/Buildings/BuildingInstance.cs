@@ -80,6 +80,17 @@ public class BuildingInstance : MonoBehaviour
     /// <summary>True kad je fiksni trosak za tekuci brod vec placen.</summary>
     public bool  KeelLaid            => _keelLaid;
 
+    /// <summary>
+    /// True kad je igrac narucio brod. Bez narudzbe brodogradiliste ne trosi
+    /// resurse ni kad je puno radnika — gradnja vise ne krece sama od sebe.
+    /// </summary>
+    public bool  ShipOrdered         => _shipOrdered;
+
+    /// <summary>Ima li igrac resurse za fiksni trosak jednog broda.</summary>
+    public bool  CanAffordShip => _game != null && _game.HasResources(
+        BalanceConfig.ShipWoodCost, BalanceConfig.ShipSteelCost,
+        BalanceConfig.ShipClothCost, BalanceConfig.ShipRopeCost);
+
     public float ShipProgressPercent => BalanceConfig.ShipProgressRequired > 0f
         ? _shipProgress / BalanceConfig.ShipProgressRequired * 100f
         : 0f;
@@ -103,6 +114,7 @@ public class BuildingInstance : MonoBehaviour
     private float                       _shipProgress;
     private int                         _shipCount;
     private bool                        _keelLaid;
+    private bool                        _shipOrdered;
 
     // ---- Init ----
 
@@ -302,11 +314,20 @@ public class BuildingInstance : MonoBehaviour
     public void SetTownHall(bool value) => IsTownHall = value;
 
     /// <summary>Restore shipyard progress from a save (O5 — ranije se gubilo).</summary>
-    public void RestoreShipyardState(float progress, int shipCount, bool keelLaid)
+    public void RestoreShipyardState(float progress, int shipCount, bool keelLaid, bool ordered)
     {
         _shipProgress = progress;
         _shipCount    = shipCount;
         _keelLaid     = keelLaid;
+        _shipOrdered  = ordered;
+    }
+
+    /// <summary>Igrac narucuje jedan brod. Vraca false ako je narudzba vec u tijeku.</summary>
+    public bool OrderShip()
+    {
+        if (!IsShipyard || _shipOrdered) return false;
+        _shipOrdered = true;
+        return true;
     }
 
     // ---- Private ----
@@ -322,6 +343,11 @@ public class BuildingInstance : MonoBehaviour
     /// </summary>
     private void TickShipyard(int activeWorkers, float bonus = 1f)
     {
+        // Bez narudzbe se ne radi nista: brodogradiliste ceka da igrac pritisne
+        // "Build ship". Ranije je gradnja kretala sama cim bi radnik usao unutra,
+        // pa su resursi nestajali bez ijedne igraceve odluke.
+        if (!_shipOrdered) return;
+
         // Kobilica: naplati fiksni trosak jednom po brodu. "Sve ili nista" —
         // ako nedostaje ijedan resurs, ne trosi se nista i napredak stoji.
         if (!_keelLaid)
@@ -347,7 +373,8 @@ public class BuildingInstance : MonoBehaviour
             _shipProgress -= BalanceConfig.ShipProgressRequired;
             _game.AddResource(ResourceType.Ships, 1);
             SpawnShip();
-            _keelLaid = false;   // sljedeci brod trazi novu naplatu
+            _keelLaid    = false;   // sljedeci brod trazi novu naplatu
+            _shipOrdered = false;   // i novu narudzbu
         }
     }
 

@@ -418,6 +418,18 @@ public class GameController : MonoBehaviour
         return TryPlaceBuilding(type, _selectedSlot.Position);
     }
 
+    /// <summary>
+    /// Igrac narucuje brod na odabranom brodogradilistu. Resursi se naplacuju
+    /// tek na prvom satnom ticku, kad se polaze kobilica.
+    /// </summary>
+    public bool OrderShipOnSelectedBuilding()
+    {
+        if (_selectedBuilding == null || !_selectedBuilding.IsShipyard) return false;
+        bool ok = _selectedBuilding.OrderShip();
+        if (ok) RefreshUI();
+        return ok;
+    }
+
     // -------------------------------------------------------
     // Ship actions
     // Mornari su uklonjeni — brod trazi samo putnike i hranu.
@@ -706,6 +718,7 @@ public class GameController : MonoBehaviour
                 ShipProgress             = b.ShipProgress,
                 ShipCount                = b.ShipCount,
                 KeelLaid                 = b.KeelLaid,
+                ShipOrdered              = b.ShipOrdered,
             });
         }
 
@@ -808,7 +821,7 @@ public class GameController : MonoBehaviour
             // Brodogradiliste: vrati napredak i stanje kobilice (O5 — ranije se gubilo,
             // a s fiksnom naplatom to bi bio gubitak cijelog troska broda).
             if (building.IsShipyard)
-                building.RestoreShipyardState(bd.ShipProgress, bd.ShipCount, bd.KeelLaid);
+                building.RestoreShipyardState(bd.ShipProgress, bd.ShipCount, bd.KeelLaid, bd.ShipOrdered);
 
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
@@ -877,35 +890,37 @@ public class GameController : MonoBehaviour
     // ---- Private ----
 
     /// <summary>
-    /// Brod koji je spreman krece sam — igrac ga ne mora slati. Cim je otisao
-    /// dovoljno daleko, brise se, a njegovi putnici su trajno evakuirani.
+    /// Igrac salje odabrani brod. Tek sada duse napustaju otok: populacija pada,
+    /// djeca izlaze iz brojaca i potrosnja hrane se smanjuje. Do ovog trenutka
+    /// su ukrcani i dalje jeli.
     /// </summary>
+    public bool SailSelectedShip()
+    {
+        var ship = _selectedShip;
+        if (ship == null || ship.IsSailing || !ship.IsReadyToSail) return false;
+
+        totalPopulation -= ship.Passengers;
+        children        -= ship.PassengerChildren;
+        _evacuatedSouls += ship.Passengers;
+
+        ship.BeginSail();
+        _selectedShip = null;
+        RefreshUI();
+        return true;
+    }
+
+    /// <summary>Brise brodove koji su otplovili dovoljno daleko.</summary>
     private void ProcessShipDepartures()
     {
         for (int i = _ships.Count - 1; i >= 0; i--)
         {
             var ship = _ships[i];
             if (ship == null) { _ships.RemoveAt(i); continue; }
+            if (!ship.HasLeft) continue;
 
-            if (!ship.IsSailing && ship.IsReadyToSail)
-            {
-                // Tek sada duse napustaju otok: populacija pada, djeca izlaze iz
-                // brojaca, a potrosnja hrane se smanjuje. Do ovog trenutka su
-                // ukrcani i dalje jeli.
-                totalPopulation -= ship.Passengers;
-                children        -= ship.PassengerChildren;
-                _evacuatedSouls += ship.Passengers;
-
-                ship.BeginSail();
-                if (_selectedShip == ship) _selectedShip = null;
-            }
-
-            if (ship.HasLeft)
-            {
-                if (_selectedShip == ship) _selectedShip = null;
-                _ships.RemoveAt(i);
-                Destroy(ship.gameObject);
-            }
+            if (_selectedShip == ship) _selectedShip = null;
+            _ships.RemoveAt(i);
+            Destroy(ship.gameObject);
         }
     }
 

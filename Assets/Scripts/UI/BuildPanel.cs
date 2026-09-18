@@ -62,7 +62,15 @@ public class BuildPanel : MonoBehaviour
 
     // ---- State ----
     private bool           _panelOpen;
-    public  bool           IsPlacing => _pendingType.HasValue;
+
+    /// <summary>
+    /// True i jedan frame NAKON postavljanja. PrototypeSelectionController cita
+    /// ovu zastavicu da ne bi odabrao upravo postavljeno gradiliste: njegov
+    /// Update se izvrsava poslije ovoga, pa je isti klik inace otvarao desnu
+    /// plocu cim bi zgrada bila postavljena.
+    /// </summary>
+    public  bool           IsPlacing => _pendingType.HasValue || Time.frameCount == _placedFrame;
+    private int            _placedFrame = -1;
     private BuildingType?  _pendingType;
     private GameObject     _ghost;
     private SpriteRenderer _ghostSR;
@@ -204,7 +212,11 @@ public class BuildPanel : MonoBehaviour
 
         if (mouse.leftButton.wasPressedThisFrame && _ghostValid)
         {
-            if (_game.TryPlaceBuilding(_pendingType.Value, worldPos)) CancelPlacement();
+            if (_game.TryPlaceBuilding(_pendingType.Value, worldPos))
+            {
+                _placedFrame = Time.frameCount;
+                CancelPlacement();
+            }
         }
     }
 

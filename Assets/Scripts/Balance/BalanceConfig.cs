@@ -50,10 +50,10 @@ public static class BalanceConfig
     public const int   ShipRopeCost            = 280;
 
     // Ship capacity
-    public const int   ShipFoodLoadStep        = 10;  // hrane po kliku
+    public const int   ShipFoodLoadStep        = 100; // hrane po kliku
     public const int   ShipPassengerLoadStep   = 10;  // putnika po kliku
     public const int   ShipMaxPassengers       = 100;
-    public const int   ShipFoodRequired        = 750;
+    public const int   ShipFoodRequired        = 700;
     public const int   ShipyardMaxWorkers      = 10;
 
     // Worker limits

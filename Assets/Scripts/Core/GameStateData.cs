@@ -72,6 +72,8 @@ public class BuildingData
     public int      ShipCount;
     /// <summary>Je li fiksni trosak za brod u izradi vec placen.</summary>
     public bool     KeelLaid;
+    /// <summary>Je li igrac narucio brod (gradnja vise ne krece sama).</summary>
+    public bool     ShipOrdered;
 }
 
 // -------------------------------------------------------
