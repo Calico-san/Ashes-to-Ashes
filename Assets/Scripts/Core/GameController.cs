@@ -741,6 +741,8 @@ public class GameController : MonoBehaviour
             });
         }
 
+        data.Events = EventManager.Instance?.BuildSaveData() ?? data.Events;
+
         foreach (var ship in _ships)
         {
             if (ship == null || ship.IsSailing) continue;   // brod u odlasku se ne sprema
@@ -867,6 +869,10 @@ public class GameController : MonoBehaviour
             RegisterShip(ship);
         }
 
+        // Bez ovoga PrepareTrigger() ostaje na svjezem stanju iz pokretanja scene,
+        // pa se vec odigrani dogadaji otvaraju ponovno.
+        EventManager.Instance?.ApplyLoadData(data.Events);
+
         _selectedBuilding = null;
         _selectedSlot     = null;
         _selectedShip     = null;
@@ -889,24 +895,57 @@ public class GameController : MonoBehaviour
 
     // ---- Private ----
 
-    /// <summary>
-    /// Igrac salje odabrani brod. Tek sada duse napustaju otok: populacija pada,
-    /// djeca izlaze iz brojaca i potrosnja hrane se smanjuje. Do ovog trenutka
-    /// su ukrcani i dalje jeli.
-    /// </summary>
-    public bool SailSelectedShip()
+    /// <summary>Koliko brodova trenutno ceka na polazak (spremni, jos u luci).</summary>
+    public int ReadyShipCount
     {
-        var ship = _selectedShip;
-        if (ship == null || ship.IsSailing || !ship.IsReadyToSail) return false;
+        get
+        {
+            int n = 0;
+            foreach (var s in _ships)
+                if (s != null && !s.IsSailing && s.IsReadyToSail) n++;
+            return n;
+        }
+    }
 
-        totalPopulation -= ship.Passengers;
-        children        -= ship.PassengerChildren;
-        _evacuatedSouls += ship.Passengers;
+    /// <summary>
+    /// Salje SVE spremne brodove jednim potezom. Tek sada duse napustaju otok:
+    /// populacija pada, djeca izlaze iz brojaca i potrosnja hrane se smanjuje.
+    /// Do ovog trenutka su ukrcani i dalje jeli.
+    ///
+    /// Svaki brod dobiva svoje mjesto u redu, pa krecu jedan za drugim i
+    /// razilaze se u lepezu umjesto da putuju kao jedna mrlja.
+    /// Vraca broj poslanih brodova.
+    /// </summary>
+    public int SailAllReadyShips()
+    {
+        // Brodovi stoje poredani kao karte, sve dalje od obale. Krecu OBRNUTIM
+        // redom — onaj najdalji prvi — jer bi inace brod uz obalu isplovio
+        // ravno kroz one koji jos cekaju iza njega.
+        var ready = new List<ShipInstance>();
+        for (int i = _ships.Count - 1; i >= 0; i--)
+        {
+            var ship = _ships[i];
+            if (ship == null || ship.IsSailing || !ship.IsReadyToSail) continue;
+            ready.Add(ship);
+        }
 
-        ship.BeginSail();
-        _selectedShip = null;
-        RefreshUI();
-        return true;
+        for (int q = 0; q < ready.Count; q++)
+        {
+            var ship = ready[q];
+
+            totalPopulation -= ship.Passengers;
+            children        -= ship.PassengerChildren;
+            _evacuatedSouls += ship.Passengers;
+
+            ship.BeginSail(q, ready.Count);
+        }
+
+        if (ready.Count > 0)
+        {
+            _selectedShip = null;
+            RefreshUI();
+        }
+        return ready.Count;
     }
 
     /// <summary>Brise brodove koji su otplovili dovoljno daleko.</summary>

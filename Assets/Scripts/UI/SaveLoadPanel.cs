@@ -11,6 +11,14 @@ public class SaveLoadPanel : MonoBehaviour
     [Header("Izgled")]
     [SerializeField] private Button _buttonTemplate;
     [SerializeField] private Sprite _panelSprite;   // neobavezno, 9-slice pozadina
+    [SerializeField] private float  _panelPixelsPerUnitMultiplier = 3f;
+
+    private float PanelPixelsPerUnitMultiplier =>
+        _panelPixelsPerUnitMultiplier > 0f ? _panelPixelsPerUnitMultiplier : 1f;
+
+    /// <summary>Ploca je svijetla, pa sav tekst ide u crno.</summary>
+    private static readonly Color Ink     = new Color(0.08f, 0.07f, 0.06f);
+    private static readonly Color InkSoft = new Color(0.30f, 0.26f, 0.21f);
 
     private GameObject              _overlay;
     private bool                    _open;
@@ -137,6 +145,8 @@ public class SaveLoadPanel : MonoBehaviour
             panelImg.sprite = _panelSprite;
             panelImg.type   = Image.Type.Sliced;   // rubovi se ne rastezu
             panelImg.color  = Color.white;
+            // Rub je nacrtan sitno; bez mnozitelja se na ploci 400x360 gubi.
+            panelImg.pixelsPerUnitMultiplier = PanelPixelsPerUnitMultiplier;
         }
         else
         {
@@ -144,9 +154,9 @@ public class SaveLoadPanel : MonoBehaviour
         }
 
         // Naslov i Resume su se preklapali: naslov je isao do 1.0, a gumb do 0.97.
-        TMP(panel.transform,  "PAUSED", 17, Color.white,          0f, 0.90f, 1f, 1f);
+        TMP(panel.transform,  "PAUSED", 17, Ink,     0f, 0.90f, 1f, 1f);
         Btn(panel.transform,  "Resume", () => { _game.SetSpeed(1); Close(); }, 0.1f, 0.79f, 0.9f, 0.885f);
-        TMP(panel.transform,  "SAVE",   10, new Color(.6f,.6f,.6f), 0f, 0.68f, 1f, 0.76f);
+        TMP(panel.transform,  "SAVE",   10, InkSoft, 0f, 0.68f, 1f, 0.76f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
@@ -156,7 +166,7 @@ public class SaveLoadPanel : MonoBehaviour
             _saveLabels[i] = SetupSlotLabel(b);
         }
 
-        TMP(panel.transform, "LOAD", 10, new Color(.6f,.6f,.6f), 0f, 0.38f, 1f, 0.46f);
+        TMP(panel.transform, "LOAD", 10, InkSoft, 0f, 0.38f, 1f, 0.46f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
@@ -167,7 +177,7 @@ public class SaveLoadPanel : MonoBehaviour
             _loadBtns[i]   = b;
         }
 
-        _feedbackText = TMP(panel.transform, "", 10, new Color(.4f,.9f,.4f), 0f, 0.13f, 1f, 0.19f);
+        _feedbackText = TMP(panel.transform, "", 10, new Color(0.10f, 0.35f, 0.14f), 0f, 0.13f, 1f, 0.19f);
 
         // Main Menu na dnu — visina 0.10 ploce, isto kao Resume, umjesto
         // prijasnjih 0.05 zbog kojih je gumb bio duplo nizi od ostalih.
@@ -181,6 +191,7 @@ public class SaveLoadPanel : MonoBehaviour
         t.fontSize         = 9f;
         t.textWrappingMode = TMPro.TextWrappingModes.Normal;
         t.alignment        = TextAlignmentOptions.Center;
+        t.color            = Ink;
         return t;
     }
 
@@ -242,7 +253,7 @@ public class SaveLoadPanel : MonoBehaviour
         lblRT.anchorMin = Vector2.zero;  lblRT.anchorMax = Vector2.one;
         lblRT.offsetMin = new Vector2(4f, 4f); lblRT.offsetMax = new Vector2(-4f, -4f);
         var t = lblGO.AddComponent<TextMeshProUGUI>();
-        t.text = label; t.fontSize = 10f; t.color = Color.white;
+        t.text = label; t.fontSize = 10f; t.color = Ink;
         t.alignment = TextAlignmentOptions.Center;
         return btn;
     }
@@ -276,6 +287,7 @@ public class SaveLoadPanel : MonoBehaviour
         {
             t.text     = label;
             t.fontSize = 10f;
+            t.color    = Ink;
         }
 
         return btn;

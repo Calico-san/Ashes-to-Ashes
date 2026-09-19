@@ -56,6 +56,23 @@ public class GameEventData : ScriptableObject
     private int scheduledHour;
     private int lastTriggeredDay;
 
+    // Stanje okidaca je runtime stanje na ScriptableObjectu i ne sprema se s
+    // assetom. Bez ovih pristupnika spremljena igra ga nije mogla zapisati, pa
+    // je PrepareTrigger() pri ucitavanju sve vracao na pocetak i vec odigrani
+    // dogadaji su se otvarali ponovno.
+    public int ScheduledDay     => scheduledDay;
+    public int ScheduledHour    => scheduledHour;
+    public int LastTriggeredDay => lastTriggeredDay;
+
+    /// <summary>Vraca stanje okidaca iz spremljene igre, bez ponovnog zdrijeba.</summary>
+    public void RestoreTrigger(bool hasTriggered, int day, int hour, int lastDay)
+    {
+        HasTriggered     = hasTriggered;
+        scheduledDay     = day;
+        scheduledHour    = hour;
+        lastTriggeredDay = lastDay;
+    }
+
     public void PrepareTrigger()
     {
         if (Options != null)

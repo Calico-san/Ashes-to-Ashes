@@ -50,8 +50,14 @@ public class UIController : MonoBehaviour
     // Brodogradnja vise ne krece sama — igrac mora naruciti brod.
     [SerializeField] private Button          _buildShipBtn;
 
+<<<<<<< Updated upstream
     [Header("Right Panel Spacing")]
     [SerializeField] private GameObject[]    _optionalSpacing;
+=======
+    // Otvara Manage fleet plocu s popisom brodova. Ako nije povucen u
+    // Inspectoru, klonira se iz _assignBtn i smjesta odmah ispod Build ship.
+    [SerializeField] private Button          _manageFleetBtn;
+>>>>>>> Stashed changes
 
     // Ikone za male gumbe tereta. Povuci iz "Sprite sheet for Basic Pack":
     //   _plusSprite  -> Sprite sheet for Basic Pack_35
@@ -130,6 +136,7 @@ public class UIController : MonoBehaviour
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
         _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
         _buildShipBtn?.onClick.AddListener(() => _game.OrderShipOnSelectedBuilding());
+        _manageFleetBtn?.onClick.AddListener(OpenFleet);
 
         WireShipButtons();
 
@@ -211,7 +218,8 @@ public class UIController : MonoBehaviour
     /// </summary>
     private void WireShipButtons()
     {
-        _shipDetailBack?.onClick.AddListener(() => _game.SelectShip(null));
+        // "< Back" se povezuje kontekstno u SetBackBtn, jer u ploci flote vodi
+        // na popis, a iz popisa natrag na brodogradiliste.
     }
 
     // Keep Build() as alias so Bootstrapper doesn't break before migration
@@ -284,6 +292,9 @@ public class UIController : MonoBehaviour
         if (_removeEngBtn    != null) _removeEngBtn.gameObject.SetActive(false);
         if (_upgradeBtn      != null) _upgradeBtn.gameObject.SetActive(false);
         if (_buildShipBtn    != null) _buildShipBtn.gameObject.SetActive(false);
+        if (_manageFleetBtn  != null) _manageFleetBtn.gameObject.SetActive(false);
+        if (_shipDetailBack  != null) _shipDetailBack.gameObject.SetActive(false);
+        if (_sailAllBtn      != null) _sailAllBtn.gameObject.SetActive(false);
         if (_addPassengerBtn != null) _addPassengerBtn.gameObject.SetActive(false);
         if (_removePassengerBtn != null) _removePassengerBtn.gameObject.SetActive(false);
         if (_boardAllBtn     != null) _boardAllBtn.gameObject.SetActive(false);
@@ -298,6 +309,26 @@ public class UIController : MonoBehaviour
         if (_cargoRows != null) _cargoRows.SetActive(false);
     }
 
+    // -------------------------------------------------------
+    // Manage fleet — stanje ploce
+    // -------------------------------------------------------
+
+    /// <summary>
+    /// True dok je otvorena ploca flote. Cisto stanje sucelja — GameController
+    /// ne zna za nju, pa se ovaj podatak namjerno ne sprema u igru.
+    /// </summary>
+    private bool             _fleetOpen;
+    private BuildingInstance _lastSelBuilding;
+
+    private void OpenFleet()  { _fleetOpen = true; }
+
+    /// <summary>Zatvara flotu i vraca se na plocu brodogradilista.</summary>
+    private void CloseFleet()
+    {
+        _fleetOpen = false;
+        _game.SelectShip(null);
+    }
+
     private void RefreshRightPanel(GameController game,
         BuildingInstance sel, ShipInstance selShip, BuildSlot selSlot)
     {
@@ -308,11 +339,24 @@ public class UIController : MonoBehaviour
         bool showSlot     = selSlot != null;
         bool anySelected  = showShipyard || showTownHall || showBuilding || showShip || showSlot;
 
+        // Promjena odabrane gradevine zatvara flotu, da se ploca flote ne
+        // pojavi nad nekom drugom zgradom.
+        if (sel != _lastSelBuilding)
+        {
+            _lastSelBuilding = sel;
+            _fleetOpen = false;
+        }
+
+        // Klik na brod u svijetu otvara flotu izravno, bez prolaska kroz
+        // brodogradiliste.
+        if (showShip) _fleetOpen = true;
+
         _rightPanel?.SetActive(anySelected);
         if (!anySelected)
         {
             _shipListContainer?  .SetActive(false);
             _shipDetailContainer?.SetActive(false);
+            _fleetOpen = false;
             _game.SelectShip(null);
             return;
         }
@@ -323,51 +367,42 @@ public class UIController : MonoBehaviour
         if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
         ResetPanelControls();
 
-        if (showShipyard)
+        // Ploca flote ima prednost: otvorena je ili preko gumba Manage fleet,
+        // ili klikom na brod u svijetu.
+        bool fleetMode = showShip || (showShipyard && _fleetOpen);
+
+        if (fleetMode)
         {
-            bool inDetail = selShip != null;
+            RefreshFleetPanel(game, selShip, showShipyard);
+        }
+        else if (showShipyard)
+        {
+            SetTitle("Shipyard");
+            SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}" +
+                (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
+                (sel.AssignedEngineers > 0
+                    ? $"  | Eng: {sel.AssignedEngineers} +{(int)((sel.EngineerBonus - 1) * 100)}%"
+                    : ""));
 
-            _shipListContainer?  .SetActive(!inDetail);
-            _shipDetailContainer?.SetActive(inDetail);
+            // Fiksni trosak po brodu — radnici odreduju samo brzinu.
+            string eta = sel.ShipHoursRemaining >= 0f ? $"{sel.ShipHoursRemaining:F1}h" : "—";
+            string keel = !sel.ShipOrdered
+                ? "No ship ordered"
+                : sel.KeelLaid ? "Keel laid — materials paid" : "Ordered — waiting for materials";
 
-            if (inDetail)
-            {
-                // Dok je otvoren brod, sazetak brodogradilista i gumbi za radnike
-                // samo trose visinu — ploca inace ne stane na ekran. Povratak je
-                // jedan klik na "< Back".
-                SetTitle(selShip.DisplayName);
-                if (_workerText != null) _workerText.gameObject.SetActive(false);
-                if (_outputText != null) _outputText.gameObject.SetActive(false);
-                if (_assignBtn  != null) _assignBtn.gameObject.SetActive(false);
-                if (_removeBtn  != null) _removeBtn.gameObject.SetActive(false);
+            SetOutputLine($"Ship cost (fixed): {ShipCostString()}\n" +
+                          $"{keel}\n" +
+                          $"Progress: {sel.ShipProgressPercent:F0}%   ETA: {eta}\n" +
+                          $"Ships built: {sel.ShipCount}   Fleet: {game.GetShips().Count}");
 
-                RefreshShipDetail(game, selShip);
-            }
-            else
-            {
-                SetTitle("Shipyard");
-                SetWorkerLine($"Workers: {sel.AssignedWorkers}/{sel.MaxWorkers}" +
-                    (sel.WorkersInside > 0 ? $" ({sel.WorkersInside} active)" : "") +
-                    (sel.AssignedEngineers > 0
-                        ? $"  | Eng: {sel.AssignedEngineers} +{(int)((sel.EngineerBonus - 1) * 100)}%"
-                        : ""));
-
-                // Fiksni trosak po brodu — radnici odreduju samo brzinu.
-                string eta = sel.ShipHoursRemaining >= 0f ? $"{sel.ShipHoursRemaining:F1}h" : "—";
-                SetOutputLine($"Cost: {ShipCostString()}  ({(sel.KeelLaid ? "paid" : "unpaid")})\n" +
-                              $"Progress: {sel.ShipProgressPercent:F0}%   ETA: {eta}\n" +
-                              $"Ships built: {sel.ShipCount}");
-
-                SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
-                           "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
-                           sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
-                           sel.AssignedWorkers > 0);
-                SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
-                              sel.AssignedEngineers > 0);
-                SetBuildShipBtn(sel);
-
-                RefreshShipList(game);
-            }
+            SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
+                       "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),
+                       sel.AssignedWorkers < sel.MaxWorkers && game.FreeWorkers > 0,
+                       sel.AssignedWorkers > 0);
+            SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
+                          sel.AssignedEngineers > 0);
+            SetBuildShipBtn(sel);
+            SetManageFleetBtn(game);
         }
         else if (showTownHall)
         {
@@ -409,15 +444,9 @@ public class UIController : MonoBehaviour
                     engStr + rawStr);
             }
 
-            // Samo total/h. Stopa po radniku i "/day" su maknuti — "/day" je uz
-            // 14-satni dan ionako bio racunat s 24 i prikazivao krivu brojku.
             string outLine = $"{outputName}/h: {sel.TotalOutputPerHour}";
-
-            // Fiberworks isporucuje i Rope; bez ovog retka resurs je rastao bez
-            // ijednog vidljivog izvora.
             if (sel.SecondaryOutputType.HasValue)
                 outLine += $"\n{sel.SecondaryOutputType.Value}/h: {sel.SecondaryTotalPerHour}";
-
             SetOutputLine(outLine);
 
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
@@ -428,16 +457,37 @@ public class UIController : MonoBehaviour
                           sel.AssignedEngineers > 0);
             SetUpgradeBtn(true, game.CanAffordUpgrade(sel));
         }
-        else if (showShip)
+    }
+
+    // -------------------------------------------------------
+    // Manage fleet — popis brodova i pojedini brod
+    // -------------------------------------------------------
+
+    /// <summary>
+    /// Bez odabranog broda prikazuje popis flote; s odabranim brodom prikazuje
+    /// njegov teret i gumb Sail. Gumbi za radnike i inzenjere su ovdje ugaseni
+    /// jer pripadaju brodogradilistu, ne floti.
+    /// </summary>
+    private void RefreshFleetPanel(GameController game, ShipInstance selShip, bool fromShipyard)
+    {
+        if (_workerText != null) _workerText.gameObject.SetActive(false);
+        if (_assignBtn  != null) _assignBtn.gameObject.SetActive(false);
+        if (_removeBtn  != null) _removeBtn.gameObject.SetActive(false);
+
+        bool inDetail = selShip != null;
+
+        _shipListContainer?  .SetActive(!inDetail);
+        _shipDetailContainer?.SetActive(inDetail);
+
+        if (inDetail)
         {
             SetTitle(selShip.DisplayName);
-            _shipDetailContainer?.SetActive(true);
-            if (_workerText != null) _workerText.gameObject.SetActive(false);
             if (_outputText != null) _outputText.gameObject.SetActive(false);
-            if (_assignBtn  != null) _assignBtn.gameObject.SetActive(false);
-            if (_removeBtn  != null) _removeBtn.gameObject.SetActive(false);
             RefreshShipDetail(game, selShip);
+            // Natrag na popis flote.
+            SetBackBtn("< Back to fleet", () => _game.SelectShip(null));
         }
+<<<<<<< Updated upstream
 
         SetOptionalSpacingVisible(!showTownHall && !showSlot && !showShip);
     }
@@ -448,6 +498,107 @@ public class UIController : MonoBehaviour
         foreach (var element in _optionalSpacing)
             if (element != null && element.activeSelf != visible)
                 element.SetActive(visible);
+=======
+        else
+        {
+            var ships = game.GetShips();
+            int ready = game.ReadyShipCount;
+
+            SetTitle("Manage fleet");
+            SetOutputLine(ships.Count == 0
+                ? "No ships yet. Order one in the Shipyard."
+                : $"Ships in port: {ships.Count}\nReady to sail: {ready}");
+
+            RefreshShipList(game);
+            SetSailAllBtn(game, ready);
+            // Iz flote natrag na brodogradiliste, ako smo dosli odande.
+            SetBackBtn(fromShipyard ? "< Back to Shipyard" : "< Close",
+                       fromShipyard ? (UnityEngine.Events.UnityAction)CloseFleet
+                                    : () => { _fleetOpen = false; _game.SelectShip(null); _game.SelectBuilding(null); });
+        }
+    }
+
+    private bool _backBtnMoved;
+
+    /// <summary>
+    /// Gumb za povratak; koristi postojeci _shipDetailBack iz scene.
+    ///
+    /// U sceni taj gumb stoji UNUTAR kontejnera detalja broda, pa bi nestao cim
+    /// se prikaze popis flote. Zato se jednom premjesta u desnu plocu, odmah
+    /// iznad popisa — zadrzava svoj sprite, font i velicinu iz scene, a postaje
+    /// vidljiv u oba prikaza flote.
+    /// </summary>
+    private void SetBackBtn(string label, UnityEngine.Events.UnityAction cb)
+    {
+        if (_shipDetailBack == null) return;
+
+        if (!_backBtnMoved && _rightPanel != null)
+        {
+            _backBtnMoved = true;
+            _shipDetailBack.transform.SetParent(_rightPanel.transform, false);
+            if (_shipListContainer != null)
+                _shipDetailBack.transform.SetSiblingIndex(
+                    _shipListContainer.transform.GetSiblingIndex());
+        }
+
+        _shipDetailBack.gameObject.SetActive(true);
+        _shipDetailBack.interactable = true;
+        _shipDetailBack.onClick.RemoveAllListeners();
+        _shipDetailBack.onClick.AddListener(cb);
+        SetLabel(_shipDetailBack, label);
+    }
+
+    private Button _sailAllBtn;
+
+    /// <summary>
+    /// Gumb Sail u ploci flote. Salje SVE spremne brodove odjednom; oni zatim
+    /// krecu jedan za drugim i razilaze se u lepezu.
+    /// Stvara se pri prvom prikazu i klonira _assignBtn, pa preuzima sprite,
+    /// font i visinu ostalih gumba ploce.
+    /// </summary>
+    private void SetSailAllBtn(GameController game, int readyCount)
+    {
+        if (_sailAllBtn == null)
+        {
+            Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
+            _sailAllBtn = CloneStyledButton(parent, "SailAll", "Sail");
+            _sailAllBtn.onClick.AddListener(() => _game.SailAllReadyShips());
+
+            // Odmah ispod popisa brodova.
+            if (_shipListContainer != null)
+                _sailAllBtn.transform.SetSiblingIndex(
+                    _shipListContainer.transform.GetSiblingIndex() + 1);
+        }
+
+        _sailAllBtn.gameObject.SetActive(true);
+        _sailAllBtn.interactable = readyCount > 0;
+        SetLabel(_sailAllBtn, readyCount > 0 ? $"Sail ({readyCount} ready)" : "Sail (none ready)");
+    }
+
+    /// <summary>
+    /// "Manage fleet" u ploci brodogradilista. Gumb se stvara tek pri prvom
+    /// prikazu i klonira _assignBtn, pa preuzme sprite, font i visinu ostalih
+    /// gumba ploce.
+    /// </summary>
+    private void SetManageFleetBtn(GameController game)
+    {
+        if (_manageFleetBtn == null)
+        {
+            Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
+            _manageFleetBtn = CloneStyledButton(parent, "ManageFleet", "Manage fleet");
+            _manageFleetBtn.onClick.AddListener(OpenFleet);
+
+            // Odmah ispod gumba Build ship, da red gumba ostane logican.
+            if (_buildShipBtn != null)
+                _manageFleetBtn.transform.SetSiblingIndex(
+                    _buildShipBtn.transform.GetSiblingIndex() + 1);
+        }
+
+        int count = game.GetShips().Count;
+        _manageFleetBtn.gameObject.SetActive(true);
+        _manageFleetBtn.interactable = count > 0;
+        SetLabel(_manageFleetBtn, count > 0 ? $"Manage fleet ({count})" : "Manage fleet (no ships)");
+>>>>>>> Stashed changes
     }
 
     // -------------------------------------------------------
@@ -573,7 +724,7 @@ public class UIController : MonoBehaviour
             {
                 // Bez prefaba se klonira gumb iz ploce, pa redak izgleda kao
                 // ostali gumbi umjesto kao tamna traka.
-                btn = CloneStyledButton(_shipListContainer.transform, "ShipRow", "", 166, 22, 9f);
+                btn = CloneStyledButton(_shipListContainer.transform, "ShipRow", "");
             }
             _shipRowBtns.Add(btn);
         }
@@ -585,14 +736,15 @@ public class UIController : MonoBehaviour
             if (btn == null) continue;
 
             // Boja se vise ne prepisuje — gumb zadrzi sprite i boje iz scene.
-            // Odabrani redak se oznacava strelicom u natpisu.
-            bool selected = game.GetSelectedShip() == ship;
+            // Oznaka odabranog retka vise ne treba: odabir broda prebacuje
+            // plocu na njegov detalj, pa popis nikad nema odabrani redak.
+            string state = ship.IsSailing            ? "  — sailing"
+                         : ship.IsReadyToSail        ? "  — READY"
+                                                     : "";
             var lbl = btn.GetComponentInChildren<TextMeshProUGUI>();
             if (lbl != null)
-                lbl.text = (selected ? "> " : "") +
-                           $"{ship.DisplayName}  P: {ship.Passengers}/{ship.MaxPassengers}" +
-                           $"  F: {ship.FoodLoaded}/{ship.RequiredFood}" +
-                           (ship.IsReadyToSail ? "  *" : "");
+                lbl.text = $"{ship.DisplayName}   P {ship.Passengers}/{ship.MaxPassengers}" +
+                           $"   F {ship.FoodLoaded}/{ship.RequiredFood}{state}";
 
             int idx = i;
             btn.onClick.RemoveAllListeners();
@@ -604,14 +756,15 @@ public class UIController : MonoBehaviour
     {
         if (ship == null) return;
         if (_shipDetailTitle != null) _shipDetailTitle.text = ship.DisplayName;
-        // Kad je brod spreman, umjesto poruke stoji gumb Sail.
-        bool ready = ship.IsReadyToSail && !ship.IsSailing;
+        // Status je samo tekst. Slanje je radnja nad flotom, pa gumb Sail stoji
+        // na ploci Manage fleet, a ne ovdje.
         if (_shipDetailInfo != null)
         {
-            _shipDetailInfo.text = ship.IsSailing ? "Sailing…" : "Not ready to sail";
-            _shipDetailInfo.gameObject.SetActive(!ready);
+            _shipDetailInfo.gameObject.SetActive(true);
+            _shipDetailInfo.text = ship.IsSailing      ? "Sailing…"
+                                 : ship.IsReadyToSail  ? "Ready to sail"
+                                                       : "Not ready to sail";
         }
-        if (_sailBtn != null) _sailBtn.gameObject.SetActive(ready);
 
         // Sve stare varijante gumba se gase — teret se vodi kroz dva kompaktna
         // retka "Passengers [+] [-]" i "Food [+] [-]". Prije je ista akcija
@@ -649,7 +802,7 @@ public class UIController : MonoBehaviour
 
     private GameObject      _cargoRows;
     private TextMeshProUGUI _passengerRowLabel, _foodRowLabel;
-    private Button          _passengerPlus, _passengerMinus, _foodPlus, _foodMinus, _fillShipBtn, _sailBtn;
+    private Button          _passengerPlus, _passengerMinus, _foodPlus, _foodMinus, _fillShipBtn;
 
     private void HideLegacyCargoButtons()
     {
@@ -696,17 +849,15 @@ public class UIController : MonoBehaviour
         // Puni brod do kraja: prvo ljudi, pa hrana koliko je ima na skladistu.
         // Redoslijed je bitan — ukrcani putnici ne diraju zalihu hrane, pa hrana
         // koja ostane ide sva na brod.
-        _fillShipBtn = CloneStyledButton(_cargoRows.transform, "FillShip", "Fill ship", 166, 24);
+        _fillShipBtn = CloneStyledButton(_cargoRows.transform, "FillShip", "Fill ship");
         _fillShipBtn.onClick.AddListener(() =>
         {
             _game.AddPassengersToSelectedShip(BalanceConfig.ShipMaxPassengers);
             _game.LoadAllFoodToSelectedShip();
         });
 
-        // Isplovljavanje je odluka igraca — gumb se pojavi tek kad je brod spreman.
-        _sailBtn = CloneStyledButton(_cargoRows.transform, "Sail", "Sail", 166, 24);
-        _sailBtn.onClick.AddListener(() => _game.SailSelectedShip());
-        _sailBtn.gameObject.SetActive(false);
+        // Sail ovdje NE postoji — isplovljavanje je radnja nad cijelom flotom i
+        // zivi u ploci Manage fleet, ne na pojedinom brodu.
     }
 
     /// <summary>Jedan redak: natpis lijevo, pa mala kvadratna gumba [-] [+].</summary>
@@ -735,12 +886,13 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// Mali kvadratni gumb 20×20. Ako je ikona povucena u Inspectoru, koristi se
-    /// ona; inace se ispisuje znak kao tekst, pa panel radi i bez grafike.
+    /// Mali gumb za korak. Sirina je fiksna, a visina, font i sprite dolaze iz
+    /// predloska, pa se uklapa medu ostale gumbe ploce. Ako je ikona povucena u
+    /// Inspectoru koristi se ona; inace se ispisuje znak kao tekst.
     /// </summary>
     private Button MakeStepBtn(Transform parent, string name, Sprite icon, string fallback)
     {
-        var btn = CloneStyledButton(parent, name, icon != null ? "" : fallback, 24, 22, 12f);
+        var btn = CloneStyledButton(parent, name, icon != null ? "" : fallback, squareWidth: 24f);
 
         if (icon != null)
         {
@@ -882,7 +1034,7 @@ public class UIController : MonoBehaviour
     /// devetodijelnim sprajtovima iz scene.
     /// </summary>
     private Button CloneStyledButton(Transform parent, string name, string label,
-        float w, float h, float fontSize = 0f)
+        float squareWidth = 0f)
     {
         Button btn;
 
@@ -893,21 +1045,36 @@ public class UIController : MonoBehaviour
             go.SetActive(true);
             btn = go.GetComponent<Button>();
             btn.onClick.RemoveAllListeners();
+
+            // RemoveAllListeners brise samo veze dodane iz koda. Ako je predlozak
+            // dobio vezu i u Inspectoru, klon bi ju naslijedio — pa bi "Manage
+            // fleet" usput dodavao radnika. Zato se gase i trajne veze.
+            for (int i = 0; i < btn.onClick.GetPersistentEventCount(); i++)
+                btn.onClick.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
+
+            // Font, sprite, boje i LayoutElement NAMJERNO se ne diraju — klon
+            // nosi tocno onaj izgled koji predlozak ima u sceni, pa svi gumbi
+            // desne ploce ostaju jednaki bez obzira gdje su stvoreni.
         }
         else
         {
-            btn = MakeBtn(parent, label, null, w, h);   // fallback bez scene
+            // Fallback bez scene: samo tada se velicina zadaje iz koda.
+            btn = MakeBtn(parent, label, null, squareWidth > 0f ? squareWidth : 166f, 24f);
             btn.name = $"Btn_{name}";
         }
 
         SetLabel(btn, label);
-        if (fontSize > 0f)
+
+        // Jedina dopustena iznimka: mali kvadratni gumbi + i -, kojima se zadaje
+        // samo sirina. Visina i font i dalje dolaze iz predloska.
+        if (squareWidth > 0f)
         {
-            var t = btn.GetComponentInChildren<TextMeshProUGUI>();
-            if (t != null) t.fontSize = fontSize;
+            var le = btn.GetComponent<LayoutElement>() ?? btn.gameObject.AddComponent<LayoutElement>();
+            le.preferredWidth = squareWidth;
+            le.minWidth       = squareWidth;
+            le.flexibleWidth  = 0f;
         }
 
-        LE(btn.gameObject, prefW: w, minW: w, prefH: h, minH: h, flexW: 0, flexH: 0);
         return btn;
     }
 

@@ -42,9 +42,21 @@ public class ShipInstance : MonoBehaviour
     private Color          _selectedColor;
     private Vector3        _sailDirection;
     private float          _sailedDistance;
+    private float          _departDelay;   // sekundi do pokreta
 
-    private const float SAIL_SPEED    = 1.6f;   // world unita/s
-    private const float SAIL_DISTANCE = 14f;    // koliko daleko prije brisanja
+    private const float SAIL_SPEED     = 1.6f;   // world unita/s
+    private const float SAIL_DISTANCE  = 14f;    // koliko daleko prije brisanja
+
+    // Kad cijela flota krene odjednom, brodovi bi se inace preklopili u jednu
+    // mrlju. Zato svaki dobije svoje kasnjenje (krecu jedan za drugim) i svoj
+    // kut u lepezi, pa se raztrkaju umjesto da putuju u koloni.
+    //
+    // Brzina je NAMJERNO jednaka za sve. Uz nasumicnu brzinu brod koji krene
+    // kasnije zna biti brzi, pa kroz 14 jedinica plovidbe stigne onoga ispred
+    // i prode kroz njega — provjereno simulacijom na flotama do 14 brodova.
+    private const float DEPART_INTERVAL = 1.0f;   // razmak izmedu polazaka
+    private const float FAN_MAX         = 50f;    // polovica sirine lepeze
+    private const float FAN_JITTER      = 3f;     // sitno rasipanje da lepeza ne bude pravilna
 
     private static readonly Vector2 IslandCenter = new Vector2(0f, 0.5f);
 
@@ -74,22 +86,57 @@ public class ShipInstance : MonoBehaviour
     // ---- Isplovljavanje ----
 
     /// <summary>
-    /// Brod krece cim je spreman; smjer je od sredista otoka prema van, pa isplovi
-    /// dalje od obale bez obzira na kojoj je strani nastao.
+    /// Brod krece od sredista otoka prema van, pa isplovi dalje od obale bez
+    /// obzira na kojoj je strani nastao.
+    ///
+    /// <paramref name="queueIndex"/> je mjesto u redu polaska: 0 krece odmah,
+    /// svaki sljedeci ceka DEPART_INTERVAL dulje. <paramref name="totalCount"/>
+    /// je koliko ih ukupno krece, pa se lepeza rasporedi ravnomjerno preko
+    /// cijele sirine bez obzira je li poslano dva broda ili cetrnaest.
+    ///
+    /// Ranija verzija je otklon povecavala po paru i zaustavljala ga na
+    /// najvecoj vrijednosti; brodovi preko te granice dobivali su isti kut i
+    /// plovili usporedo, prakticki jedan preko drugoga.
     /// </summary>
-    public void BeginSail()
+    public void BeginSail(int queueIndex = 0, int totalCount = 1)
     {
         if (IsSailing) return;
         IsSailing = true;
 
+        _departDelay = queueIndex * DEPART_INTERVAL;
+
         Vector3 away = new Vector3(transform.position.x - IslandCenter.x,
                                    transform.position.y - IslandCenter.y, 0f);
-        _sailDirection = away.sqrMagnitude > 0.0001f ? away.normalized : new Vector3(0f, -1f, 0f);
+        away = away.sqrMagnitude > 0.0001f ? away.normalized : new Vector3(0f, -1f, 0f);
+
+        // Ravnomjerna lepeza preko [-FAN_MAX, +FAN_MAX]; jedan brod ide ravno.
+        float angle = totalCount <= 1
+            ? 0f
+            : -FAN_MAX + 2f * FAN_MAX * (queueIndex / (float)(totalCount - 1));
+        angle += Random.Range(-FAN_JITTER, FAN_JITTER);
+
+        _sailDirection = Rotate(away, angle);
+    }
+
+    /// <summary>Rotacija vektora oko z osi, u stupnjevima.</summary>
+    private static Vector3 Rotate(Vector3 v, float degrees)
+    {
+        float r = degrees * Mathf.Deg2Rad;
+        float c = Mathf.Cos(r), s = Mathf.Sin(r);
+        return new Vector3(v.x * c - v.y * s, v.x * s + v.y * c, 0f);
     }
 
     private void Update()
     {
         if (!IsSailing || HasLeft) return;
+
+        // Cekanje na svoj red. Brod je vec "IsSailing", pa vise ne prima teret
+        // i ne moze biti poslan dvaput.
+        if (_departDelay > 0f)
+        {
+            _departDelay -= Time.deltaTime;
+            return;
+        }
 
         float step = SAIL_SPEED * Time.deltaTime;
         transform.position = transform.position + _sailDirection * step;

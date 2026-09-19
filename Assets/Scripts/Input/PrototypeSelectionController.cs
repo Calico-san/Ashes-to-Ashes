@@ -36,6 +36,9 @@ public class PrototypeSelectionController : MonoBehaviour
 
         if (hit == null)
         {
+            // I brod se mora odznaciti, inace bi ploca flote ostala otvorena
+            // nakon klika u prazno.
+            Game.SelectShip(null);
             Game.SelectBuilding(null);
             Game.SelectSlot(null);
             return;
@@ -70,8 +73,12 @@ public class PrototypeSelectionController : MonoBehaviour
         var ship = hit.GetComponent<ShipInstance>();
         if (ship != null)
         {
-            Game.SelectShip(null);
+            // Klik na brod otvara Manage fleet plocu na tom brodu. Uz brod se
+            // odabire i brodogradiliste, pa gumb "< Back to fleet" ima kamo
+            // voditi — bez toga bi povratak zatvorio cijelu plocu.
+            Game.SelectSlot(null);
             Game.SelectBuilding(Game.GetShipyard());
+            Game.SelectShip(ship);
             return;
         }
 

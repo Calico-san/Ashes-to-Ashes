@@ -23,6 +23,15 @@ public class PrototypeBootstrapper : MonoBehaviour
         Boot();
     }
 
+    /// <summary>
+    /// Start() se izvrsi nakon svih Awake poziva, dakle nakon Boot(). Tek tada
+    /// postoje GameController, UI i karta, pa se spremljena igra moze ucitati.
+    /// </summary>
+    private void Start()
+    {
+        GameSceneLoader.ApplyPendingLoad();
+    }
+
     private void Update()
     {
         eventManager?.Update();

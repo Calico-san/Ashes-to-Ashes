@@ -11,10 +11,11 @@ using UnityEngine;
 public class GameStateData
 {
     // ---- Meta ----
+    // 1.2 — dodano stanje okidaca dogadaja (Events).
     // 1.1 — dodan KeelLaid (fiksni trosak broda) i podjela putnika na djecu/odrasle.
     //       Stari zapisi (1.0) se i dalje ucitavaju: nova polja dobiju default,
     //       a AssignedSailors se ignorira jer mornari vise ne postoje.
-    public string   SaveVersion  = "1.1";
+    public string   SaveVersion  = "1.2";
     public string   SaveDateTime;          // ISO 8601, informational only
 
     // ---- Time ----
@@ -48,6 +49,25 @@ public class GameStateData
 
     // ---- Ships ----
     public List<ShipData>      ShipList   = new List<ShipData>();
+
+    // ---- Events ----
+    public List<EventStateData> Events    = new List<EventStateData>();
+}
+
+// -------------------------------------------------------
+
+/// <summary>
+/// Stanje okidaca jednog dogadaja. Vezano po Title jer se dogadaji ucitavaju
+/// iz Resources i nemaju stabilan indeks.
+/// </summary>
+[Serializable]
+public class EventStateData
+{
+    public string   Title;
+    public bool     HasTriggered;
+    public int      ScheduledDay;
+    public int      ScheduledHour;
+    public int      LastTriggeredDay;
 }
 
 // -------------------------------------------------------

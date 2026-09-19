@@ -322,11 +322,16 @@ public class BuildingInstance : MonoBehaviour
         _shipOrdered  = ordered;
     }
 
-    /// <summary>Igrac narucuje jedan brod. Vraca false ako je narudzba vec u tijeku.</summary>
+    /// <summary>
+    /// Igrac narucuje jedan brod. Vraca false ako je narudzba vec u tijeku —
+    /// brodogradiliste gradi tocno jedan brod odjednom, pa za svaki sljedeci
+    /// treba novi klik.
+    /// </summary>
     public bool OrderShip()
     {
         if (!IsShipyard || _shipOrdered) return false;
-        _shipOrdered = true;
+        _shipOrdered  = true;
+        _shipProgress = 0f;   // nova narudzba uvijek krece od nule
         return true;
     }
 
@@ -366,15 +371,18 @@ public class BuildingInstance : MonoBehaviour
 
         _shipProgress += EconomyCalculator.ShipProgressPerHour(activeWorkers) * bonus;
 
-        // while, a ne if: jedan sat pri punom pogonu i inzenjerskom bonusu moze
-        // preskociti prag za vise od jednog broda.
-        while (_shipProgress >= BalanceConfig.ShipProgressRequired)
+        // if, a NE while: jedna narudzba = tocno jedan brod. Petlja je mogla
+        // isporuciti dva broda iz jedne narudzbe, a naplacen je bio samo jedan.
+        if (_shipProgress >= BalanceConfig.ShipProgressRequired)
         {
-            _shipProgress -= BalanceConfig.ShipProgressRequired;
             _game.AddResource(ResourceType.Ships, 1);
             SpawnShip();
-            _keelLaid    = false;   // sljedeci brod trazi novu naplatu
-            _shipOrdered = false;   // i novu narudzbu
+
+            // Visak napretka se NE prenosi na sljedeci brod — svaki brod je
+            // zasebna odluka i krece od nule.
+            _shipProgress = 0f;
+            _keelLaid     = false;   // sljedeci brod trazi novu naplatu
+            _shipOrdered  = false;   // i novu narudzbu
         }
     }
 
