@@ -50,14 +50,12 @@ public class UIController : MonoBehaviour
     // Brodogradnja vise ne krece sama — igrac mora naruciti brod.
     [SerializeField] private Button          _buildShipBtn;
 
-<<<<<<< Updated upstream
-    [Header("Right Panel Spacing")]
-    [SerializeField] private GameObject[]    _optionalSpacing;
-=======
     // Otvara Manage fleet plocu s popisom brodova. Ako nije povucen u
     // Inspectoru, klonira se iz _assignBtn i smjesta odmah ispod Build ship.
     [SerializeField] private Button          _manageFleetBtn;
->>>>>>> Stashed changes
+
+    [Header("Right Panel Spacing")]
+    [SerializeField] private GameObject[]    _optionalSpacing;
 
     // Ikone za male gumbe tereta. Povuci iz "Sprite sheet for Basic Pack":
     //   _plusSprite  -> Sprite sheet for Basic Pack_35
@@ -149,6 +147,8 @@ public class UIController : MonoBehaviour
             _tutorialBtn.onClick.RemoveAllListeners();
             _tutorialBtn.onClick.AddListener(ToggleTutorialPanel);
         }
+
+        NormalizeRightPanelSize();
 
         _rightPanel?.SetActive(false);
         _tutorialPanel?.SetActive(false);
@@ -457,6 +457,19 @@ public class UIController : MonoBehaviour
                           sel.AssignedEngineers > 0);
             SetUpgradeBtn(true, game.CanAffordUpgrade(sel));
         }
+
+        // Razmaknice se skrivaju u zbijenim kontekstima. Uz Town Hall i
+        // gradiliste tu je i cijela ploca flote — i popis i pojedini brod —
+        // pa se umjesto showShip koristi fleetMode.
+        SetOptionalSpacingVisible(!showTownHall && !showSlot && !fleetMode);
+    }
+
+    private void SetOptionalSpacingVisible(bool visible)
+    {
+        if (_optionalSpacing == null) return;
+        foreach (var element in _optionalSpacing)
+            if (element != null && element.activeSelf != visible)
+                element.SetActive(visible);
     }
 
     // -------------------------------------------------------
@@ -487,18 +500,6 @@ public class UIController : MonoBehaviour
             // Natrag na popis flote.
             SetBackBtn("< Back to fleet", () => _game.SelectShip(null));
         }
-<<<<<<< Updated upstream
-
-        SetOptionalSpacingVisible(!showTownHall && !showSlot && !showShip);
-    }
-
-    private void SetOptionalSpacingVisible(bool visible)
-    {
-        if (_optionalSpacing == null) return;
-        foreach (var element in _optionalSpacing)
-            if (element != null && element.activeSelf != visible)
-                element.SetActive(visible);
-=======
         else
         {
             var ships = game.GetShips();
@@ -598,7 +599,6 @@ public class UIController : MonoBehaviour
         _manageFleetBtn.gameObject.SetActive(true);
         _manageFleetBtn.interactable = count > 0;
         SetLabel(_manageFleetBtn, count > 0 ? $"Manage fleet ({count})" : "Manage fleet (no ships)");
->>>>>>> Stashed changes
     }
 
     // -------------------------------------------------------
@@ -736,19 +736,24 @@ public class UIController : MonoBehaviour
             if (btn == null) continue;
 
             // Boja se vise ne prepisuje — gumb zadrzi sprite i boje iz scene.
-            // Oznaka odabranog retka vise ne treba: odabir broda prebacuje
-            // plocu na njegov detalj, pa popis nikad nema odabrani redak.
-            string state = ship.IsSailing            ? "  — sailing"
-                         : ship.IsReadyToSail        ? "  — READY"
-                                                     : "";
+            // Redak nosi samo stanje; brojke putnika i hrane stoje u ploci
+            // pojedinog broda, jedan klik dalje.
+            //
+            // SAILING je zaseban slucaj, a ne "ready": brod koji je vec otplovio
+            // i dalje zadovoljava IsReadyToSail, pa bi inace pisalo READY.
+            string state = ship.IsSailing     ? "SAILING"
+                         : ship.IsReadyToSail ? "READY"
+                                              : "NOT READY";
             var lbl = btn.GetComponentInChildren<TextMeshProUGUI>();
             if (lbl != null)
-                lbl.text = $"{ship.DisplayName}   P {ship.Passengers}/{ship.MaxPassengers}" +
-                           $"   F {ship.FoodLoaded}/{ship.RequiredFood}{state}";
+                lbl.text = $"{ship.DisplayName}   {state}";
 
-            int idx = i;
+            // Hvata se sam brod, ne indeks: brod moze otploviti i nestati iz
+            // popisa izmedu vezanja i klika, pa bi indeks promasio.
+            var target = ship;
+            btn.interactable = true;   // redak je uvijek klikabilan
             btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => game.SelectShip(game.GetShips()[idx]));
+            btn.onClick.AddListener(() => game.SelectShip(target));
         }
     }
 
@@ -1046,6 +1051,12 @@ public class UIController : MonoBehaviour
             btn = go.GetComponent<Button>();
             btn.onClick.RemoveAllListeners();
 
+            // Predlozak je cesto onemogucen (npr. "+ Add worker" kad je
+            // brodogradiliste puno), a klon nasljeduje to stanje i nikad se ne
+            // okine. Svaki novi gumb zato krece kao klikabilan; tko treba,
+            // postavi interactable poslije.
+            btn.interactable = true;
+
             // RemoveAllListeners brise samo veze dodane iz koda. Ako je predlozak
             // dobio vezu i u Inspectoru, klon bi ju naslijedio — pa bi "Manage
             // fleet" usput dodavao radnika. Zato se gase i trajne veze.
@@ -1119,7 +1130,43 @@ public class UIController : MonoBehaviour
 
         WireShipButtons();
 
+        NormalizeRightPanelSize();
+
         _rightPanel?.SetActive(false);
+    }
+
+    /// <summary>
+    /// Izjednacuje velicinu desne ploce u svim kontekstima.
+    ///
+    /// Ploca u sceni ima ContentSizeFitter (PreferredSize), pa joj je visina
+    /// ovisila o sadrzaju — ploca flote i broda ispadale su drukcije velicine
+    /// od ploca gradevina. Fitter se gasi i ploca zadrzava visinu zadanu u
+    /// sceni; mijenja se jednim brojem u Inspectoru, ne u kodu.
+    ///
+    /// Uz to, kontejneri popisa i detalja broda imali su fiksnu zadanu visinu
+    /// (120 i 160) koja nije pratila stvarni sadrzaj, pa su redci tereta i gumb
+    /// Fill ship ispadali izvan ploce. -1 znaci "ne namecem visinu", pa ih
+    /// VerticalLayoutGroup izmjeri po sadrzaju.
+    /// </summary>
+    private void NormalizeRightPanelSize()
+    {
+        if (_rightPanel != null)
+        {
+            var fitter = _rightPanel.GetComponent<ContentSizeFitter>();
+            if (fitter != null) fitter.enabled = false;
+        }
+
+        WrapHeightToContent(_shipListContainer);
+        WrapHeightToContent(_shipDetailContainer);
+    }
+
+    private static void WrapHeightToContent(GameObject go)
+    {
+        if (go == null) return;
+        var le = go.GetComponent<LayoutElement>();
+        if (le == null) return;
+        le.preferredHeight = -1f;
+        le.minHeight       = -1f;
     }
 
     private void BuildTopBarFromCode(Transform parent)

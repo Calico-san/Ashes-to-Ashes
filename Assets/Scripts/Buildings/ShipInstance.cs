@@ -55,7 +55,7 @@ public class ShipInstance : MonoBehaviour
     // kasnije zna biti brzi, pa kroz 14 jedinica plovidbe stigne onoga ispred
     // i prode kroz njega — provjereno simulacijom na flotama do 14 brodova.
     private const float DEPART_INTERVAL = 1.0f;   // razmak izmedu polazaka
-    private const float FAN_MAX         = 50f;    // polovica sirine lepeze
+    private const float FAN_MAX         = 20f;    // 40°
     private const float FAN_JITTER      = 3f;     // sitno rasipanje da lepeza ne bude pravilna
 
     private static readonly Vector2 IslandCenter = new Vector2(0f, 0.5f);
