@@ -490,7 +490,7 @@ public class BuildingInstance : MonoBehaviour
     }
 
     // ---- Upgrade state ----
-    private int _upgradeLevel = 0;
+    private int _upgradeLevel = 1;
     public int UpgradeLevel => _upgradeLevel;
 
     public float ProductionMultiplier => 1.0f + (_upgradeLevel * (BalanceConfig.UpgradeProductionBonus - 1.0f));
@@ -500,4 +500,5 @@ public class BuildingInstance : MonoBehaviour
         _upgradeLevel++;
         DisplayName = _baseDisplayName + $" (Level {_upgradeLevel})";
     }
+
 }

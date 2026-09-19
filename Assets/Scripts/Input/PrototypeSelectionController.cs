@@ -53,12 +53,14 @@ public class PrototypeSelectionController : MonoBehaviour
                 Game.SelectShip(null);
                 Game.SelectSlot(null);
                 Game.SelectBuilding(null);
+                UISoundManager.Instance?.PlayButtonSound();
                 return;
             }
 
             Game.SelectShip(null);
             Game.SelectSlot(null);
             Game.SelectBuilding(building);
+            UISoundManager.Instance?.PlayButtonSound();
             return;
         }
 
@@ -67,6 +69,7 @@ public class PrototypeSelectionController : MonoBehaviour
         {
             Game.SelectBuilding(null);
             Game.SelectSlot(slot);
+            UISoundManager.Instance?.PlayButtonSound();
             return;
         }
 
@@ -79,6 +82,7 @@ public class PrototypeSelectionController : MonoBehaviour
             Game.SelectSlot(null);
             Game.SelectBuilding(Game.GetShipyard());
             Game.SelectShip(ship);
+            UISoundManager.Instance?.PlayButtonSound();
             return;
         }
 
