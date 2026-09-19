@@ -14,27 +14,70 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjectiveCampaign
   startAfterEvent: {fileID: 11400000, guid: 3a4d812a9fb2450a90c5d12f738e7cbc, type: 2}
   phases:
-  - title: 'Getting Started '
+  - title: 'GETTING STARTED '
     objectives:
-    - title: Stockpile some wood
-      type: 1
-      targetValue: 100
-      buildingType: 0
-      resourceType: 1
     - title: Build a Sawmill
       type: 0
       targetValue: 1
       buildingType: 1
       resourceType: 0
-    - title: Raise Hope
+    - title: Stockpile some wood
+      type: 1
+      targetValue: 100
+      buildingType: 0
+      resourceType: 1
+    - title: Raise Hope to 50%
       type: 2
       targetValue: 50
       buildingType: 1
       resourceType: 0
-  - title: TESTING
+  - title: FEED THE PEOPLE
     objectives:
-    - title: 
+    - title: Build Hunters' Huts
       type: 0
+      targetValue: 2
+      buildingType: 6
+      resourceType: 0
+    - title: Build Cookhouses
+      type: 0
+      targetValue: 2
+      buildingType: 4
+      resourceType: 0
+  - title: BUILDING SPREE
+    objectives:
+    - title: Build a Steelworks
+      type: 0
+      targetValue: 1
+      buildingType: 2
+      resourceType: 0
+    - title: Build a Fiberworks
+      type: 0
+      targetValue: 1
+      buildingType: 3
+      resourceType: 0
+    - title: Build a Shipyard
+      type: 0
+      targetValue: 1
+      buildingType: 5
+      resourceType: 0
+  - title: PREPARE THE EVACUATION
+    objectives:
+    - title: Build a ship
+      type: 1
+      targetValue: 1
+      buildingType: 2
+      resourceType: 5
+    - title: 'Stockpile food for the journey
+
+'
+      type: 1
+      targetValue: 1000
+      buildingType: 3
+      resourceType: 0
+  - title: EVACUATE
+    objectives:
+    - title: Evacuate when you feel the time is right
+      type: 3
       targetValue: 1
       buildingType: 2
       resourceType: 0

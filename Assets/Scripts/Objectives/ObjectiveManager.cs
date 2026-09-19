@@ -131,8 +131,8 @@ public class ObjectiveManager : MonoBehaviour
                 return GetResourceAmount(definition.ResourceType);
             case ObjectiveType.ReachHope:
                 return Mathf.FloorToInt(gameController.Hope);
-            case ObjectiveType.OwnShips:
-                return gameController.Ships;
+            case ObjectiveType.Evacuate:
+                return gameController.EvacuationStarted ? 1 : 0;
             default:
                 return 0;
         }

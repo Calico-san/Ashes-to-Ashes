@@ -28,7 +28,7 @@ public enum ObjectiveType
     BuildBuilding,
     ReachResourceAmount,
     ReachHope,
-    OwnShips
+    Evacuate
 }
 
 [Serializable]

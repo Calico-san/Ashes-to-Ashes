@@ -12,6 +12,9 @@ public class PrototypeSelectionController : MonoBehaviour
         _camera != null ? _camera : (_camera = Camera.main ?? FindFirstObjectByType<Camera>());
     private GameController Game =>
         _game != null ? _game : (_game = FindFirstObjectByType<GameController>());
+    private UIController _ui;
+    private UIController UI =>
+        _ui != null ? _ui : (_ui = FindFirstObjectByType<UIController>());
 
     public void Initialize(GameController game, Camera cameraComponent)
     {
@@ -47,6 +50,24 @@ public class PrototypeSelectionController : MonoBehaviour
         var building = hit.GetComponent<BuildingInstance>();
         if (building != null)
         {
+            // Ponovni klik na Shipyard iz flote ili detalja broda vraca njegov
+            // glavni meni. Tek ponovni klik na vec otvoreni glavni meni zatvara
+            // cijelu plocu.
+            if (building.IsShipyard && Game.GetSelectedBuilding() == building)
+            {
+                if (UI != null && UI.IsShowingShipyardSubmenu)
+                {
+                    UI.ShowMainShipyardPanel();
+                }
+                else
+                {
+                    Game.SelectShip(null);
+                    Game.SelectSlot(null);
+                    Game.SelectBuilding(null);
+                }
+                return;
+            }
+
             // Town Hall se istim klikom i otvara i zatvara.
             if (building.IsTownHall && Game.GetSelectedBuilding() == building)
             {

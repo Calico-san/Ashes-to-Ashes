@@ -16,10 +16,14 @@ public class ObjectiveDefinitionDrawer : PropertyDrawer
         line.height = EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(line, property.FindPropertyRelative("type"));
         line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-        EditorGUI.PropertyField(line, property.FindPropertyRelative("targetValue"));
-        line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
         ObjectiveType type = (ObjectiveType)property.FindPropertyRelative("type").enumValueIndex;
+        if (type != ObjectiveType.Evacuate)
+        {
+            EditorGUI.PropertyField(line, property.FindPropertyRelative("targetValue"));
+            line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+        }
+
         if (type == ObjectiveType.BuildBuilding)
             EditorGUI.PropertyField(line, property.FindPropertyRelative("buildingType"));
         else if (type == ObjectiveType.ReachResourceAmount)
@@ -31,7 +35,8 @@ public class ObjectiveDefinitionDrawer : PropertyDrawer
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
         ObjectiveType type = (ObjectiveType)property.FindPropertyRelative("type").enumValueIndex;
-        int remainingLines = type == ObjectiveType.BuildBuilding || type == ObjectiveType.ReachResourceAmount ? 3 : 2;
+        int remainingLines = type == ObjectiveType.Evacuate ? 1
+            : type == ObjectiveType.BuildBuilding || type == ObjectiveType.ReachResourceAmount ? 3 : 2;
         return EditorGUI.GetPropertyHeight(property.FindPropertyRelative("title"))
              + EditorGUIUtility.standardVerticalSpacing
              + remainingLines * EditorGUIUtility.singleLineHeight

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,13 +12,19 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
+    private const float MenuActionDelay = 0.1f;
+
     [Header("Scene Names")]
     [SerializeField] private string _gameSceneName = "AshesToAshes";
 
+    private bool _actionPending;
+
     public void OnStartNewGame()
     {
+        if (_actionPending) return;
+
         GameSceneLoader.ShouldLoadSave = false;
-        SceneManager.LoadScene(_gameSceneName);
+        BeginLoadGame();
     }
 
     public void OnContinue()
@@ -25,9 +32,11 @@ public class MainMenuController : MonoBehaviour
         int latest = SaveSystem.GetLatestSlot();
         if (latest >= 0)
         {
+            if (_actionPending) return;
+
             GameSceneLoader.ShouldLoadSave = true;
             GameSceneLoader.LoadSlot       = latest;
-            SceneManager.LoadScene(_gameSceneName);
+            BeginLoadGame();
         }
         else
         {
@@ -38,6 +47,30 @@ public class MainMenuController : MonoBehaviour
 
     public void OnQuit()
     {
+        if (_actionPending) return;
+
+        _actionPending = true;
+        StartCoroutine(QuitAfterClick());
+    }
+
+    private void BeginLoadGame()
+    {
+        _actionPending = true;
+        StartCoroutine(LoadGameAfterClick());
+    }
+
+    private IEnumerator LoadGameAfterClick()
+    {
+        // The button's next Inspector listener plays the click sound. Keep the
+        // menu scene alive briefly so its scene-local AudioSource can emit it.
+        yield return new WaitForSecondsRealtime(MenuActionDelay);
+        SceneManager.LoadScene(_gameSceneName);
+    }
+
+    private IEnumerator QuitAfterClick()
+    {
+        yield return new WaitForSecondsRealtime(MenuActionDelay);
+
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

@@ -15,18 +15,16 @@ public class UISoundManager : MonoBehaviour
 
     private void Awake()
     {
-        // Simple Singleton pattern so you can call this from anywhere
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-
+        // Each scene owns its AudioManager. Scene buttons can therefore safely
+        // keep direct Inspector references to the manager from the same scene.
+        Instance = this;
         audioSource = GetComponent<AudioSource>();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     

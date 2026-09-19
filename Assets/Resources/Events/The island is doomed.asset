@@ -18,7 +18,11 @@ MonoBehaviour:
 
 
     Our only option is to build ships
-    and evacuate.'
+    and evacuate.
+
+
+    Governor, if you need any guidance, you can always consult the Tutorial by
+    clicking the ? button in the upper-left corner of the screen.'
   Options:
   - Label: God help us
     Explanation: Hope falls greatly.

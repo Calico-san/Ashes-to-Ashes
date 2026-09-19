@@ -6,6 +6,17 @@ using UnityEngine.UI;
 
 public class UniversalPopup : MonoBehaviour
 {
+    private const float PopupMinHeight       = 300f;
+    private const float ContentWidth         = 430f;
+    private const float TitleMinHeight       = 32f;
+    private const float MessageMinHeight     = 72f;
+    private const float ExplanationMinHeight = 34f;
+    private const float ButtonWidth          = 260f;
+    private const float ButtonHeight         = 32f;
+    private const float VerticalPadding      = 24f;
+    private const float SectionSpacing       = 10f;
+    private const float ButtonSpacing        = 6f;
+
     [Header("UI Elements")]
     [SerializeField] private GameObject panelObject;
     [SerializeField] private TextMeshProUGUI titleText;
@@ -108,8 +119,6 @@ public class UniversalPopup : MonoBehaviour
             optionButtons.Add(newButton);
         }
 
-        float firstButtonY = optionCount == 1 ? -80f : optionCount == 2 ? -61f : -42f;
-
         for (int i = 0; i < optionButtons.Count; i++)
         {
             bool isVisible = i < optionCount;
@@ -137,10 +146,6 @@ public class UniversalPopup : MonoBehaviour
                     ? Color.white
                     : new Color(0.68f, 0.68f, 0.68f, 0.9f);
 
-            RectTransform buttonTransform = optionButton.GetComponent<RectTransform>();
-            buttonTransform.sizeDelta = new Vector2(260f, 32f);
-            buttonTransform.anchoredPosition = new Vector2(0f, firstButtonY - i * 38f);
-
             optionButton.onClick.RemoveAllListeners();
             int optionIndex = i;
             optionButton.onClick.AddListener(() => ChooseOption(optionIndex));
@@ -154,19 +159,62 @@ public class UniversalPopup : MonoBehaviour
             hoverButton.Setup(this, i);
         }
 
-        RectTransform messageTransform = messageText.GetComponent<RectTransform>();
         messageText.fontSize = 16f;
-        messageTransform.anchoredPosition = new Vector2(0f, 49f);
-        messageTransform.sizeDelta = new Vector2(430f, 72f);
-
-        RectTransform titleTransform = titleText.GetComponent<RectTransform>();
         titleText.fontSize = 23f;
         titleText.fontStyle = FontStyles.Bold;
-        titleTransform.anchoredPosition = new Vector2(0f, 111f);
-        titleTransform.sizeDelta = new Vector2(430f, 32f);
+        LayoutPopup(optionCount);
+    }
 
-        RectTransform explanationTransform = explanationText.GetComponent<RectTransform>();
-        explanationTransform.anchoredPosition = new Vector2(0f, firstButtonY + 37f);
+    /// <summary>
+    /// Slaze sadrzaj od vrha prema dnu prema stvarnoj visini poruke i najduljeg
+    /// explanationa. Prostor za explanation je uvijek rezerviran, pa panel ne
+    /// poskakuje kada igrac prijede misem preko opcije.
+    /// </summary>
+    private void LayoutPopup(int optionCount)
+    {
+        float titleHeight = Mathf.Max(TitleMinHeight,
+            titleText.GetPreferredValues(titleText.text, ContentWidth, 0f).y + 2f);
+        float messageHeight = Mathf.Max(MessageMinHeight,
+            messageText.GetPreferredValues(messageText.text, ContentWidth, 0f).y + 4f);
+
+        float explanationHeight = ExplanationMinHeight;
+        for (int i = 0; i < optionCount; i++)
+        {
+            string explanation = currentEvent.Options[i].Explanation;
+            if (string.IsNullOrWhiteSpace(explanation)) continue;
+
+            explanationHeight = Mathf.Max(explanationHeight,
+                explanationText.GetPreferredValues(explanation, ContentWidth, 0f).y + 4f);
+        }
+
+        float buttonsHeight = optionCount * ButtonHeight
+                            + Mathf.Max(0, optionCount - 1) * ButtonSpacing;
+        float contentHeight = titleHeight + messageHeight + explanationHeight + buttonsHeight
+                            + SectionSpacing * 3f;
+        float panelHeight = Mathf.Max(PopupMinHeight, contentHeight + VerticalPadding * 2f);
+
+        RectTransform panelTransform = panelObject.GetComponent<RectTransform>();
+        panelTransform.sizeDelta = new Vector2(panelTransform.sizeDelta.x, panelHeight);
+
+        float y = panelHeight * 0.5f - VerticalPadding;
+        Place(titleText.rectTransform, ContentWidth, titleHeight, ref y, SectionSpacing);
+        Place(messageText.rectTransform, ContentWidth, messageHeight, ref y, SectionSpacing);
+        Place(explanationText.rectTransform, ContentWidth, explanationHeight, ref y, SectionSpacing);
+
+        for (int i = 0; i < optionCount; i++)
+        {
+            RectTransform buttonTransform = optionButtons[i].GetComponent<RectTransform>();
+            Place(buttonTransform, ButtonWidth, ButtonHeight, ref y,
+                i + 1 < optionCount ? ButtonSpacing : 0f);
+        }
+    }
+
+    private static void Place(RectTransform element, float width, float height,
+        ref float y, float spacingAfter)
+    {
+        element.sizeDelta = new Vector2(width, height);
+        element.anchoredPosition = new Vector2(0f, y - height * 0.5f);
+        y -= height + spacingAfter;
     }
 
     private void ChooseOption(int optionIndex)

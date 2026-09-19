@@ -388,13 +388,14 @@ public class BuildingInstance : MonoBehaviour
 
     private void SpawnShip()
     {
-        var go   = new GameObject($"Ship_{_shipCount + 1}");
+        int shipNumber = _game.GetNextShipNumber();
+        var go   = new GameObject($"Ship_{shipNumber}");
         var ship = go.AddComponent<ShipInstance>();
 
         // Svaki brod sada ima vizual. Prvi je najblizi brodogradilistu i crta se
         // na vrhu; sljedeci se slazu kao lepeza karata prema pucini, pa im viri
         // po jedan kut. Sortiranje pada s indeksom da poredak ostane citljiv.
-        ship.Initialize(_game, _shipCount + 1, ShipSlot(_shipCount), true,
+        ship.Initialize(_game, shipNumber, ShipSlot(_shipCount), true,
                         Mathf.Max(8, 60 - _shipCount * 4));
 
         _shipObjects.Add(go);

@@ -88,6 +88,7 @@ public class GameController : MonoBehaviour
 
     /// <summary>Duse koje su vec otplovile s otoka — konacni rezultat igre.</summary>
     public int EvacuatedSouls => _evacuatedSouls;
+    public bool EvacuationStarted { get; private set; }
 
     public Vector3 WorkerSpawnPoint { get; private set; }
     public Sprite  WorkerSprite     { get; private set; }
@@ -98,6 +99,16 @@ public class GameController : MonoBehaviour
     public IReadOnlyList<BuildingInstance> Buildings  => _buildings;
     public IReadOnlyList<BuildSlot>        BuildSlots => _buildSlots;
     public IReadOnlyList<ShipInstance>     GetShips() => _ships;
+
+    public int GetNextShipNumber()
+    {
+        int highestNumber = 0;
+        foreach (var ship in _ships)
+            if (ship != null)
+                highestNumber = Mathf.Max(highestNumber, ship.ShipNumber);
+
+        return highestNumber + 1;
+    }
 
     public BuildingInstance GetShipyard()
     {
@@ -942,6 +953,7 @@ public class GameController : MonoBehaviour
 
         if (ready.Count > 0)
         {
+            EvacuationStarted = true;
             _selectedShip = null;
             RefreshUI();
         }
