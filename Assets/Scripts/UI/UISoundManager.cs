@@ -8,7 +8,8 @@ public class UISoundManager : MonoBehaviour
     [Header("Audio Clips")]
     public AudioClip buttonClickClip;
     public AudioClip panelOpenClip;
-    public AudioClip panelCloseClip;
+    public AudioClip buttonSound;
+    public AudioClip buttonHoverSound;
 
     private AudioSource audioSource;
 
@@ -41,9 +42,14 @@ public class UISoundManager : MonoBehaviour
     }
 
     
-    public void PlayPanelClose()
+    public void PlayButtonSound()
     {
-        PlaySound(panelCloseClip);
+        PlaySound(buttonSound);
+    }
+
+    public void PlayHoverSound()
+    {
+        PlaySound(buttonHoverSound);
     }
 
     // Utility method using PlayOneShot to allow overlapping sounds

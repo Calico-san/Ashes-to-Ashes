@@ -72,6 +72,11 @@ public class UniversalPopup : MonoBehaviour
             gameController.SetSpeed(0);
             timePaused = true;
         }
+
+        if (UISoundManager.Instance != null)
+        {
+            UISoundManager.Instance.PlayPanelOpen();
+        }
     }
 
     public void ClosePopup()
