@@ -349,10 +349,10 @@ public class BuildPanel : MonoBehaviour
     private static string CostString(BuildingCost cost)
     {
         var parts = new List<string>();
-        if (cost.Wood  > 0) parts.Add($"W:{cost.Wood}");
-        if (cost.Steel > 0) parts.Add($"S:{cost.Steel}");
-        if (cost.Cloth > 0) parts.Add($"C:{cost.Cloth}");
-        if (cost.Rope  > 0) parts.Add($"R:{cost.Rope}");
+        if (cost.Wood  > 0) parts.Add(ResourceIcons.Line(ResourceType.Wood,  cost.Wood));
+        if (cost.Steel > 0) parts.Add(ResourceIcons.Line(ResourceType.Steel, cost.Steel));
+        if (cost.Cloth > 0) parts.Add(ResourceIcons.Line(ResourceType.Cloth, cost.Cloth));
+        if (cost.Rope  > 0) parts.Add(ResourceIcons.Line(ResourceType.Rope,  cost.Rope));
         return parts.Count > 0 ? string.Join("  ", parts) : "Free";
     }
 }

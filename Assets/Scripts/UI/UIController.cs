@@ -18,7 +18,7 @@ public class UIController : MonoBehaviour
 {
     // ---- Top bar ----
     [Header("Top Bar")]
-    [SerializeField] private TextMeshProUGUI _resourcesText;  // "Wood: X  Steel: X ..."
+    [SerializeField] private TextMeshProUGUI _resourcesText;  // ikone + iznosi, lijevi dio trake
     [SerializeField] private TextMeshProUGUI _clockText;      // "Day X  HH:MM"
     [SerializeField] private TextMeshProUGUI _resourcesRightText;
     [SerializeField] private Button          _pauseBtn;
@@ -277,14 +277,16 @@ public class UIController : MonoBehaviour
     {
         if (_resourcesText != null)
             _resourcesText.text =
-                $"Wood: {game.Wood}   Steel: {game.Steel}   Cloth: {game.Cloth}" +
-                $"   Rope: {game.Rope}   Ships: {game.Ships}";
+                $"{ResourceIcons.Wood} {game.Wood}   {ResourceIcons.Steel} {game.Steel}" +
+                $"   {ResourceIcons.Cloth} {game.Cloth}   {ResourceIcons.Rope} {game.Rope}" +
+                $"   {ResourceIcons.Ships} {game.Ships}";
 
         if (_clockText != null)
             _clockText.text = $"Day {game.Day}  {game.Hour:00}:{game.Minute:00}";
 
         if (_resourcesRightText != null)
-            _resourcesRightText.text = $"Raw Food: {game.RawFood}   Food: {game.Food}";
+            _resourcesRightText.text =
+                $"{ResourceIcons.RawFood} {game.RawFood}   {ResourceIcons.Food} {game.Food}";
     }
 
     // -------------------------------------------------------
@@ -334,22 +336,6 @@ public class UIController : MonoBehaviour
     /// </summary>
     private bool             _fleetOpen;
     private BuildingInstance _lastSelBuilding;
-
-    private enum RightPanelView
-    {
-        None,
-        Building,
-        Shipyard,
-        TownHall,
-        BuildSlot,
-        FleetList,
-        ShipDetail
-    }
-
-    private RightPanelView   _lastRightPanelView;
-    private BuildingInstance _lastPanelBuilding;
-    private ShipInstance     _lastPanelShip;
-    private BuildSlot        _lastPanelSlot;
 
     private void OpenFleet()
     {
@@ -410,53 +396,25 @@ public class UIController : MonoBehaviour
         // brodogradiliste.
         if (showShip) _fleetOpen = true;
 
-        // Ploca flote ima prednost: otvorena je ili preko gumba Manage fleet,
-        // ili klikom na brod u svijetu.
-        bool fleetMode = showShip || (showShipyard && _fleetOpen);
-
-        RightPanelView view = !anySelected ? RightPanelView.None
-            : fleetMode && showShip ? RightPanelView.ShipDetail
-            : fleetMode             ? RightPanelView.FleetList
-            : showShipyard          ? RightPanelView.Shipyard
-            : showTownHall          ? RightPanelView.TownHall
-            : showSlot              ? RightPanelView.BuildSlot
-                                    : RightPanelView.Building;
-
-        bool viewChanged = view != _lastRightPanelView
-            || sel != _lastPanelBuilding
-            || selShip != _lastPanelShip
-            || selSlot != _lastPanelSlot;
-
-        _lastRightPanelView = view;
-        _lastPanelBuilding  = sel;
-        _lastPanelShip      = selShip;
-        _lastPanelSlot      = selSlot;
-
         _rightPanel?.SetActive(anySelected);
         if (!anySelected)
         {
-            if (viewChanged)
-            {
-                _shipListContainer?  .SetActive(false);
-                _shipDetailContainer?.SetActive(false);
-                if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
-            }
-
+            _shipListContainer?  .SetActive(false);
+            _shipDetailContainer?.SetActive(false);
             _fleetOpen = false;
             _game.SelectShip(null);
             return;
         }
 
-        // Vidljivost se resetira samo pri stvarnoj promjeni prikaza ili odabira.
-        // Tekst i interactable stanje i dalje se osvjezavaju svaki frame, ali se
-        // hover vise ne ponistava stalnim gasenjem i ponovnim paljenjem objekata.
-        if (viewChanged)
-        {
-            _shipListContainer?  .SetActive(false);
-            _shipDetailContainer?.SetActive(false);
-            if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
-            ResetPanelControls();
-        }
+        // Reset all sub-containers and optional controls
+        _shipListContainer?  .SetActive(false);
+        _shipDetailContainer?.SetActive(false);
+        if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
+        ResetPanelControls();
+
+        // Ploca flote ima prednost: otvorena je ili preko gumba Manage fleet,
+        // ili klikom na brod u svijetu.
+        bool fleetMode = showShip || (showShipyard && _fleetOpen);
 
         if (fleetMode)
         {
@@ -505,17 +463,15 @@ public class UIController : MonoBehaviour
             if (_assignBtn != null) _assignBtn.gameObject.SetActive(false);
             if (_removeBtn != null) _removeBtn.gameObject.SetActive(false);
 
-            bool canCancel = selSlot.State == BuildSlot.SlotState.UnderConstruction;
-            if (canCancel)
+            if (selSlot.State == BuildSlot.SlotState.UnderConstruction)
                 SetCancelBtn();
-            else if (_cancelBtn != null)
-                _cancelBtn.gameObject.SetActive(false);
         }
         else if (showBuilding)
         {
-            string outputName = sel.BuildingTypeEnum == BuildingType.HuntersHut
-                ? "Raw Food"
-                : sel.OutputType.ToString();
+            // Hunter's Hut ima OutputType Food, ali isporucuje sirovu hranu.
+            string outputIcon = sel.BuildingTypeEnum == BuildingType.HuntersHut
+                ? ResourceIcons.RawFood
+                : ResourceIcons.Tag(sel.OutputType);
             SetTitle(sel.DisplayName);
             {
                 string engStr = sel.AssignedEngineers > 0
@@ -526,9 +482,10 @@ public class UIController : MonoBehaviour
                     engStr);
             }
 
-            string outLine = $"{outputName}/h: {sel.TotalOutputPerHour}";
+            string outLine = $"{outputIcon} {sel.TotalOutputPerHour} /h";
             if (sel.SecondaryOutputType.HasValue)
-                outLine += $"\n{sel.SecondaryOutputType.Value}/h: {sel.SecondaryTotalPerHour}";
+                outLine += $"\n{ResourceIcons.Tag(sel.SecondaryOutputType.Value)} " +
+                           $"{sel.SecondaryTotalPerHour} /h";
             SetOutputLine(outLine);
 
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
@@ -744,8 +701,8 @@ public class UIController : MonoBehaviour
             $"Engineers: {game.EmployedEngineers} working / {game.FreeEngineers} free",
             "",
             "<b>Food</b>",
-            $"Produced: {game.FoodProducedPerDay:F0} / day",
-            $"Consumed: {game.FoodConsumedPerDay:F0} / day",
+            $"Produced: {ResourceIcons.Food} {game.FoodProducedPerDay:F0} / day",
+            $"Consumed: {ResourceIcons.Food} {game.FoodConsumedPerDay:F0} / day",
         };
 
         string text = string.Join("\n", lines);
@@ -820,8 +777,10 @@ public class UIController : MonoBehaviour
     // -------------------------------------------------------
 
     private static string ShipCostString()
-        => $"W:{BalanceConfig.ShipWoodCost}  S:{BalanceConfig.ShipSteelCost}" +
-           $"  C:{BalanceConfig.ShipClothCost}  R:{BalanceConfig.ShipRopeCost}";
+        => $"{ResourceIcons.Wood} {BalanceConfig.ShipWoodCost}  " +
+           $"{ResourceIcons.Steel} {BalanceConfig.ShipSteelCost}  " +
+           $"{ResourceIcons.Cloth} {BalanceConfig.ShipClothCost}  " +
+           $"{ResourceIcons.Rope} {BalanceConfig.ShipRopeCost}";
 
     private void RefreshShipList(GameController game)
     {
@@ -908,7 +867,8 @@ public class UIController : MonoBehaviour
         if (_passengerRowLabel != null)
             _passengerRowLabel.text = $"Passengers  {ship.Passengers} / {ship.MaxPassengers}";
         if (_foodRowLabel != null)
-            _foodRowLabel.text = $"Food  {ship.FoodLoaded} / {ship.RequiredFood}";
+            _foodRowLabel.text =
+                $"{ResourceIcons.Food}  {ship.FoodLoaded} / {ship.RequiredFood}";
 
         if (_passengerPlus  != null) _passengerPlus.interactable  = canBoard;
         if (_passengerMinus != null) _passengerMinus.interactable = ship.Passengers > 0;
