@@ -98,7 +98,7 @@ public class PrototypeBootstrapper : MonoBehaviour
         // ---- Events ----
         eventManager = new EventManager();
         eventManager.Initialize(gameController);
-        gameController.DayEnding += eventManager.TryOpenEvent;
+        FindFirstObjectByType<FadeManager>()?.Initialize(gameController);
 
         var objectiveManager = FindFirstObjectByType<ObjectiveManager>();
         if (objectiveManager == null)

@@ -247,10 +247,7 @@ public class GameController : MonoBehaviour
                 return;
             }
 
-            _day++;
-            _simulatedMinutes = DAY_START_MINUTES;
-            _hourAccumulator = _simulatedMinutes % 60f;
-            _speedMultiplier = 1;
+            AdvanceToNextDay();
         }
 
         RefreshUI();
@@ -756,6 +753,15 @@ public class GameController : MonoBehaviour
     // ---- Time control ----
 
     public void SetSpeed(int speed) { _speedMultiplier = Mathf.Clamp(speed, 0, 5); RefreshUI(); }
+
+    public void AdvanceToNextDay()
+    {
+        _day++;
+        _simulatedMinutes = DAY_START_MINUTES;
+        _hourAccumulator = _simulatedMinutes % 60f;
+        _speedMultiplier = 1;
+        RefreshUI();
+    }
 
     // ---- Save / Load ----
 

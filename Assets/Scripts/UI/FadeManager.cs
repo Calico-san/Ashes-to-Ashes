@@ -1,21 +1,32 @@
 using System.Collections;
 using UnityEngine;
 
-public class ScreenFader : MonoBehaviour
+public class FadeManager : MonoBehaviour
 {
     public CanvasGroup fadeGroup;
     public float fadeDuration = 1.0f;
     public float holdDuration = 0.5f;
 
-    [ContextMenu("Test Full Fade Sequence")]
-    public void FadeToBlackAndBack()
+    private GameController gameController;
+
+    public void Initialize(GameController controller)
     {
+        gameController = controller;
+        gameController.DayEnding += HandleDayEnding;
+    }
+
+    private bool HandleDayEnding(int day, int hour)
+    {
+        if (fadeGroup == null) return false;
+
+        gameController.SetSpeed(0);
         StartCoroutine(FadeSequence());
+        return true;
     }
 
     private IEnumerator FadeSequence()
     {
-        // 1. Fade to Black
+        // 1. Fade to black
         float time = 0f;
         while (time < fadeDuration)
         {
@@ -25,10 +36,11 @@ public class ScreenFader : MonoBehaviour
         }
         fadeGroup.alpha = 1f;
 
-        // 2. Wait while screen is full black
+        // 2. Change the day while the screen is black
+        gameController.AdvanceToNextDay();
         yield return new WaitForSeconds(holdDuration);
 
-        // 3. Fade back to Clear
+        // 3. Fade back to clear
         time = 0f;
         while (time < fadeDuration)
         {
@@ -38,34 +50,4 @@ public class ScreenFader : MonoBehaviour
         }
         fadeGroup.alpha = 0f;
     }
-
-    //public CanvasGroup fadeGroup;
-    //public float duration = 1.0f;
-
-    //[ContextMenu("Fade To Black")]
-    //public void FadeToBlack()
-    //{
-    //    StartCoroutine(FadeRoutine(1.0f));
-    //}
-
-    //[ContextMenu("Fade To Clear")]
-    //public void FadeToClear()
-    //{
-    //    StartCoroutine(FadeRoutine(0.0f));
-    //}
-
-    //private IEnumerator FadeRoutine(float targetAlpha)
-    //{
-    //    float startAlpha = fadeGroup.alpha;
-    //    float time = 0f;
-
-    //    while (time < duration)
-    //    {
-    //        time += Time.deltaTime;
-    //        fadeGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, time / duration);
-    //        yield return null;
-    //    }
-
-    //    fadeGroup.alpha = targetAlpha;
-    //}
 }
