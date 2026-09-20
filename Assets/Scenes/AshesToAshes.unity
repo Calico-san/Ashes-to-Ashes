@@ -1513,7 +1513,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
@@ -2819,7 +2819,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0.22, y: 0}
-  m_AnchoredPosition: {x: 25, y: 90}
+  m_AnchoredPosition: {x: 25.000061, y: 90}
   m_SizeDelta: {x: -30, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &583455351
@@ -6003,8 +6003,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.1, y: 1}
   m_AnchorMax: {x: 0.42, y: 1}
-  m_AnchoredPosition: {x: 49.99987, y: -30}
-  m_SizeDelta: {x: -100.00025, y: 40}
+  m_AnchoredPosition: {x: 24.999872, y: -30}
+  m_SizeDelta: {x: -50.000256, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1004595057
 MonoBehaviour:
@@ -6077,7 +6077,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
@@ -15237,7 +15237,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
@@ -15499,7 +15499,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}

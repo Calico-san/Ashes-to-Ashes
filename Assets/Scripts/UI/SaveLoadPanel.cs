@@ -80,6 +80,7 @@ public class SaveLoadPanel : MonoBehaviour
         _open = !_open;
         _overlay.SetActive(_open);
         if (_open) { _game.SetSpeed(0); RefreshLabels(); }
+        else _game.SetSpeed(1);
     }
 
     private void Close()  { _open = false; _overlay.SetActive(false); }
