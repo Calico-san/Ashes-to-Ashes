@@ -135,13 +135,13 @@ public class BuildingInstance : MonoBehaviour
             MaxWorkers = BalanceConfig.HuntersHutMaxWorkers;
         else
             MaxWorkers = isShipyard ? BalanceConfig.ShipyardMaxWorkers : BalanceConfig.DefaultBuildingMaxWorkers;
-        // Otisak zgrade je po dizajnu UVIJEK 1x1 polje (BalanceConfig.BuildingPlacementSize).
-        // Proslijedeni `size` se namjerno ignorira: dolazio je iz tri razlicita izvora
-        // (TryPlaceBuilding, CompleteBuild, ApplyLoadData), a onaj iz spremljene igre je
-        // mogao nositi zastarjele vrijednosti iz starijih verzija (npr. 3x4), koje su
-        // zavrsavale kao localScale i mnozile velicinu sprite-a — zgrada bi izgledala
-        // 3x3 polja iako je sr.size bio ispravnih 1x0.8. Jedan izvor istine to sprjecava.
-        float footprint = BalanceConfig.BuildingPlacementSize;
+        // Otisak se IZVODI IZ TIPA, nikad ne cita iz proslijedenog `size`. Taj je
+        // dolazio iz tri izvora (TryPlaceBuilding, CompleteBuild, ApplyLoadData), a
+        // onaj iz spremljene igre je mogao nositi zastarjele vrijednosti iz starijih
+        // verzija (npr. 3x4), koje su zavrsavale kao localScale i mnozile velicinu
+        // sprite-a. Jedan izvor istine to sprjecava, a promjena otiska automatski
+        // vrijedi i za stare zapise.
+        float footprint = BuildingFootprint.SizeFor(BuildingTypeEnum);
         Size = new Vector2(footprint, footprint);
 
         transform.position   = position;
@@ -159,6 +159,8 @@ public class BuildingInstance : MonoBehaviour
         _renderer.sprite = SimpleShapeFactory.CreateFilledSquareSprite(_normalColor);
         _renderer.sortingOrder = 5;
 
+        // Collider je u lokalnom prostoru, a localScale je vec otisak — zato 1x1
+        // ovdje pokriva cijeli otisak bez obzira koliki on bio.
         var col  = gameObject.AddComponent<BoxCollider2D>();
         col.size = Vector2.one;
 
@@ -254,7 +256,7 @@ public class BuildingInstance : MonoBehaviour
     /// </summary>
     private void LateUpdate()
     {
-        float   f        = BalanceConfig.BuildingPlacementSize;
+        float   f        = Size.x;
         Vector3 expected = new Vector3(f, f, 1f);
 
         if ((transform.localScale - expected).sqrMagnitude > 0.000001f)
@@ -487,16 +489,22 @@ public class BuildingInstance : MonoBehaviour
         }
     }
 
+    // Mjesta radnika su u svjetskim jedinicama, pa se moraju skalirati otiskom —
+    // inace bi se na brodogradilistu 2x2 svi zbili u sredinu.
     private Vector3 WorkerSlot(int index)
     {
         int col = index % 5, row = index / 5;
-        return transform.position + new Vector3(-0.45f + col * 0.22f, 0.35f - row * 0.22f, 0f);
+        float f = Size.x;
+        return transform.position
+             + new Vector3((-0.45f + col * 0.22f) * f, (0.35f - row * 0.22f) * f, 0f);
     }
 
     private Vector3 EngineerSlot(int index)
     {
         // Engineers stand slightly above workers, tinted differently
-        return transform.position + new Vector3(-0.45f + index * 0.22f, 0.58f, 0f);
+        float f = Size.x;
+        return transform.position
+             + new Vector3((-0.45f + index * 0.22f) * f, 0.58f * f, 0f);
     }
 
     // ---- Upgrade state ----

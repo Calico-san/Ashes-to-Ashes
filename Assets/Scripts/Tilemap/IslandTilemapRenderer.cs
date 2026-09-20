@@ -108,20 +108,30 @@ public class IslandTilemapRenderer : MonoBehaviour
     {
         if (_map == null) return false;
 
-        var corners = GetFootprintSamples(center, size);
-        foreach (var pt in corners)
+        // Svako polje koje otisak pokriva mora biti dopusteno. Ranije se
+        // uzorkovalo pet tocaka, sto je bilo tocno samo za otisak 1x1;
+        // brodogradiliste je 2x2, pa se ide preko svih pokrivenih polja.
+        if (!TryGetFootprint(center, size, out int minCol, out int minRow,
+                                             out int maxCol, out int maxRow))
+            return false;
+
+        for (int row = minRow; row <= maxRow; row++)
+        for (int col = minCol; col <= maxCol; col++)
         {
-            var tile = _map.GetTileAtWorld(pt);
-            if (!IsTileAllowed(tile, buildingType)) return false;
+            if (!_map.InBounds(col, row)) return false;
+            if (!IsTileAllowed(_map.GetTile(col, row), buildingType)) return false;
         }
 
-        if (buildingType == BuildingType.Steelworks && !IsNearIronMine(center))
+        if (buildingType == BuildingType.Steelworks
+            && !IsNear(TileType.IronMine, minCol, minRow, maxCol, maxRow, SteelworksIronMineRadius))
             return false;
 
-        if (buildingType == BuildingType.Sawmill && !IsNearForest(center))
+        if (buildingType == BuildingType.Sawmill
+            && !IsNear(TileType.Forest, minCol, minRow, maxCol, maxRow, SawmillForestRadius))
             return false;
 
-        if (buildingType == BuildingType.Shipyard && !IsNearOcean(center))
+        if (buildingType == BuildingType.Shipyard
+            && !IsNear(TileType.Ocean, minCol, minRow, maxCol, maxRow, ShipyardOceanRadius))
             return false;
 
         return true;
@@ -300,7 +310,12 @@ public class IslandTilemapRenderer : MonoBehaviour
     // Max distance in tiles from an IronMine for Steelworks placement
     private const int SteelworksIronMineRadius = 1;
     private const int SawmillForestRadius      = 1;
+    private const int ShipyardOceanRadius      = 1;
 
+    /// <summary>
+    /// Na cemu gradevina smije stajati. Suma NIJE gradiva ni za koga — ostaje
+    /// samo uvjet blizine za Sawmill, koji tako mora stajati uz sumu, a ne na njoj.
+    /// </summary>
     private static bool IsTileAllowed(TileType tile, BuildingType buildingType)
     {
         switch (buildingType)
@@ -308,72 +323,49 @@ public class IslandTilemapRenderer : MonoBehaviour
             case BuildingType.Shipyard:
                 return tile == TileType.Shore || tile == TileType.Land;
 
-            case BuildingType.Steelworks:
-                return tile == TileType.Land || tile == TileType.Forest;
-
-            case BuildingType.Sawmill:
-                return tile == TileType.Land || tile == TileType.Forest;
-
-            case BuildingType.HuntersHut:
-            case BuildingType.ScoutStation:
-                return tile == TileType.Land || tile == TileType.Forest;
-
             default:
-                return tile == TileType.Land || tile == TileType.Forest;
+                return tile == TileType.Land;
         }
     }
 
-    /// <summary>True if any Forest tile exists within radius tiles of center.</summary>
-    private bool IsNearForest(Vector2 worldCenter)
+    /// <summary>
+    /// Polja koja otisak pokriva. Rubovi se uvlace za djelic polja jer bi tocno
+    /// na granici zaokruzivanje u WorldToTile ocitalo susjedno polje, pa bi se
+    /// ispravna pozicija uz rub nasumicno odbijala.
+    /// </summary>
+    private bool TryGetFootprint(Vector2 center, Vector2 size,
+                                 out int minCol, out int minRow,
+                                 out int maxCol, out int maxRow)
     {
+        minCol = minRow = maxCol = maxRow = 0;
         if (_map == null) return false;
-        var tile = _map.WorldToTile(worldCenter);
-        int r    = SawmillForestRadius;
-        for (int dr = -r; dr <= r; dr++)
-        for (int dc = -r; dc <= r; dc++)
-            if (_map.GetTile(tile.x + dc, tile.y + dr) == TileType.Forest)
-                return true;
-        return false;
+
+        const float Inset = 0.05f;
+        float hx = Mathf.Max(0f, size.x * 0.5f - Inset);
+        float hy = Mathf.Max(0f, size.y * 0.5f - Inset);
+
+        var lo = _map.WorldToTile(new Vector2(center.x - hx, center.y - hy));
+        var hi = _map.WorldToTile(new Vector2(center.x + hx, center.y + hy));
+
+        minCol = Mathf.Min(lo.x, hi.x);  maxCol = Mathf.Max(lo.x, hi.x);
+        minRow = Mathf.Min(lo.y, hi.y);  maxRow = Mathf.Max(lo.y, hi.y);
+        return true;
     }
 
-    /// <summary>True if any Ocean tile exists within radius 1 of center.</summary>
-    private bool IsNearOcean(Vector2 worldCenter)
+    /// <summary>
+    /// True ako trazeno polje postoji unutar <paramref name="radius"/> polja od
+    /// BILO KOJEG polja otiska. Mjeri se od ruba otiska, ne od sredista — inace
+    /// brodogradiliste 2x2 nikad ne bi bilo "uz more" jer mu je srediste uvijek
+    /// najmanje jedno polje od ruba.
+    /// </summary>
+    private bool IsNear(TileType wanted, int minCol, int minRow, int maxCol, int maxRow, int radius)
     {
         if (_map == null) return false;
-        var tile = _map.WorldToTile(worldCenter);
-        for (int dr = -1; dr <= 1; dr++)
-        for (int dc = -1; dc <= 1; dc++)
-            if (_map.GetTile(tile.x + dc, tile.y + dr) == TileType.Ocean)
-                return true;
-        return false;
-    }
 
-    /// <summary>True if any IronMine tile exists within radius tiles of center.</summary>
-    private bool IsNearIronMine(Vector2 worldCenter)
-    {
-        if (_map == null) return false;
-        var  tile   = _map.WorldToTile(worldCenter);
-        int  r      = SteelworksIronMineRadius;
-        for (int dr = -r; dr <= r; dr++)
-        for (int dc = -r; dc <= r; dc++)
-        {
-            if (_map.GetTile(tile.x + dc, tile.y + dr) == TileType.IronMine)
-                return true;
-        }
-        return false;
-    }
+        for (int row = minRow - radius; row <= maxRow + radius; row++)
+        for (int col = minCol - radius; col <= maxCol + radius; col++)
+            if (_map.GetTile(col, row) == wanted) return true;
 
-    private static Vector2[] GetFootprintSamples(Vector2 center, Vector2 size)
-    {
-        float hx = size.x * 0.45f;
-        float hy = size.y * 0.45f;
-        return new[]
-        {
-            center,
-            new Vector2(center.x - hx, center.y - hy),
-            new Vector2(center.x + hx, center.y - hy),
-            new Vector2(center.x - hx, center.y + hy),
-            new Vector2(center.x + hx, center.y + hy),
-        };
+        return false;
     }
 }

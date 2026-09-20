@@ -101,6 +101,11 @@ public static class BalanceConfig
     // Free placement building size (world units)
     public const float BuildingPlacementSize = 1.0f;   // 32x32px @ PPU=32
 
+    // Brodogradiliste je jedina gradevina veca od jednog polja. Otisak je paran,
+    // pa mu srediste pada na kriziste mreze, a ne na srediste polja — o tome
+    // ovisi lijepljenje duha u BuildPanelu.
+    public const float ShipyardPlacementSize = 2.0f;
+
     // ---- Raw Food ----
     // Lanac je 1:1 i po satu: jedan lovac donese 1 sirove hrane, jedan kuhar ju
     // pretvori u 1 kuhane. Stopa je morala postati cjelobrojna zajedno s ostalima

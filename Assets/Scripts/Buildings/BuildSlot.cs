@@ -86,10 +86,21 @@ public class BuildSlot : MonoBehaviour
         _animator.SetConstructionProgress(ConstructionProgress);
     }
 
+    /// <summary>
+    /// Gradiliste poprima otisak gradevine koja se na njemu gradi. Initialize ne
+    /// zna tip, pa se velicina postavlja tek ovdje.
+    /// </summary>
+    private void ApplyFootprint(BuildingType type)
+    {
+        float f = BuildingFootprint.SizeFor(type);
+        Size    = new Vector2(f, f);
+        transform.localScale = new Vector3(f, f, 1f);
+    }
+
     /// <summary>Osigurac — isti razlog kao BuildingInstance.LateUpdate.</summary>
     private void GuardScale()
     {
-        float   f        = BalanceConfig.BuildingPlacementSize;
+        float   f        = Size.x;
         Vector3 expected = new Vector3(f, f, 1f);
 
         if ((transform.localScale - expected).sqrMagnitude > 0.000001f)
@@ -110,6 +121,7 @@ public class BuildSlot : MonoBehaviour
     public void StartConstruction(BuildingType type)
     {
         var cost = BuildingCost.For(type);
+        ApplyFootprint(type);
         QueuedType                = type;
         ConstructionHoursTotal    = cost.Hours;
         ConstructionHoursRemaining = cost.Hours;
@@ -121,6 +133,7 @@ public class BuildSlot : MonoBehaviour
     /// <summary>Restore construction state from save data (no resource cost).</summary>
     public void RestoreConstruction(BuildingType type, float hoursRemaining, float hoursTotal)
     {
+        ApplyFootprint(type);
         QueuedType                 = type;
         ConstructionHoursTotal     = hoursTotal;
         ConstructionHoursRemaining = hoursRemaining;

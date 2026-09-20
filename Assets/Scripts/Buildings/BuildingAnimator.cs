@@ -20,6 +20,8 @@ public class BuildingAnimator : MonoBehaviour
     // Postavlja se u Setup(). Komponenta se dodaje kroz AddComponent u runtimeu,
     // pa vrijednost upisana u Inspectoru ne bi prezivjela Play.
     private float _artWidth      = BalanceConfig.BuildingPlacementSize;
+    // Otisak vlasnika u poljima; postavlja ga Setup() iz tipa zgrade.
+    private float _footprint     = BalanceConfig.BuildingPlacementSize;
     private float _artHalfHeight = 0.5f;
 
     // ---- Progress bar (world space, shown during construction) ----
@@ -49,6 +51,7 @@ public class BuildingAnimator : MonoBehaviour
     {
         _buildingType       = type;
         _fallbackBuiltColor = fallbackBuiltColor;
+        _footprint          = BuildingFootprint.SizeFor(type);
         _artWidth           = BalanceConfig.BuildingPlacementSize;
         _sr = GetComponent<SpriteRenderer>();
 
@@ -141,7 +144,7 @@ public class BuildingAnimator : MonoBehaviour
         // 48x64 @ PPU 16 to je (3, 4), sto je mnozilo vec ispravno skaliran sr.size i
         // cinilo zgradu ~3x3 polja. Otisak je uvijek 1x1, pa ga vracamo odmah ovdje.
         // Mora biti NAKON PlaceOverlays jer i ono racuna polozaje u lokalnom prostoru.
-        float f = BalanceConfig.BuildingPlacementSize;
+        float f = _footprint;
         transform.localScale = new Vector3(f, f, 1f);
     }
 

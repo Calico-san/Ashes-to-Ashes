@@ -469,8 +469,7 @@ public class GameController : MonoBehaviour
         var cost = BuildingCost.For(type);
         if (!cost.CanAfford(wood, steel, cloth)) return false;
 
-        var size      = new Vector2(BalanceConfig.BuildingPlacementSize,
-                                    BalanceConfig.BuildingPlacementSize);
+        var size      = BuildingFootprint.VectorFor(type);
 
         var validator = PlacementValidator.Instance;
         if (validator != null && !validator.IsValidForType(worldPosition, size, type))
@@ -484,8 +483,10 @@ public class GameController : MonoBehaviour
         var go   = new GameObject("BuildSlot");
         var slot = go.AddComponent<BuildSlot>();
         slot.Initialize(this, worldPosition, new Vector2(size.x, size.y));
-        RegisterBuildSlot(slot);
+        // StartConstruction postavlja otisak prema tipu, pa mora doci PRIJE
+        // upisa u validator — inace bi se brodogradiliste upisalo kao 1x1.
         slot.StartConstruction(type);
+        RegisterBuildSlot(slot);
 
         SelectSlot(null);
         RefreshUI();
@@ -799,8 +800,8 @@ public class GameController : MonoBehaviour
                 PositionY                = b.transform.position.y,
                 // Zadrzano radi kompatibilnosti sa starim zapisima; pri ucitavanju
                 // se ionako vise ne cita.
-                SizeX                    = BalanceConfig.BuildingPlacementSize,
-                SizeY                    = BalanceConfig.BuildingPlacementSize,
+                SizeX                    = BuildingFootprint.SizeFor(b.BuildingTypeEnum),
+                SizeY                    = BuildingFootprint.SizeFor(b.BuildingTypeEnum),
                 AssignedWorkers          = b.AssignedWorkers,
                 AssignedEngineers        = b.AssignedEngineers,
                 IsShipyard               = b.IsShipyard,
@@ -823,8 +824,8 @@ public class GameController : MonoBehaviour
             {
                 PositionX                  = s.Position.x,
                 PositionY                  = s.Position.y,
-                SizeX                      = BalanceConfig.BuildingPlacementSize,
-                SizeY                      = BalanceConfig.BuildingPlacementSize,
+                SizeX                      = BuildingFootprint.SizeFor(s.QueuedType),
+                SizeY                      = BuildingFootprint.SizeFor(s.QueuedType),
                 QueuedTypeName             = s.QueuedType.ToString(),
                 ConstructionHoursRemaining = s.ConstructionHoursRemaining,
                 ConstructionHoursTotal     = s.ConstructionHoursTotal,
@@ -905,10 +906,11 @@ public class GameController : MonoBehaviour
             var type = Enum.TryParse<BuildingType>(bd.BuildingTypeName, out var bt)
                 ? bt : BuildingType.Sawmill;
 
-            // SizeX/SizeY iz zapisa se namjerno ignoriraju — otisak je uvijek 1x1.
+            // SizeX/SizeY iz zapisa se namjerno ignoriraju — otisak se izvodi iz
+            // tipa, pa promjena otiska vrijedi i za stare spremljene igre.
             var building = BuildingFactory.Create(this, type,
                 new Vector3(bd.PositionX, bd.PositionY, 0f),
-                Vector2.one * BalanceConfig.BuildingPlacementSize);
+                BuildingFootprint.VectorFor(type));
 
             // Brodogradiliste: vrati napredak i stanje kobilice (O5 — ranije se gubilo,
             // a s fiksnom naplatom to bi bio gubitak cijelog troska broda).
@@ -936,7 +938,7 @@ public class GameController : MonoBehaviour
             var slot = go.AddComponent<BuildSlot>();
             slot.Initialize(this,
                 new Vector3(sd.PositionX, sd.PositionY, 0f),
-                Vector2.one * BalanceConfig.BuildingPlacementSize);   // isti razlog kao gore
+                BuildingFootprint.VectorFor(qt));   // isti razlog kao gore
             slot.RestoreConstruction(qt, sd.ConstructionHoursRemaining, sd.ConstructionHoursTotal);
             RegisterBuildSlot(slot);
         }

@@ -78,7 +78,8 @@ public class BuildPanel : MonoBehaviour
     // ---- Config ----
     private static readonly Color GhostValid   = new Color(0.3f, 1.0f, 0.3f, 0.55f);
     private static readonly Color GhostInvalid = new Color(1.0f, 0.2f, 0.2f, 0.55f);
-    private const float GhostSize = BalanceConfig.BuildingPlacementSize;
+    // Duh poprima otisak gradevine koja se postavlja; postavlja se u CreateGhost.
+    private float _ghostSize = BalanceConfig.BuildingPlacementSize;
 
     private GameController _game;
     private Camera         _cam;
@@ -205,16 +206,17 @@ public class BuildPanel : MonoBehaviour
         Vector3 rawPos = Cam.ScreenToWorldPoint(mouse.position.ReadValue());
         rawPos.z = 0f;
 
-        // Snap to tile centre so buildings always land inside one tile
-        Vector3 worldPos = SnapToTile(rawPos);
+        // Neparan otisak se lijepi na srediste polja, paran na kriziste mreze.
+        Vector3 worldPos = SnapToGrid(rawPos, _pendingType.Value);
 
         if (_ghost != null) _ghost.transform.position = worldPos;
 
         // Validate using explicit BuildingType (Steelworks needs proximity check)
         var validator = PlacementValidator.Instance;
+        var ghostFootprint = new Vector2(_ghostSize, _ghostSize);
         _ghostValid = validator != null
-            ? validator.IsValidForType(worldPos, new Vector2(GhostSize, GhostSize), _pendingType.Value)
-            : IslandBounds.IsValidPlacement(worldPos, new Vector2(GhostSize, GhostSize),
+            ? validator.IsValidForType(worldPos, ghostFootprint, _pendingType.Value)
+            : IslandBounds.IsValidPlacement(worldPos, ghostFootprint,
                 _pendingType == BuildingType.Shipyard);
 
         if (_ghostSR != null)
@@ -302,16 +304,33 @@ public class BuildPanel : MonoBehaviour
         _ghostSR = null;
     }
 
-    /// <summary>Snap world position to nearest tile centre.</summary>
-    private static Vector3 SnapToTile(Vector3 world)
+    /// <summary>
+    /// Lijepi poziciju na mrezu karte. Neparan otisak (1x1) ide na SREDISTE
+    /// polja; paran (2x2) na KRIZISTE, jer mu srediste pada izmedu polja.
+    ///
+    /// Bez te razlike bi brodogradiliste 2x2 centrirano na srediste polja
+    /// visilo pola polja preko ruba i pokrivalo devet polja umjesto cetiri.
+    /// </summary>
+    private static Vector3 SnapToGrid(Vector3 world, BuildingType type)
     {
         var renderer = IslandTilemapRenderer.Instance;
         if (renderer == null || renderer.Map == null) return world;
 
-        var map     = renderer.Map;
-        var tile    = map.WorldToTile(world);
-        var snapped = map.TileToWorld(tile.x, tile.y);
-        return new Vector3(snapped.x, snapped.y, world.z);
+        var map  = renderer.Map;
+        var tile = map.WorldToTile(world);
+
+        if (!BuildingFootprint.IsEven(type))
+        {
+            var centre = map.TileToWorld(tile.x, tile.y);
+            return new Vector3(centre.x, centre.y, world.z);
+        }
+
+        // Kriziste je donji lijevi kut polja pod kursorom, pomaknut za pola
+        // polja od sredista tog polja.
+        var c = map.TileToWorld(tile.x, tile.y);
+        return new Vector3(c.x - map.TileSize * 0.5f,
+                           c.y - map.TileSize * 0.5f,
+                           world.z);
     }
 
     /// <summary>Duh je objekt u svijetu, ne UI — zato se i dalje stvara iz koda.</summary>
@@ -319,8 +338,12 @@ public class BuildPanel : MonoBehaviour
     {
         if (_ghost != null) Destroy(_ghost);
 
+        _ghostSize = _pendingType.HasValue
+            ? BuildingFootprint.SizeFor(_pendingType.Value)
+            : BalanceConfig.BuildingPlacementSize;
+
         _ghost = new GameObject("Ghost");
-        _ghost.transform.localScale = new Vector3(GhostSize, GhostSize, 1f);
+        _ghost.transform.localScale = new Vector3(_ghostSize, _ghostSize, 1f);
 
         _ghostSR                  = _ghost.AddComponent<SpriteRenderer>();
         _ghostSR.sprite           = SimpleShapeFactory.CreateFilledSquareSprite(Color.white);

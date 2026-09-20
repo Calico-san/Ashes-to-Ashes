@@ -1,3 +1,5 @@
+using UnityEngine;
+
 /// <summary>All building types. TownHall is pre-built. Others must be constructed.</summary>
 public enum BuildingType
 {
@@ -9,6 +11,36 @@ public enum BuildingType
     Shipyard,
     HuntersHut,
     ScoutStation
+}
+
+/// <summary>
+/// Otisak gradevine u poljima karte. Sve osim brodogradilista zauzima jedno
+/// polje; brodogradiliste zauzima 2x2.
+///
+/// Velicina se NIKAD ne cita iz spremljene igre nego uvijek izvodi iz tipa —
+/// tako promjena otiska vrijedi i za stare zapise, a zastarjela vrijednost ne
+/// moze zavrsiti kao localScale i napuhati gradevinu.
+/// </summary>
+public static class BuildingFootprint
+{
+    /// <summary>Stranica otiska u svjetskim jedinicama (1 polje = 1).</summary>
+    public static float SizeFor(BuildingType type)
+        => type == BuildingType.Shipyard
+            ? BalanceConfig.ShipyardPlacementSize
+            : BalanceConfig.BuildingPlacementSize;
+
+    public static Vector2 VectorFor(BuildingType type)
+    {
+        float s = SizeFor(type);
+        return new Vector2(s, s);
+    }
+
+    /// <summary>
+    /// True ako otisak pokriva paran broj polja. Parni otisci se centriraju na
+    /// kriziste mreze, neparni na srediste polja.
+    /// </summary>
+    public static bool IsEven(BuildingType type)
+        => Mathf.RoundToInt(SizeFor(type)) % 2 == 0;
 }
 
 /// <summary>Construction cost and time for a building type.</summary>
