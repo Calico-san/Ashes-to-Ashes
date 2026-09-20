@@ -44,6 +44,12 @@ public class ShipInstance : MonoBehaviour
     private float          _sailedDistance;
     private float          _departDelay;   // sekundi do pokreta
 
+    // Animacija broda. Postavlja se samo kad art postoji; placeholder od
+    // pravokutnika nema frameove pa se petlja preskace.
+    private bool  _animated;
+    private float _frameTimer;
+    private int   _frame;
+
     private const float SAIL_SPEED     = 1.6f;   // world unita/s
     private const float SAIL_DISTANCE  = 14f;    // koliko daleko prije brisanja
 
@@ -128,6 +134,9 @@ public class ShipInstance : MonoBehaviour
 
     private void Update()
     {
+        // Brod se njise i dok stoji u luci, pa animacija ide prije izlaza.
+        TickIdleAnimation();
+
         if (!IsSailing || HasLeft) return;
 
         // Cekanje na svoj red. Brod je vec "IsSailing", pa vise ne prima teret
@@ -212,14 +221,46 @@ public class ShipInstance : MonoBehaviour
         _normalColor   = new Color(0.55f, 0.38f, 0.18f);
         _selectedColor = Color.Lerp(_normalColor, Color.white, 0.4f);
 
-        _hullRenderer = SpawnPart("Hull", Vector3.zero,
-            new Vector3(1.8f * s, 0.7f * s, 1f), _normalColor, sortBase);
+        var registry  = SpriteRegistry.Instance;
+        var shipArt   = registry != null ? registry.GetShipIdleFrame(0) : null;
 
-        SpawnPart("Mast", new Vector3(0f, 0.3f * s, 0f),
-            new Vector3(0.08f * s, 1.0f * s, 1f), new Color(0.25f, 0.18f, 0.10f), sortBase + 2);
+        if (shipArt != null)
+        {
+            // Jedan sprite za cijeli brod. Trup, jarbol i jedro vise nisu odvojeni
+            // objekti — art ih nosi sam, pa nema ni slaganja po sortingOrderu.
+            _normalColor   = Color.white;                         // sprite se ne boji
+            _selectedColor = new Color(1f, 0.92f, 0.65f, 1f);     // topli odsjaj pri odabiru
 
-        SpawnPart("Sail", new Vector3(0f, 0.65f * s, 0f),
-            new Vector3(0.35f * s, 0.9f * s, 1f), new Color(0.92f, 0.92f, 0.88f), sortBase + 1);
+            var go = new GameObject("Ship");
+            go.transform.SetParent(transform);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale    = Vector3.one;
+
+            _hullRenderer              = go.AddComponent<SpriteRenderer>();
+            _hullRenderer.sprite       = shipArt;
+            _hullRenderer.color        = _normalColor;
+            _hullRenderer.sortingOrder = sortBase;
+
+            // Omjer stranica se cuva, sirinu zadaje SpriteRegistry.ShipWidthInTiles.
+            float width  = registry.ShipWidthInTiles > 0f ? registry.ShipWidthInTiles : 1f;
+            float aspect = shipArt.rect.height > 0f ? shipArt.rect.width / shipArt.rect.height : 1f;
+            SpriteFit.Fill(_hullRenderer, new Vector2(width, width / Mathf.Max(0.0001f, aspect)));
+
+            _animated = registry.ShipIdleFrames != null && registry.ShipIdleFrames.Length >= 2;
+        }
+        else
+        {
+            // Placeholder od pravokutnika dok art nije postavljen.
+            _hullRenderer = SpawnPart("Hull", Vector3.zero,
+                new Vector3(1.8f * s, 0.7f * s, 1f), _normalColor, sortBase);
+
+            SpawnPart("Mast", new Vector3(0f, 0.3f * s, 0f),
+                new Vector3(0.08f * s, 1.0f * s, 1f), new Color(0.25f, 0.18f, 0.10f), sortBase + 2);
+
+            SpawnPart("Sail", new Vector3(0f, 0.65f * s, 0f),
+                new Vector3(0.35f * s, 0.9f * s, 1f), new Color(0.92f, 0.92f, 0.88f), sortBase + 1);
+        }
 
         var lbl = new GameObject("Label");
         lbl.transform.SetParent(transform);
@@ -233,6 +274,35 @@ public class ShipInstance : MonoBehaviour
         tmp.color                   = Color.white;
         tmp.sortingOrder            = sortBase + 3;
         tmp.rectTransform.sizeDelta = new Vector2(2f, 0.6f);
+    }
+
+    /// <summary>
+    /// Izmjena framea broda. Velicina se cuva jer SpriteFit koristi Sliced nacin,
+    /// a zamjena sprajta bi inace vratila renderer na prirodnu velicinu sprajta.
+    /// </summary>
+    private void TickIdleAnimation()
+    {
+        if (!_animated || _hullRenderer == null) return;
+
+        var registry = SpriteRegistry.Instance;
+        if (registry == null) return;
+        if (registry.ShipIdleFrames == null || registry.ShipIdleFrames.Length < 2) return;
+
+        float frameTime = 1f / Mathf.Max(0.1f, registry.ShipFps);
+        _frameTimer += Time.deltaTime;
+
+        while (_frameTimer >= frameTime)
+        {
+            _frameTimer -= frameTime;
+            _frame++;
+        }
+
+        var next = registry.GetShipIdleFrame(_frame);
+        if (next == null || next == _hullRenderer.sprite) return;
+
+        var size = _hullRenderer.size;
+        _hullRenderer.sprite = next;
+        _hullRenderer.size   = size;
     }
 
     private SpriteRenderer SpawnPart(string partName, Vector3 localPos, Vector3 scale, Color color, int sortOrder)

@@ -71,7 +71,13 @@ public class PrototypeBootstrapper : MonoBehaviour
         // ---- Town Hall ----
         var townHallPos  = FindTownHallPosition();
         Debug.Log($"[Bootstrapper] TownHallPos = {townHallPos}, Camera = {mainCamera}");
-        var workerSprite = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(1f, 0.9f, 0.25f, 1f));
+        // Art radnika dolazi iz SpriteRegistryja. Trokut ostaje samo kao
+        // placeholder dok WorkerIdle nije postavljen — ranije se uvijek crtao
+        // trokut, pa se dodani art nije ni vidio.
+        var workerSprite = SpriteRegistry.Instance != null
+                        && SpriteRegistry.Instance.GetWorkerSprite() != null
+            ? SpriteRegistry.Instance.GetWorkerSprite()
+            : SimpleShapeFactory.CreateFilledTriangleSprite(new Color(1f, 0.9f, 0.25f, 1f));
 
         bool hasTownHall = false;
         foreach (var b in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
@@ -144,6 +150,10 @@ public class PrototypeBootstrapper : MonoBehaviour
         // Vulkan je jedan veliki animirani objekt, ne tile. Vraca null ako karta
         // nema Volcano polja ili ako VolcanoFrames u SpriteRegistryju nisu popunjeni.
         VolcanoRenderer.Spawn(renderer.Map);
+
+        // Rudnici su takoder objekti u velicini zgrade, ne tileovi. Jedan objekt
+        // po skupini susjednih IronMine polja — karta i dalje odreduje gdje su.
+        IronMineRenderer.SpawnAll(renderer.Map);
     }
 
     // ---- Town Hall ----

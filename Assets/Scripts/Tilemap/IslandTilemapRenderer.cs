@@ -38,6 +38,41 @@ public class IslandTilemapRenderer : MonoBehaviour
 
     private Tilemap _ground;
 
+    // Podloga ispod Grounda. Novi sprajtovi (drvo, rudnik, vulkan) crtaju samo
+    // svoj motiv i imaju prozirnu pozadinu, pa bi se kroz njih vidjela boja
+    // pozadine kamere. Ova mapa im podmece Land sprite.
+    private Tilemap _groundBase;
+
+    /// <summary>
+    /// Tipovi ciji sprajt ne pokriva cijelo polje (prozirna pozadina), pa im treba
+    /// Land ispod. Ocean i Shore imaju pune sprajtove; Land je i sam podloga.
+    /// Doda li Tomislav jos koji prozirni sprajt, dopise se ovdje.
+    /// </summary>
+    private static readonly TileType[] NeedsLandBase =
+    {
+        TileType.Forest,
+        TileType.IronMine,
+        TileType.Volcano,
+    };
+
+    /// <summary>
+    /// Tipovi koje ne crta tilemap nego zaseban objekt u velicini zgrade
+    /// (IronMineRenderer, VolcanoRenderer). Njihovo polje na Ground sloju ostaje
+    /// prazno da se art ne crta dvaput — vidi se samo Land iz podloge.
+    /// </summary>
+    private static readonly TileType[] DrawnAsObject =
+    {
+        TileType.IronMine,
+    };
+
+    private static bool Contains(TileType[] set, TileType type)
+    {
+        for (int i = 0; i < set.Length; i++)
+            if (set[i] == type) return true;
+        return false;
+    }
+
+
     // One Tile asset per unique sprite — avoids creating 1536 ScriptableObjects.
     private readonly Dictionary<Sprite, Tile> _tileCache = new();
 
@@ -117,6 +152,13 @@ public class IslandTilemapRenderer : MonoBehaviour
         // Drzimo bazu na 1 da OceanFps iz SpriteRegistryja bude izravno u fps-ima.
         _ground.animationFrameRate = 1f;
 
+        // Podloga ispod Grounda. O redoslijedu crtanja odlucuje sortingOrder
+        // (-6 < -5), ne redoslijed djece u hijerarhiji.
+        var baseGO = new GameObject("GroundBase");
+        baseGO.transform.SetParent(gridGO.transform, false);
+        _groundBase = baseGO.AddComponent<Tilemap>();
+        baseGO.AddComponent<TilemapRenderer>().sortingOrder = -6;
+
         var renderer = groundGO.AddComponent<TilemapRenderer>();
         renderer.sortingOrder = -5;
         // Non-overlapping grid — one tile per cell, so all terrain shares one sort order.
@@ -130,6 +172,7 @@ public class IslandTilemapRenderer : MonoBehaviour
     private void BuildTiles()
     {
         _ground.ClearAllTiles();
+        _groundBase?.ClearAllTiles();
         _tileCache.Clear();
 
         var registry = SpriteRegistry.Instance;
@@ -145,10 +188,32 @@ public class IslandTilemapRenderer : MonoBehaviour
         // Vraca null ako OceanFrames nisu postavljeni — tada se koristi TileOcean.
         TileBase oceanTile = OceanRenderer.Create(registry);
 
+        // Podloga za prozirne sprajtove. Jedan Tile za cijelu kartu — dijeli se
+        // kroz _tileCache, pa ne kosta nista dodatno.
+        Tile landBaseTile = null;
+        if (_groundBase != null)
+        {
+            var landSprite = registry != null ? registry.GetTileSprite(TileType.Land) : null;
+            if (landSprite == null)
+                landSprite = SimpleShapeFactory.CreateFilledSquareSprite(TileColorFor(TileType.Land));
+            landBaseTile = GetOrCreateTile(landSprite);
+        }
+
         for (int row = 0; row < _map.Height; row++)
         for (int col = 0; col < _map.Width;  col++)
         {
             TileType type = _map.GetTile(col, row);
+            var pos = new Vector3Int(col, row, 0);
+
+            // Prozirni sprajtovi (drvo, rudnik, vulkan) bi inace pokazali boju
+            // pozadine kamere umjesto kopna.
+            if (landBaseTile != null && Contains(NeedsLandBase, type))
+                _groundBase.SetTile(pos, landBaseTile);
+
+            // Rudnik crta IronMineRenderer u velicini zgrade. Polje ostaje prazno
+            // da se art ne crta dvaput, jednom malen u tileu i jednom velik.
+            if (Contains(DrawnAsObject, type))
+                continue;
 
             // Animirani ocean ima prednost pred staticnim TileOcean spriteom
             if (type == TileType.Ocean && oceanTile != null)
@@ -194,8 +259,36 @@ public class IslandTilemapRenderer : MonoBehaviour
         var tile = ScriptableObject.CreateInstance<Tile>();
         tile.sprite = sprite;
         tile.colliderType = Tile.ColliderType.None;
+
+        // Tilemap crta sprite u njegovoj prirodnoj velicini (pikseli / PPU), a ne
+        // u velicini polja. Sprite od 16px pri PPU 32 zato zauzme pola polja i
+        // izgleda sitno. Skaliranjem pločice velicina uvoza arta prestaje biti
+        // bitna — isti razlog zbog kojeg SpriteFit postoji za obicne renderere.
+        float scale = CellFitScale(sprite);
+        if (!Mathf.Approximately(scale, 1f))
+        {
+            tile.transform = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            tile.flags     = TileFlags.LockTransform | TileFlags.LockColor;
+        }
+
         _tileCache[sprite] = tile;
         return tile;
+    }
+
+    /// <summary>
+    /// Koliko treba skalirati sprite da njegova duza stranica tocno popuni polje.
+    /// Jednoliko po obje osi — art se ne razvlaci, kvadratni sprite popuni polje,
+    /// a nekvadratni ostane u omjeru i dotakne rub duzom stranicom.
+    /// </summary>
+    private float CellFitScale(Sprite sprite)
+    {
+        if (sprite == null || _map == null) return 1f;
+
+        float ppu = sprite.pixelsPerUnit > 0f ? sprite.pixelsPerUnit : 100f;
+        float natural = Mathf.Max(sprite.rect.width, sprite.rect.height) / ppu;
+        if (natural <= 0.0001f) return 1f;
+
+        return _map.TileSize / natural;
     }
 
     private static Color TileColorFor(TileType type)

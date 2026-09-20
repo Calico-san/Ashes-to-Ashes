@@ -65,6 +65,12 @@ public class SpriteRegistry : ScriptableObject
     private static Sprite Pick(Sprite[] set, int mask)
         => set != null && mask >= 0 && mask < set.Length ? set[mask] : null;
 
+    // ---- Iron Mine (objekt u velicini zgrade, ne tile) ----
+    [Header("Iron Mine")]
+    [Tooltip("Mnozitelj velicine rudnika. 1 = tocno onoliko polja koliko je nacrtano " +
+             "na karti; 1.5 znaci da art prelazi pola polja preko ruba.")]
+    public float IronMineScale = 1f;
+
     // ---- Volcano (jedan veliki animirani objekt, ne tile) ----
     [Header("Volcano — animated object")]
     [Tooltip("Frameovi iz volcano.png. Prazno = vulkan se ne iscrtava kao objekt.")]
@@ -117,13 +123,26 @@ public class SpriteRegistry : ScriptableObject
     [Header("Worker")]
     public Sprite   WorkerIdle;
     public Sprite[] WorkerWalkFrames;
+    [Tooltip("Brzina animacije hoda u frameovima po sekundi.")]
+    public float    WalkFps = 6f;
+
+    // ---- Engineer ----
+    [Header("Engineer")]
+    [Tooltip("Ostavi prazno da inzenjeri koriste isti art kao radnici.")]
+    public Sprite   EngineerIdle;
+    public Sprite[] EngineerWalkFrames;
 
     // ---- Ship ----
+    // Brod je jedan sprite, ne sastavljen od trupa, jarbola i jedra.
     [Header("Ship")]
-    public Sprite   ShipHull;
-    public Sprite   ShipMast;
-    public Sprite   ShipSail;
+    [Tooltip("Cijeli brod u jednom spriteu. Prazno = crta se placeholder od pravokutnika.")]
+    public Sprite   ShipIdle;
+    [Tooltip("Frameovi animacije broda. Prazno = koristi se staticni ShipIdle.")]
     public Sprite[] ShipIdleFrames;
+    [Tooltip("Sirina broda u poljima. Visina se racuna iz omjera stranica sprajta.")]
+    public float    ShipWidthInTiles = 1f;
+    [Tooltip("Brzina animacije broda u frameovima po sekundi.")]
+    public float    ShipFps = 4f;
 
     // ---- API ----
 
@@ -144,11 +163,22 @@ public class SpriteRegistry : ScriptableObject
         return WorkerIdle;
     }
 
+    /// <summary>
+    /// Art inzenjera. Ako EngineerIdle nije postavljen, vraca se art radnika —
+    /// inzenjeri tada izgledaju kao radnici, sto je bolje od trokuta.
+    /// </summary>
+    public Sprite GetEngineerSprite(int walkFrame = -1)
+    {
+        if (walkFrame >= 0 && EngineerWalkFrames != null && EngineerWalkFrames.Length > 0)
+            return EngineerWalkFrames[walkFrame % EngineerWalkFrames.Length];
+        return EngineerIdle != null ? EngineerIdle : GetWorkerSprite(walkFrame);
+    }
+
     public Sprite GetShipIdleFrame(int frame)
     {
         if (ShipIdleFrames != null && ShipIdleFrames.Length > 0)
             return ShipIdleFrames[frame % ShipIdleFrames.Length];
-        return ShipHull;
+        return ShipIdle;
     }
 
     // ---- Private ----

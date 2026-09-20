@@ -185,6 +185,8 @@ public class BuildingInstance : MonoBehaviour
         var agent = new GameObject($"{DisplayName}_Worker_{AssignedWorkers + 1}")
             .AddComponent<WorkerAgent>();
         agent.Initialize(_game.WorkerSpawnPoint, WorkerSlot(_workers.Count), _game.WorkerSprite);
+        var reg = SpriteRegistry.Instance;
+        if (reg != null) agent.SetWalkFrames(reg.WorkerWalkFrames, reg.WalkFps);
 
         _workers.Add(agent);
         _game.OnWorkerAssigned();
@@ -209,6 +211,13 @@ public class BuildingInstance : MonoBehaviour
         var agent = new GameObject($"{DisplayName}_Engineer_{AssignedEngineers + 1}")
             .AddComponent<WorkerAgent>();
         agent.Initialize(_game.WorkerSpawnPoint, EngineerSlot(_engineers.Count), _game.EngineerSprite, _pathToTownHall);
+        var engReg = SpriteRegistry.Instance;
+        if (engReg != null)
+            agent.SetWalkFrames(
+                engReg.EngineerWalkFrames != null && engReg.EngineerWalkFrames.Length >= 2
+                    ? engReg.EngineerWalkFrames
+                    : engReg.WorkerWalkFrames,
+                engReg.WalkFps);
         _engineers.Add(agent);
         _game.OnEngineerAssigned();
         return true;

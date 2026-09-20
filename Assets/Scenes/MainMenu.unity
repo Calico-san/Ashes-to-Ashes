@@ -227,7 +227,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 283129b5afc17714dadd4ca431305ff1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISoundManager
   buttonClickClip: {fileID: 8300000, guid: ae6f37328d592ec4eae6686759b8724d, type: 3}
   panelOpenClip: {fileID: 8300000, guid: 42f1fdc06e10252469e5d08776a61c0d, type: 3}
@@ -569,13 +569,13 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
-      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 703495527}
+    - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: PlayHoverSound
@@ -943,13 +943,13 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
-      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 703495527}
+    - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: PlayHoverSound
@@ -1220,13 +1220,13 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
-      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 703495527}
+    - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
+      propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4476115997566777735, guid: a357a3e44660eb1428b2e1ca2e84eb71, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: PlayHoverSound

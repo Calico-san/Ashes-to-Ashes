@@ -15,8 +15,8 @@ MonoBehaviour:
   TileOcean: {fileID: 1407615122, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   TileShore: {fileID: -966269095, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   TileLand: {fileID: 145928239, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
-  TileForest: {fileID: 21300000, guid: fe533c079accfcc45986b54807513a3f, type: 3}
-  TileIronMine: {fileID: 21300000, guid: 9d58b713d5fafd94b9dc4fbb896de6c8, type: 3}
+  TileForest: {fileID: 21300000, guid: 39c036a06e739b64e971cc79731169ea, type: 3}
+  TileIronMine: {fileID: 21300000, guid: cc6cba34fe22d3141815fc8ed6e25a8a, type: 3}
   TileVolcano: {fileID: 145928239, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
   OceanFrames:
   - {fileID: 1407615122, guid: dd639b893c4770744892ac8c7a3cfa22, type: 3}
@@ -58,6 +58,7 @@ MonoBehaviour:
   - {fileID: 868542383, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
   - {fileID: 946031253, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
   - {fileID: -908296374, guid: 57c48a8ed00508f49b88279ac24b7333, type: 3}
+  IronMineScale: 1
   VolcanoFrames:
   - {fileID: 790823014, guid: ff270735ac9fca241a26793977a8480a, type: 3}
   - {fileID: 580060535, guid: ff270735ac9fca241a26793977a8480a, type: 3}
@@ -91,9 +92,19 @@ MonoBehaviour:
   ShipyardProducing: {fileID: 0}
   HuntersHutProducing: {fileID: 0}
   ScoutStationProducing: {fileID: 0}
-  WorkerIdle: {fileID: 0}
-  WorkerWalkFrames: []
-  ShipHull: {fileID: 0}
-  ShipMast: {fileID: 0}
-  ShipSail: {fileID: 0}
-  ShipIdleFrames: []
+  WorkerIdle: {fileID: -960709346, guid: 6efcb29974090c0438fb5fc8490932c8, type: 3}
+  WorkerWalkFrames:
+  - {fileID: -960709346, guid: 6efcb29974090c0438fb5fc8490932c8, type: 3}
+  - {fileID: 169967116, guid: 6efcb29974090c0438fb5fc8490932c8, type: 3}
+  WalkFps: 6
+  EngineerIdle: {fileID: 1391444845, guid: 6efcb29974090c0438fb5fc8490932c8, type: 3}
+  EngineerWalkFrames:
+  - {fileID: 1391444845, guid: 6efcb29974090c0438fb5fc8490932c8, type: 3}
+  - {fileID: 1769606833, guid: 6efcb29974090c0438fb5fc8490932c8, type: 3}
+  ShipIdle: {fileID: 21300000, guid: 235dfa7ea8e516e4fbc57d1fcfb1aba8, type: 3}
+  ShipIdleFrames:
+  - {fileID: 21300000, guid: 40fd601721b9e6043b261b47162178ca, type: 3}
+  - {fileID: 21300000, guid: 984e647d65f9c5548b50ebbd420607c5, type: 3}
+  - {fileID: 21300000, guid: 1808f5e700d73fc48a35188e6322a3ca, type: 3}
+  ShipWidthInTiles: 1
+  ShipFps: 4

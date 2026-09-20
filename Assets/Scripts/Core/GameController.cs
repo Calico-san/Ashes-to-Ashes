@@ -205,7 +205,14 @@ public class GameController : MonoBehaviour
         WorkerSpawnPoint  = spawnPoint;
         _freeWorkers      = AdultPopulation - engineers;
         _freeEngineers    = engineers;
-        EngineerSprite    = SimpleShapeFactory.CreateFilledTriangleSprite(new Color(0.3f, 0.7f, 1f, 1f));
+        // Isto kao radnici: art iz SpriteRegistryja, trokut samo kao placeholder.
+        // GetEngineerSprite vraca art radnika ako EngineerIdle nije postavljen.
+        var engineerArt = SpriteRegistry.Instance != null
+            ? SpriteRegistry.Instance.GetEngineerSprite()
+            : null;
+        EngineerSprite    = engineerArt != null
+            ? engineerArt
+            : SimpleShapeFactory.CreateFilledTriangleSprite(new Color(0.3f, 0.7f, 1f, 1f));
         _simulatedMinutes = 8f * 60f; // start at 08:00
         _hourAccumulator  = 0f;
         RefreshUI();
@@ -328,6 +335,72 @@ public class GameController : MonoBehaviour
         bool ok = _selectedBuilding != null && _selectedBuilding.RemoveWorker();
         if (ok) RefreshUI();
         return ok;
+    }
+
+    // ---- Rusenje i otkazivanje ----
+
+    /// <summary>
+    /// Otkazuje gradnju na odabranom gradilistu i vraca pola ulozenog materijala.
+    /// Gradiliste nema radnike ni proizvodnju, pa je jedino sto treba pocistiti
+    /// otisak u validatoru — inace bi polje ostalo trajno zauzeto.
+    /// </summary>
+    public bool CancelSelectedSlot()
+    {
+        var slot = _selectedSlot;
+        if (slot == null) return false;
+        if (slot.State != BuildSlot.SlotState.UnderConstruction) return false;
+
+        var cost = BuildingCost.For(slot.QueuedType);
+        wood  += BalanceConfig.Refund(cost.Wood);
+        steel += BalanceConfig.Refund(cost.Steel);
+        cloth += BalanceConfig.Refund(cost.Cloth);
+
+        PlacementValidator.Instance?.Unregister(slot.Position, slot.Size);
+        _buildSlots.Remove(slot);
+        _selectedSlot = null;          // prije Destroy: SelectSlot(null) bi zvao
+        Destroy(slot.gameObject);      // SetSelected na vec unistenom objektu
+
+        RefreshUI();
+        return true;
+    }
+
+    /// <summary>
+    /// Rusi odabranu gradevinu i vraca pola ulozenog materijala.
+    ///
+    /// Radnici se NE brisu zajedno sa zgradom — WorkerAgent je zaseban GameObject
+    /// koji nije dijete zgrade, pa bi ostao lebdjeti u sceni. RemoveWorker() ga
+    /// posalje kuci i usput digne _freeWorkers, zato petlja umjesto Destroy.
+    /// </summary>
+    public bool DemolishSelectedBuilding()
+    {
+        var b = _selectedBuilding;
+        if (b == null || b.IsTownHall) return false;
+
+        var cost = BuildingCost.For(b.BuildingTypeEnum);
+        wood  += BalanceConfig.Refund(cost.Wood);
+        steel += BalanceConfig.Refund(cost.Steel);
+        cloth += BalanceConfig.Refund(cost.Cloth);
+
+        // Brodogradiliste s polozenom kobilicom: materijal za brod je vec
+        // naplacen i nestao bi bez traga. Isto pravilo, pola natrag.
+        if (b.IsShipyard && b.KeelLaid)
+        {
+            wood  += BalanceConfig.Refund(BalanceConfig.ShipWoodCost);
+            steel += BalanceConfig.Refund(BalanceConfig.ShipSteelCost);
+            cloth += BalanceConfig.Refund(BalanceConfig.ShipClothCost);
+            rope  += BalanceConfig.Refund(BalanceConfig.ShipRopeCost);
+        }
+
+        while (b.RemoveWorker())   { }
+        while (b.RemoveEngineer()) { }
+
+        PlacementValidator.Instance?.Unregister(b.transform.position, b.Size);
+        _buildings.Remove(b);
+        _selectedBuilding = null;
+        Destroy(b.gameObject);
+
+        RefreshUI();
+        return true;
     }
 
     /// <summary>

@@ -56,6 +56,11 @@ public class UIController : MonoBehaviour
     // Inspectoru, klonira se iz _assignBtn i smjesta odmah ispod Build ship.
     [SerializeField] private Button          _manageFleetBtn;
 
+    // Otkazivanje gradnje i rusenje. Ako nisu povuceni u Inspectoru, kloniraju
+    // se iz _assignBtn kao i Manage fleet, pa scena ne treba nikakvu izmjenu.
+    [SerializeField] private Button          _cancelBtn;
+    [SerializeField] private Button          _demolishBtn;
+
     [SerializeField] private GameObject      _titleSeparator;
     [SerializeField] private GameObject      _actionSeparator;
     [SerializeField] private GameObject      _footerSeparator;
@@ -134,6 +139,10 @@ public class UIController : MonoBehaviour
         _assignEngBtn?.onClick.AddListener(() => _game.AssignEngineerToSelectedBuilding());
         _removeEngBtn?.onClick.AddListener(() => _game.RemoveEngineerFromSelectedBuilding());
         _upgradeBtn?  .onClick.AddListener(() => _game.TryUpgradeSelectedBuilding());
+        // Samo ako su povuceni u Inspectoru — klonirani gumbi dobiju vezu pri
+        // stvaranju, pa bi ovdje dobili drugu i okinuli se dvaput po kliku.
+        _cancelBtn?   .onClick.AddListener(() => _game.CancelSelectedSlot());
+        _demolishBtn? .onClick.AddListener(() => _game.DemolishSelectedBuilding());
         _buildShipBtn?.onClick.AddListener(() => _game.OrderShipOnSelectedBuilding());
         _manageFleetBtn?.onClick.AddListener(OpenFleet);
 
@@ -293,6 +302,8 @@ public class UIController : MonoBehaviour
         if (_assignEngBtn    != null) _assignEngBtn.gameObject.SetActive(false);
         if (_removeEngBtn    != null) _removeEngBtn.gameObject.SetActive(false);
         if (_upgradeBtn      != null) _upgradeBtn.gameObject.SetActive(false);
+        if (_cancelBtn       != null) _cancelBtn.gameObject.SetActive(false);
+        if (_demolishBtn     != null) _demolishBtn.gameObject.SetActive(false);
         if (_buildShipBtn    != null) _buildShipBtn.gameObject.SetActive(false);
         if (_manageFleetBtn  != null) _manageFleetBtn.gameObject.SetActive(false);
         if (_shipDetailBack  != null) _shipDetailBack.gameObject.SetActive(false);
@@ -426,6 +437,7 @@ public class UIController : MonoBehaviour
                           sel.AssignedEngineers > 0);
             SetBuildShipBtn(sel);
             SetManageFleetBtn(game);
+            SetDemolishBtn(sel);
         }
         else if (showTownHall)
         {
@@ -448,6 +460,9 @@ public class UIController : MonoBehaviour
             SetButtons("", null, "", null, false, false);
             if (_assignBtn != null) _assignBtn.gameObject.SetActive(false);
             if (_removeBtn != null) _removeBtn.gameObject.SetActive(false);
+
+            if (selSlot.State == BuildSlot.SlotState.UnderConstruction)
+                SetCancelBtn();
         }
         else if (showBuilding)
         {
@@ -476,6 +491,7 @@ public class UIController : MonoBehaviour
             SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
                           sel.AssignedEngineers > 0);
             SetUpgradeBtn(true, game.CanAffordUpgrade(sel));
+            SetDemolishBtn(sel);
         }
 
         if (_titleSeparator != null) _titleSeparator.SetActive(!showShip);
@@ -1072,6 +1088,60 @@ public class UIController : MonoBehaviour
         _upgradeBtn.gameObject.SetActive(visible);
         _upgradeBtn.interactable = enabled;
         SetLabel(_upgradeBtn, enabled ? "Upgrade ▲" : "Upgrade (insufficient resources)");
+    }
+
+    // -------------------------------------------------------
+    // Otkazivanje gradnje i rusenje
+    // -------------------------------------------------------
+
+    private void SetCancelBtn()
+    {
+        if (_cancelBtn == null)
+        {
+            Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
+            _cancelBtn = CloneStyledButton(parent, "CancelBuild", "Cancel");
+            _cancelBtn.onClick.AddListener(() => _game.CancelSelectedSlot());
+        }
+
+        _cancelBtn.gameObject.SetActive(true);
+        _cancelBtn.interactable = true;
+        SetLabel(_cancelBtn, "Cancel");
+        MoveToBottom(_cancelBtn);
+    }
+
+    private void SetDemolishBtn(BuildingInstance building)
+    {
+        if (_demolishBtn == null)
+        {
+            Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
+            _demolishBtn = CloneStyledButton(parent, "Demolish", "Demolish");
+            _demolishBtn.onClick.AddListener(() => _game.DemolishSelectedBuilding());
+        }
+
+        // Town Hall se ne rusi — bez njega nema evidencije populacije.
+        if (building == null || building.IsTownHall)
+        {
+            _demolishBtn.gameObject.SetActive(false);
+            return;
+        }
+
+        _demolishBtn.gameObject.SetActive(true);
+        _demolishBtn.interactable = true;
+        SetLabel(_demolishBtn, "Demolish");
+        MoveToBottom(_demolishBtn);
+    }
+
+    /// <summary>
+    /// Gura gumb na dno desneploce. Provjera indeksa je tu jer se Refresh vrti
+    /// svaki okvir, a bezuvjetni SetAsLastSibling bi svaki put prljao layout.
+    /// </summary>
+    private static void MoveToBottom(Button btn)
+    {
+        if (btn == null) return;
+        var t = btn.transform;
+        if (t.parent == null) return;
+        int last = t.parent.childCount - 1;
+        if (t.GetSiblingIndex() != last) t.SetAsLastSibling();
     }
 
     private void SetEngButtons(bool assignEnabled, bool removeEnabled)

@@ -122,6 +122,20 @@ public static class BalanceConfig
     public const int   ScoutStationSteelCost   = 35;
     public const int   ScoutStationBuildHours  = 3;
 
+    // ---- Rusenje i otkazivanje ----
+    // Polovica ulozenog se vraca. Puni povrat bi gradnju ucinio bezrizicnom
+    // (igrac bi mogao zauzeti svako polje i predomisliti se bez posljedice),
+    // a nula bi gumb pretvorila u cistu kaznu. Zaokruzuje se AwayFromZero, isto
+    // kao proizvodnja, da se pravilo ne mijenja od mjesta do mjesta.
+    public const float RefundRatio = 0.5f;
+
+    /// <summary>Polovica iznosa, zaokruzeno na vise na pola (2.5 -> 3, ne 2).</summary>
+    public static int Refund(int amount)
+        => amount <= 0
+            ? 0
+            : (int)System.Math.Round(amount * (double)RefundRatio,
+                                     System.MidpointRounding.AwayFromZero);
+
     // ---- Building Upgrade Costs ----
     public const int UpgradeWoodCost = 7;
     public const int UpgradeSteelCost = 7;
