@@ -256,21 +256,20 @@ public class UIController : MonoBehaviour
     // Top bar
     // -------------------------------------------------------
 
-    /// <summary>
-    /// Ploca je svijetla, pa je svijetli tekst na njoj bio jedva citljiv.
-    /// Boje se postavljaju iz koda da ne ovise o tome sto je zapisano u sceni.
-    /// Natpisi gumba ostaju bijeli — gumbi imaju tamnu podlogu.
-    /// </summary>
-    private static readonly Color PanelInk      = new Color(0.08f, 0.07f, 0.06f);
-    private static readonly Color PanelInkSoft  = new Color(0.24f, 0.21f, 0.17f);
+    /// <summary>Jedinstvena boja teksta na svim plocama: #1B0D00.</summary>
+    private static readonly Color PanelInk     = new Color32(0x1B, 0x0D, 0x00, 0xFF);
+    private static readonly Color PanelInkSoft = PanelInk;
 
     private void ApplyInkColors()
     {
+        if (_resourcesText   != null) _resourcesText.color   = PanelInk;
+        if (_resourcesRightText != null) _resourcesRightText.color = PanelInk;
         if (_titleText       != null) _titleText.color       = PanelInk;
         if (_workerText      != null) _workerText.color      = PanelInk;
         if (_outputText      != null) _outputText.color      = PanelInk;
         if (_shipDetailTitle != null) _shipDetailTitle.color = PanelInk;
         if (_shipDetailInfo  != null) _shipDetailInfo.color  = PanelInkSoft;
+        if (_buildSlotTitle  != null) _buildSlotTitle.color  = PanelInk;
     }
 
     private void RefreshTopBar(GameController game)
@@ -693,8 +692,7 @@ public class UIController : MonoBehaviour
         // igrac odlucuje na ovoj ploci.
         var lines = new List<string>
         {
-            "<b>Population</b>",
-            $"Souls on the island: {game.TotalPopulation}",
+            $"Population: {game.TotalPopulation}",
             $"Children: {game.Children}",
             $"Adults: {game.AdultPopulation}",
             $"Workers: {game.EmployedWorkers} working / {game.FreeWorkers} free",
@@ -711,7 +709,7 @@ public class UIController : MonoBehaviour
         // poveca kako bi svi redci stali; ResetPanelControls() je vraca za druge
         // vrste selekcije.
         if (_workerText != null) _workerText.gameObject.SetActive(false);
-        SetOutputExpanded(true, lines.Count);
+        SetOutputExpanded(true, lines.Count, 12f);
         SetOutputLine(text);
 
         // Town Hall ne zaposljava — gumbi za radnike se skrivaju, a inzenjeri i
@@ -728,6 +726,7 @@ public class UIController : MonoBehaviour
     private LayoutElement     _outputLE;
     private float             _outputPrefH = -1f;
     private float             _outputMinH  = -1f;
+    private float             _outputFontSize = -1f;
     private TextWrappingModes _outputWrap  = TextWrappingModes.Normal;
     private bool              _outputDefaultsCached;
     private bool              _outputExpanded;
@@ -741,11 +740,12 @@ public class UIController : MonoBehaviour
             _outputPrefH = _outputLE.preferredHeight;
             _outputMinH  = _outputLE.minHeight;
         }
+        _outputFontSize       = _outputText.fontSize;
         _outputWrap           = _outputText.textWrappingMode;
         _outputDefaultsCached = true;
     }
 
-    private void SetOutputExpanded(bool expanded, int lineCount = 0)
+    private void SetOutputExpanded(bool expanded, int lineCount = 0, float fontSize = -1f)
     {
         if (_outputText == null) return;
         CacheOutputDefaults();
@@ -753,6 +753,7 @@ public class UIController : MonoBehaviour
 
         if (expanded)
         {
+            if (fontSize > 0f) _outputText.fontSize = fontSize;
             _outputText.textWrappingMode = TextWrappingModes.NoWrap;
             if (_outputLE != null)
             {
@@ -763,6 +764,7 @@ public class UIController : MonoBehaviour
         }
         else
         {
+            if (_outputFontSize > 0f) _outputText.fontSize = _outputFontSize;
             _outputText.textWrappingMode = _outputWrap;
             if (_outputLE != null && _outputPrefH >= 0f)
             {
@@ -1348,7 +1350,7 @@ public class UIController : MonoBehaviour
         var rt = rp.GetComponent<RectTransform>();
         rt.anchorMin = new Vector2(1,0); rt.anchorMax = new Vector2(1,1);
         rt.pivot = new Vector2(1,1);
-        rt.offsetMin = new Vector2(-190,22); rt.offsetMax = new Vector2(0,-26);
+        rt.offsetMin = new Vector2(-220,22); rt.offsetMax = new Vector2(0,-26);
         rp.AddComponent<Image>().color = new Color(0.05f,0.05f,0.05f,0.90f);
         var vg = rp.AddComponent<VerticalLayoutGroup>();
         vg.padding = new RectOffset(12,12,12,12); vg.spacing = 6;
@@ -1407,7 +1409,7 @@ public class UIController : MonoBehaviour
         _shipDetailTitle.fontStyle = FontStyles.Bold;
         LE(_shipDetailTitle.gameObject, prefH:16, minH:16);
         _shipDetailInfo = MakeTMP(sd.transform, "ShipInfo", 10, TextAlignmentOptions.TopLeft);
-        _shipDetailInfo.color = new Color(0.75f,0.88f,0.75f);
+        _shipDetailInfo.color = PanelInk;
         _shipDetailInfo.textWrappingMode = TextWrappingModes.Normal;
         LE(_shipDetailInfo.gameObject, prefH:18, minH:18);
         Sep(sd.transform);
@@ -1439,7 +1441,7 @@ public class UIController : MonoBehaviour
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var t = go.AddComponent<TextMeshProUGUI>();
-        t.fontSize = size; t.alignment = align; t.color = Color.white;
+        t.fontSize = size; t.alignment = align; t.color = PanelInk;
         t.enableAutoSizing = false; t.margin = new Vector4(0,1,0,1);
         return t;
     }
@@ -1463,7 +1465,7 @@ public class UIController : MonoBehaviour
         lrt.offsetMin = lrt.offsetMax = Vector2.zero;
         var t = lblGO.AddComponent<TextMeshProUGUI>();
         t.text = label; t.fontSize = 10f;
-        t.alignment = TextAlignmentOptions.Center; t.color = Color.white;
+        t.alignment = TextAlignmentOptions.Center; t.color = PanelInk;
         t.textWrappingMode = TextWrappingModes.NoWrap;
         return btn;
     }

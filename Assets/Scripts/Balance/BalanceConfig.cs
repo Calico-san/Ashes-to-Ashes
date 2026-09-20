@@ -72,7 +72,7 @@ public static class BalanceConfig
     //   Scout Station 3h  (70 wood + 35 steel)
     //   Fiberworks    4h  (105 wood + 35 steel)
     //   Steelworks    5h  (140 wood)                — najskuplja obicna zgrada
-    //   Shipyard      8h  (280/105/70)              — vise od pola dana, prava odluka
+    //   Shipyard      8h  (280 wood + 105 steel)     — vise od pola dana, prava odluka
     public const int SawmillWoodCost        = 70;
     public const int SawmillSteelCost       = 0;
     public const int SawmillClothCost       = 0;
@@ -95,7 +95,7 @@ public static class BalanceConfig
 
     public const int ShipyardWoodCost       = 280;
     public const int ShipyardSteelCost      = 105;
-    public const int ShipyardClothCost      = 70;
+    public const int ShipyardClothCost      = 0;
     public const int ShipyardBuildHours     = 8;
 
     // Free placement building size (world units)

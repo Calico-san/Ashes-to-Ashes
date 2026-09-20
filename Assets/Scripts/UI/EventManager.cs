@@ -52,7 +52,7 @@ public class EventManager
 
         foreach (GameEventData gameEvent in events)
         {
-            if (!gameEvent.IsReady(day, hour))
+            if (!gameEvent.IsReady(day, hour) || !gameEvent.IsTriggerConditionMet())
             {
                 continue;
             }
@@ -81,6 +81,7 @@ public class EventManager
                 ScheduledDay     = e.ScheduledDay,
                 ScheduledHour    = e.ScheduledHour,
                 LastTriggeredDay = e.LastTriggeredDay,
+                SelectedOptionNumber = e.SelectedOptionIndex + 1,
             });
         }
         return list;
@@ -101,7 +102,8 @@ public class EventManager
             foreach (GameEventData e in events)
             {
                 if (e == null || e.Title != d.Title) continue;
-                e.RestoreTrigger(d.HasTriggered, d.ScheduledDay, d.ScheduledHour, d.LastTriggeredDay);
+                e.RestoreTrigger(d.HasTriggered, d.ScheduledDay, d.ScheduledHour,
+                    d.LastTriggeredDay, d.SelectedOptionNumber);
                 break;
             }
         }

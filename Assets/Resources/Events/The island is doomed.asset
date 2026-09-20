@@ -21,14 +21,20 @@ MonoBehaviour:
     and evacuate.
 
 
-    Governor, if you need any guidance, you can always consult the Tutorial by
-    clicking the ? button in the upper-left corner of the screen.'
+    Governor, if you need any guidance, you can always consult
+    the Tutorial by clicking the ? button in the upper-left corner of the screen.'
   Options:
   - Label: God help us
     Explanation: Hope falls greatly.
     ChangesHope: 1
     HopeChange: -80
-    Requirements: []
+    Requirements:
+    - Type: 0
+      Building: 0
+      Resource: 0
+      Manpower: 0
+      Amount: 0
+    Rewards: []
     RequirementType: 0
     RequiredBuilding: 0
     RequiredResourceType: 0
@@ -39,3 +45,5 @@ MonoBehaviour:
   RepeatEveryDay: 0
   FirstDay: 1
   LastDay: 1
+  conditionEvent: {fileID: 0}
+  conditionOptionIndex: -1

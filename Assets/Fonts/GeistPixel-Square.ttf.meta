@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 15831336ba9545b40bde5ccaf8aa4285
+guid: 81d86e4d8d4d9b2418948b5c14ea937e
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Press Start 2P
+  - Geist Pixel
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

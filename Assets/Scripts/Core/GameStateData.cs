@@ -11,11 +11,12 @@ using UnityEngine;
 public class GameStateData
 {
     // ---- Meta ----
+    // 1.3 — spremljen odabir opcije dogadaja za uvjetno okidanje kasnijih dogadaja.
     // 1.2 — dodano stanje okidaca dogadaja (Events).
     // 1.1 — dodan KeelLaid (fiksni trosak broda) i podjela putnika na djecu/odrasle.
     //       Stari zapisi (1.0) se i dalje ucitavaju: nova polja dobiju default,
     //       a AssignedSailors se ignorira jer mornari vise ne postoje.
-    public string   SaveVersion  = "1.2";
+    public string   SaveVersion  = "1.3";
     public string   SaveDateTime;          // ISO 8601, informational only
 
     // ---- Time ----
@@ -68,6 +69,8 @@ public class EventStateData
     public int      ScheduledDay;
     public int      ScheduledHour;
     public int      LastTriggeredDay;
+    /// <summary>Nula znaci da opcija nije odabrana; inace je to indeks opcije + 1.</summary>
+    public int      SelectedOptionNumber;
 }
 
 // -------------------------------------------------------

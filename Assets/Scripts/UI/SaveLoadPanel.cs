@@ -16,9 +16,9 @@ public class SaveLoadPanel : MonoBehaviour
     private float PanelPixelsPerUnitMultiplier =>
         _panelPixelsPerUnitMultiplier > 0f ? _panelPixelsPerUnitMultiplier : 1f;
 
-    /// <summary>Ploca je svijetla, pa sav tekst ide u crno.</summary>
-    private static readonly Color Ink     = new Color(0.08f, 0.07f, 0.06f);
-    private static readonly Color InkSoft = new Color(0.30f, 0.26f, 0.21f);
+    /// <summary>Jedinstvena boja teksta: #1B0D00.</summary>
+    private static readonly Color Ink     = new Color32(0x1B, 0x0D, 0x00, 0xFF);
+    private static readonly Color InkSoft = Ink;
 
     private GameObject              _overlay;
     private bool                    _open;
@@ -178,7 +178,7 @@ public class SaveLoadPanel : MonoBehaviour
             _loadBtns[i]   = b;
         }
 
-        _feedbackText = TMP(panel.transform, "", 11, new Color(0.10f, 0.35f, 0.14f), 0f, 0.13f, 1f, 0.19f);
+        _feedbackText = TMP(panel.transform, "", 11, Ink, 0f, 0.13f, 1f, 0.19f);
 
         // Main Menu na dnu — visina 0.10 ploce, isto kao Resume, umjesto
         // prijasnjih 0.05 zbog kojih je gumb bio duplo nizi od ostalih.

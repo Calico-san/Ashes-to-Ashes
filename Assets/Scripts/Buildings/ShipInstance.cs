@@ -271,7 +271,7 @@ public class ShipInstance : MonoBehaviour
         tmp.text                    = DisplayName;
         tmp.fontSize                = 1.3f;
         tmp.alignment               = TMPro.TextAlignmentOptions.Center;
-        tmp.color                   = Color.white;
+        tmp.color                   = new Color32(0x1B, 0x0D, 0x00, 0xFF);
         tmp.sortingOrder            = sortBase + 3;
         tmp.rectTransform.sizeDelta = new Vector2(2f, 0.6f);
     }

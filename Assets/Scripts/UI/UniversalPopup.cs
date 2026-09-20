@@ -6,21 +6,11 @@ using UnityEngine.UI;
 
 public class UniversalPopup : MonoBehaviour
 {
-    private const float PopupMinHeight       = 300f;
-    private const float ContentWidth         = 430f;
-    private const float TitleMinHeight       = 32f;
-    private const float MessageMinHeight     = 72f;
-    private const float ExplanationMinHeight = 34f;
-    private const float ButtonWidth          = 260f;
-    private const float ButtonHeight         = 32f;
-    private const float VerticalPadding      = 24f;
-    private const float SectionSpacing       = 10f;
-    private const float ButtonSpacing        = 6f;
-
     [Header("UI Elements")]
     [SerializeField] private GameObject panelObject;
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI messageText;
+    [SerializeField] private TextMeshProUGUI explanationText;
     [SerializeField] private Button closeButton;
 
     public static UniversalPopup Instance { get; private set; }
@@ -28,7 +18,6 @@ public class UniversalPopup : MonoBehaviour
     public bool IsOpen => panelObject.activeSelf;
 
     private readonly List<Button> optionButtons = new();
-    private TextMeshProUGUI explanationText;
     private GameEventData currentEvent;
     private GameController gameController;
     private int speedBeforeEvent;
@@ -43,7 +32,6 @@ public class UniversalPopup : MonoBehaviour
     private void Start()
     {
         optionButtons.Add(closeButton);
-        CreateExplanationText();
         panelObject.SetActive(false);
     }
 
@@ -133,12 +121,8 @@ public class UniversalPopup : MonoBehaviour
             GameEventOption option = currentEvent.Options[i];
             TextMeshProUGUI optionLabel = optionButton.GetComponentInChildren<TextMeshProUGUI>();
             optionLabel.text = option.Label;
-            optionLabel.fontSize = 16f;
             bool canChoose = option.MeetsRequirements(gameController);
             optionButton.interactable = canChoose;
-            optionLabel.color = canChoose
-                ? Color.white
-                : new Color(0.68f, 0.68f, 0.68f, 1f);
 
             Image buttonImage = optionButton.GetComponent<Image>();
             if (buttonImage != null)
@@ -159,62 +143,22 @@ public class UniversalPopup : MonoBehaviour
             hoverButton.Setup(this, i);
         }
 
-        messageText.fontSize = 16f;
-        titleText.fontSize = 23f;
-        titleText.fontStyle = FontStyles.Bold;
-        LayoutPopup(optionCount);
+        ReserveExplanationSpace(optionCount);
     }
 
-    /// <summary>
-    /// Slaze sadrzaj od vrha prema dnu prema stvarnoj visini poruke i najduljeg
-    /// explanationa. Prostor za explanation je uvijek rezerviran, pa panel ne
-    /// poskakuje kada igrac prijede misem preko opcije.
-    /// </summary>
-    private void LayoutPopup(int optionCount)
+    private void ReserveExplanationSpace(int optionCount)
     {
-        float titleHeight = Mathf.Max(TitleMinHeight,
-            titleText.GetPreferredValues(titleText.text, ContentWidth, 0f).y + 2f);
-        float messageHeight = Mathf.Max(MessageMinHeight,
-            messageText.GetPreferredValues(messageText.text, ContentWidth, 0f).y + 4f);
-
-        float explanationHeight = ExplanationMinHeight;
+        LayoutElement layout = explanationText.GetComponent<LayoutElement>();
+        float requiredHeight = layout.minHeight;
         for (int i = 0; i < optionCount; i++)
         {
             string explanation = currentEvent.Options[i].Explanation;
-            if (string.IsNullOrWhiteSpace(explanation)) continue;
-
-            explanationHeight = Mathf.Max(explanationHeight,
-                explanationText.GetPreferredValues(explanation, ContentWidth, 0f).y + 4f);
+            if (!string.IsNullOrWhiteSpace(explanation))
+                requiredHeight = Mathf.Max(requiredHeight,
+                    explanationText.GetPreferredValues(explanation, layout.preferredWidth, 0f).y);
         }
 
-        float buttonsHeight = optionCount * ButtonHeight
-                            + Mathf.Max(0, optionCount - 1) * ButtonSpacing;
-        float contentHeight = titleHeight + messageHeight + explanationHeight + buttonsHeight
-                            + SectionSpacing * 3f;
-        float panelHeight = Mathf.Max(PopupMinHeight, contentHeight + VerticalPadding * 2f);
-
-        RectTransform panelTransform = panelObject.GetComponent<RectTransform>();
-        panelTransform.sizeDelta = new Vector2(panelTransform.sizeDelta.x, panelHeight);
-
-        float y = panelHeight * 0.5f - VerticalPadding;
-        Place(titleText.rectTransform, ContentWidth, titleHeight, ref y, SectionSpacing);
-        Place(messageText.rectTransform, ContentWidth, messageHeight, ref y, SectionSpacing);
-        Place(explanationText.rectTransform, ContentWidth, explanationHeight, ref y, SectionSpacing);
-
-        for (int i = 0; i < optionCount; i++)
-        {
-            RectTransform buttonTransform = optionButtons[i].GetComponent<RectTransform>();
-            Place(buttonTransform, ButtonWidth, ButtonHeight, ref y,
-                i + 1 < optionCount ? ButtonSpacing : 0f);
-        }
-    }
-
-    private static void Place(RectTransform element, float width, float height,
-        ref float y, float spacingAfter)
-    {
-        element.sizeDelta = new Vector2(width, height);
-        element.anchoredPosition = new Vector2(0f, y - height * 0.5f);
-        y -= height + spacingAfter;
+        layout.preferredHeight = requiredHeight;
     }
 
     private void ChooseOption(int optionIndex)
@@ -229,6 +173,7 @@ public class UniversalPopup : MonoBehaviour
         }
 
         option.ApplyRewards(gameController);
+        currentEvent.RecordSelectedOption(optionIndex);
 
         ClosePopup();
     }
@@ -248,35 +193,13 @@ public class UniversalPopup : MonoBehaviour
         }
 
         explanationText.text = explanation;
-        explanationText.gameObject.SetActive(true);
     }
 
     public void HideExplanation()
     {
         if (explanationText != null)
         {
-            explanationText.gameObject.SetActive(false);
+            explanationText.text = string.Empty;
         }
     }
-
-    private void CreateExplanationText()
-    {
-        GameObject explanationObject = new GameObject("Option Explanation", typeof(RectTransform));
-        explanationObject.transform.SetParent(panelObject.transform, false);
-
-        RectTransform explanationTransform = explanationObject.GetComponent<RectTransform>();
-        explanationTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        explanationTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        explanationTransform.anchoredPosition = new Vector2(0f, -5f);
-        explanationTransform.sizeDelta = new Vector2(430f, 34f);
-
-        explanationText = explanationObject.AddComponent<TextMeshProUGUI>();
-        explanationText.font = messageText.font;
-        explanationText.fontSize = 13f;
-        explanationText.fontStyle = FontStyles.Italic;
-        explanationText.color = Color.white;
-        explanationText.alignment = TextAlignmentOptions.Center;
-        explanationText.textWrappingMode = TextWrappingModes.Normal;
-    }
-
 }

@@ -50,11 +50,18 @@ public class GameEventData : ScriptableObject
     [Min(1)] public int FirstDay = 1;
     [Min(1)] public int LastDay = 1;
 
+    [SerializeField, Tooltip("Optional event whose selected option enables this event at its scheduled time.")]
+    private GameEventData conditionEvent;
+
+    [SerializeField, HideInInspector]
+    private int conditionOptionIndex = -1;
+
     [NonSerialized] public bool HasTriggered;
 
     private int scheduledDay;
     private int scheduledHour;
     private int lastTriggeredDay;
+    private int selectedOptionIndex = -1;
 
     // Stanje okidaca je runtime stanje na ScriptableObjectu i ne sprema se s
     // assetom. Bez ovih pristupnika spremljena igra ga nije mogla zapisati, pa
@@ -63,14 +70,20 @@ public class GameEventData : ScriptableObject
     public int ScheduledDay     => scheduledDay;
     public int ScheduledHour    => scheduledHour;
     public int LastTriggeredDay => lastTriggeredDay;
+    public int SelectedOptionIndex => selectedOptionIndex;
 
     /// <summary>Vraca stanje okidaca iz spremljene igre, bez ponovnog zdrijeba.</summary>
-    public void RestoreTrigger(bool hasTriggered, int day, int hour, int lastDay)
+    public void RestoreTrigger(bool hasTriggered, int day, int hour, int lastDay, int selectedOptionNumber)
     {
         HasTriggered     = hasTriggered;
         scheduledDay     = day;
         scheduledHour    = hour;
         lastTriggeredDay = lastDay;
+        selectedOptionIndex = Options != null
+            && selectedOptionNumber > 0
+            && selectedOptionNumber <= Options.Length
+                ? selectedOptionNumber - 1
+                : -1;
     }
 
     public void PrepareTrigger()
@@ -81,6 +94,7 @@ public class GameEventData : ScriptableObject
 
         HasTriggered = false;
         lastTriggeredDay = -1;
+        selectedOptionIndex = -1;
 
         if (TriggerType == EventTriggerType.ExactDay)
         {
@@ -115,6 +129,26 @@ public class GameEventData : ScriptableObject
         return day == scheduledDay && hour >= scheduledHour;
     }
 
+    public bool IsTriggerConditionMet()
+    {
+        if (conditionEvent == null)
+        {
+            return true;
+        }
+
+        return conditionEvent.Options != null
+            && conditionOptionIndex >= 0
+            && conditionOptionIndex < conditionEvent.Options.Length
+            && conditionEvent.selectedOptionIndex == conditionOptionIndex;
+    }
+
+    public void RecordSelectedOption(int optionIndex)
+    {
+        selectedOptionIndex = Options != null && optionIndex >= 0 && optionIndex < Options.Length
+            ? optionIndex
+            : -1;
+    }
+
     public void MarkTriggered(int day)
     {
         if (RepeatEveryDay)
@@ -129,6 +163,20 @@ public class GameEventData : ScriptableObject
 
     private void OnValidate()
     {
+        if (conditionEvent == this)
+        {
+            conditionEvent = null;
+        }
+
+        if (conditionEvent == null || conditionEvent.Options == null || conditionEvent.Options.Length == 0)
+        {
+            conditionOptionIndex = -1;
+        }
+        else
+        {
+            conditionOptionIndex = Mathf.Clamp(conditionOptionIndex, 0, conditionEvent.Options.Length - 1);
+        }
+
         if (Options == null) return;
 
         foreach (GameEventOption option in Options)
