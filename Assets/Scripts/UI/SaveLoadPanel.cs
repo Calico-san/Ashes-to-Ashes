@@ -157,7 +157,7 @@ public class SaveLoadPanel : MonoBehaviour
         // Naslov i Resume su se preklapali: naslov je isao do 1.0, a gumb do 0.97.
         TMP(panel.transform,  "PAUSED", 17, Ink,     0f, 0.90f, 1f, 1f);
         Btn(panel.transform,  "Resume", () => { _game.SetSpeed(1); Close(); }, 0.1f, 0.79f, 0.9f, 0.885f);
-        TMP(panel.transform,  "SAVE",   10, InkSoft, 0f, 0.68f, 1f, 0.76f);
+        TMP(panel.transform,  "SAVE",   11, InkSoft, 0f, 0.68f, 1f, 0.76f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
@@ -167,7 +167,7 @@ public class SaveLoadPanel : MonoBehaviour
             _saveLabels[i] = SetupSlotLabel(b);
         }
 
-        TMP(panel.transform, "LOAD", 10, InkSoft, 0f, 0.38f, 1f, 0.46f);
+        TMP(panel.transform, "LOAD", 11, InkSoft, 0f, 0.38f, 1f, 0.46f);
 
         for (int i = 0; i < SaveSystem.MaxSlots; i++)
         {
@@ -178,7 +178,7 @@ public class SaveLoadPanel : MonoBehaviour
             _loadBtns[i]   = b;
         }
 
-        _feedbackText = TMP(panel.transform, "", 10, new Color(0.10f, 0.35f, 0.14f), 0f, 0.13f, 1f, 0.19f);
+        _feedbackText = TMP(panel.transform, "", 11, new Color(0.10f, 0.35f, 0.14f), 0f, 0.13f, 1f, 0.19f);
 
         // Main Menu na dnu — visina 0.10 ploce, isto kao Resume, umjesto
         // prijasnjih 0.05 zbog kojih je gumb bio duplo nizi od ostalih.
@@ -189,7 +189,7 @@ public class SaveLoadPanel : MonoBehaviour
     {
         var t = btn.GetComponentInChildren<TextMeshProUGUI>();
         if (t == null) return null;
-        t.fontSize         = 9f;
+        t.fontSize         = 10f;
         t.textWrappingMode = TMPro.TextWrappingModes.Normal;
         t.alignment        = TextAlignmentOptions.Center;
         t.color            = Ink;
@@ -287,7 +287,7 @@ public class SaveLoadPanel : MonoBehaviour
         if (t != null)
         {
             t.text     = label;
-            t.fontSize = 10f;
+            t.fontSize = 11f;
             t.color    = Ink;
         }
 
