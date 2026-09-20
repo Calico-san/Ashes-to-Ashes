@@ -335,6 +335,22 @@ public class UIController : MonoBehaviour
     private bool             _fleetOpen;
     private BuildingInstance _lastSelBuilding;
 
+    private enum RightPanelView
+    {
+        None,
+        Building,
+        Shipyard,
+        TownHall,
+        BuildSlot,
+        FleetList,
+        ShipDetail
+    }
+
+    private RightPanelView   _lastRightPanelView;
+    private BuildingInstance _lastPanelBuilding;
+    private ShipInstance     _lastPanelShip;
+    private BuildSlot        _lastPanelSlot;
+
     private void OpenFleet()
     {
         _fleetOpen = true;
@@ -394,25 +410,53 @@ public class UIController : MonoBehaviour
         // brodogradiliste.
         if (showShip) _fleetOpen = true;
 
+        // Ploca flote ima prednost: otvorena je ili preko gumba Manage fleet,
+        // ili klikom na brod u svijetu.
+        bool fleetMode = showShip || (showShipyard && _fleetOpen);
+
+        RightPanelView view = !anySelected ? RightPanelView.None
+            : fleetMode && showShip ? RightPanelView.ShipDetail
+            : fleetMode             ? RightPanelView.FleetList
+            : showShipyard          ? RightPanelView.Shipyard
+            : showTownHall          ? RightPanelView.TownHall
+            : showSlot              ? RightPanelView.BuildSlot
+                                    : RightPanelView.Building;
+
+        bool viewChanged = view != _lastRightPanelView
+            || sel != _lastPanelBuilding
+            || selShip != _lastPanelShip
+            || selSlot != _lastPanelSlot;
+
+        _lastRightPanelView = view;
+        _lastPanelBuilding  = sel;
+        _lastPanelShip      = selShip;
+        _lastPanelSlot      = selSlot;
+
         _rightPanel?.SetActive(anySelected);
         if (!anySelected)
         {
-            _shipListContainer?  .SetActive(false);
-            _shipDetailContainer?.SetActive(false);
+            if (viewChanged)
+            {
+                _shipListContainer?  .SetActive(false);
+                _shipDetailContainer?.SetActive(false);
+                if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
+            }
+
             _fleetOpen = false;
             _game.SelectShip(null);
             return;
         }
 
-        // Reset all sub-containers and optional controls
-        _shipListContainer?  .SetActive(false);
-        _shipDetailContainer?.SetActive(false);
-        if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
-        ResetPanelControls();
-
-        // Ploca flote ima prednost: otvorena je ili preko gumba Manage fleet,
-        // ili klikom na brod u svijetu.
-        bool fleetMode = showShip || (showShipyard && _fleetOpen);
+        // Vidljivost se resetira samo pri stvarnoj promjeni prikaza ili odabira.
+        // Tekst i interactable stanje i dalje se osvjezavaju svaki frame, ali se
+        // hover vise ne ponistava stalnim gasenjem i ponovnim paljenjem objekata.
+        if (viewChanged)
+        {
+            _shipListContainer?  .SetActive(false);
+            _shipDetailContainer?.SetActive(false);
+            if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
+            ResetPanelControls();
+        }
 
         if (fleetMode)
         {
@@ -461,8 +505,11 @@ public class UIController : MonoBehaviour
             if (_assignBtn != null) _assignBtn.gameObject.SetActive(false);
             if (_removeBtn != null) _removeBtn.gameObject.SetActive(false);
 
-            if (selSlot.State == BuildSlot.SlotState.UnderConstruction)
+            bool canCancel = selSlot.State == BuildSlot.SlotState.UnderConstruction;
+            if (canCancel)
                 SetCancelBtn();
+            else if (_cancelBtn != null)
+                _cancelBtn.gameObject.SetActive(false);
         }
         else if (showBuilding)
         {
