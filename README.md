@@ -1,31 +1,71 @@
-# Prototype (Unity 6)
+# Ashes to Ashes
 
-Fresh prototype project for a simple 2D colony/resource game.
+2D strateška igra preživljavanja u stvarnom vremenu. Vulkan na otoku New Haven
+uskoro će eruptirati — kao guverner kolonije upravljaš resursima i radnom snagom
+da izgradiš brodove i evakuiraš što više od 1100 stanovnika prije erupcije.
 
-## Included
-- Simple 2D prototype built fully from code
-- Buildings: Cookhouse, Sawmill, Steelworks, Cloth Works, Shipyard
-- Building selection and management panel
-- Worker assignment up to 10 per building
-- Worker triangle visuals that move into buildings when assigned
-- Resource production only after a worker reaches the building
-- 24-hour in-game clock
-- Camera move: WASD / Arrow keys
-- Camera zoom: mouse wheel
-- New Input System compatible code
+Studentski projekt na kolegiju *Dizajn i programiranje računalnih igara*,
+Sveučilište Jurja Dobrile u Puli, 2025./2026.
 
-## How to run
-1. Open the project in **Unity 6**.
-2. Open or create any empty scene.
-3. Press **Play**.
-4. The prototype world is generated automatically at runtime.
+## Pokretanje
 
-## Controls
-- **Left click**: select a building
-- **WASD / Arrow keys**: move camera
-- **Mouse wheel**: zoom
-- **UI buttons**: assign/remove workers, change time speed
+1. Otvori projekt u **Unity 6 (6000.3.11f1)**.
+2. Otvori scenu `Assets/Scenes/MainMenu.unity`.
+3. Pritisni **Play**.
 
-## Notes
-- The whole prototype is generated from scripts to avoid broken prefab or scene references.
-- Graphics intentionally stay simple 2D shapes for fast iteration.
+Scene: `MainMenu` → `Intro` → `AshesToAshes` (igra) → `TheEnd`.
+
+## Kontrole
+
+| Tipka | Radnja |
+| --- | --- |
+| Lijevi klik | Odabir građevine, gradilišta ili broda; postavljanje u načinu gradnje |
+| Desni klik | Izlazak iz načina gradnje |
+| WASD / strelice | Pomicanje kamere |
+| Kotačić miša | Zoom |
+| Esc | Izlaz iz načina gradnje, inače pauza i spremanje |
+
+## Struktura koda
+
+`Assets/Scripts/` — 50 skripti podijeljenih po odgovornosti:
+
+| Mapa | Sadržaj |
+| --- | --- |
+| `Balance/` | Sve brojke i formule ekonomije, bez ovisnosti o Unityju |
+| `Core/` | Stanje igre, vrijeme, validacija postavljanja, spremanje |
+| `Buildings/` | Građevine, gradilišta, brodovi |
+| `Workers/` | Radnici i inženjeri |
+| `Tilemap/` | Podaci o karti i iscrtavanje terena |
+| `Input/` | Kamera i odabir objekata |
+| `UI/` | HUD, paneli, događaji, ciljevi |
+| `Bootstrap/` | Inicijalizacija fiksnim redoslijedom |
+
+Ovisnosti idu u jednom smjeru — od sučelja prema simulaciji, nikad obrnuto.
+
+## Balans
+
+Sve brojke su u `Assets/Scripts/Balance/BalanceConfig.cs`. Nijedna vrijednost
+nije upisana u logiku, pa se balans mijenja bez diranja koda.
+
+Karta se uređuje kroz vlastiti alat u Inspectoru na
+`Assets/Resources/IslandMap.asset`, a grafika se povezuje u
+`Assets/Resources/SpriteRegistry.asset`.
+
+## Spremljene igre
+
+Tri mjesta, JSON, u `Application.persistentDataPath/saves/`.
+Na Windowsu: `%USERPROFILE%\AppData\LocalLow\<tvrtka>\<igra>\saves\`.
+
+## Tim
+
+| Član | Dio |
+| --- | --- |
+| Mislav Balaž | Sučelje i scena |
+| Laura Đurinec | Događaji, nada, ciljevi, tutorial |
+| Igor Pavlić | Simulacijska jezgra: vrijeme, ekonomija, kamera, gradnja, spremanje |
+| Tomislav Rakuljić | Grafika, animacije, zvuk |
+
+## Načela
+
+Projekt slijedi KISS, YAGNI, SRP i LCP. Dokument dizajna objašnjava gdje je
+svako od njih promijenilo konkretnu odluku.
