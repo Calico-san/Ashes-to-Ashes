@@ -64,6 +64,7 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject      _actionSeparator;
     [SerializeField] private GameObject      _footerSeparator;
 
+
     // Ikone za male gumbe tereta. Povuci iz "Sprite sheet for Basic Pack":
     //   _plusSprite  -> Sprite sheet for Basic Pack_35
     //   _minusSprite -> Sprite sheet for Basic Pack_60
@@ -510,7 +511,7 @@ public class UIController : MonoBehaviour
                        sel.AssignedWorkers > 0);
             SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
                           sel.AssignedEngineers > 0);
-            SetUpgradeBtn(true, game.CanAffordUpgrade(sel));
+            SetUpgradeBtn(true, game.CanAffordUpgrade(sel), sel);
             SetDemolishBtn(sel);
         }
 
@@ -593,6 +594,7 @@ public class UIController : MonoBehaviour
         _shipDetailBack.gameObject.SetActive(true);
         _shipDetailBack.interactable = true;
         _shipDetailBack.onClick.RemoveAllListeners();
+        _shipDetailBack.onClick.AddListener(() => UISoundManager.Instance?.PlayButtonClick());
         _shipDetailBack.onClick.AddListener(cb);
         SetLabel(_shipDetailBack, label);
     }
@@ -615,6 +617,7 @@ public class UIController : MonoBehaviour
             Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
             _evacuateTopGap = Gap(parent, 4f, "EvacuateGapTop");
             _evacuateBtn = CloneStyledButton(parent, "Evacuate", "EVACUATE");
+            _evacuateBtn.onClick.AddListener(() => UISoundManager.Instance?.PlayButtonClick());
             _evacuateBtn.onClick.AddListener(BeginEvacuation);
             _evacuateBottomGap = Gap(parent, 4f, "EvacuateGapBottom");
         }
@@ -684,6 +687,7 @@ public class UIController : MonoBehaviour
         {
             Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
             _manageFleetBtn = CloneStyledButton(parent, "ManageFleet", "Manage fleet");
+            _manageFleetBtn.onClick.AddListener(() => UISoundManager.Instance?.PlayButtonClick());
             _manageFleetBtn.onClick.AddListener(OpenFleet);
 
             // Odmah ispod gumba Build ship, da red gumba ostane logican.
@@ -1113,12 +1117,20 @@ public class UIController : MonoBehaviour
             : "Ordered — waiting for materials");
     }
 
-    private void SetUpgradeBtn(bool visible, bool enabled)
+    private void SetUpgradeBtn(bool visible, bool enabled, BuildingInstance building = null)
     {
         if (_upgradeBtn == null) return;
         _upgradeBtn.gameObject.SetActive(visible);
         _upgradeBtn.interactable = enabled;
-        SetLabel(_upgradeBtn, enabled ? "Upgrade ▲" : "Upgrade (insufficient resources)");
+        if (building != null && building.UpgradeLevel >= 3)
+        {
+            SetLabel(_upgradeBtn, "Max Upgrade");
+        }
+        else
+        {
+            SetLabel(_upgradeBtn, enabled ? "Upgrade ▲" : "Upgrade (insufficient resources)");
+        }
+        //SetLabel(_upgradeBtn, enabled ? "Upgrade ▲" : "Upgrade (insufficient resources)");
     }
 
     // -------------------------------------------------------
