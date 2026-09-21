@@ -511,7 +511,8 @@ public class UIController : MonoBehaviour
                        sel.AssignedWorkers > 0);
             SetEngButtons(sel.AssignedEngineers < sel.MaxEngineers && game.FreeEngineers > 0,
                           sel.AssignedEngineers > 0);
-            SetUpgradeBtn(true, game.CanAffordUpgrade(sel), sel);
+            bool canUpgrade = sel.BuildingTypeEnum != BuildingType.ScoutStation;
+            SetUpgradeBtn(canUpgrade, canUpgrade && game.CanAffordUpgrade(sel), sel);
             SetDemolishBtn(sel);
         }
 

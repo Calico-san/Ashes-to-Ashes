@@ -10,28 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
-  m_Name: The island is doomed
+  m_Name: A Parent's Worst Fear
   m_EditorClassIdentifier: Assembly-CSharp::GameEventData
-  Title: 'The Island is Doomed '
-  Message: 'The volcano has awoken from its slumber. Now we must race against time
-    to save our lives from impending doom.
+  Title: A Parent's Worst Fear
+  Message: 'Governor, a child was frightened by the latest earthquake and ran off
+    into the forest. We must send a search party at once!
 
-
-    Our only option is to build ships
-    and evacuate.
-
-
-    For a start I recommend consulting the Tutorial by clicking
-    the ? button in the upper-left corner of the screen.'
+'
   PopupSound: {fileID: 0}
   Options:
-  - Label: God help us
-    Explanation: Hope falls greatly.
-    ChangesHope: 1
-    HopeChange: -80
+  - Label: Send scouts to look for the child
+    Explanation: Scout station must be built
+    ChangesHope: 0
+    HopeChange: 0
     Requirements:
-    - Type: 0
-      Building: 0
+    - Type: 1
+      Building: 7
       Resource: 0
       Manpower: 0
       Amount: 0
@@ -40,11 +34,22 @@ MonoBehaviour:
     RequiredBuilding: 0
     RequiredResourceType: 0
     RequiredResourceAmount: 0
-  TriggerType: 0
+  - Label: We must not waste time on naughty children
+    Explanation: Hope falls
+    ChangesHope: 1
+    HopeChange: -10
+    Requirements: []
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  TriggerType: 1
   TriggerDay: 1
   TriggerHour: 8
   RepeatEveryDay: 0
-  FirstDay: 1
-  LastDay: 1
+  RepeatIntervalDays: 1
+  FirstDay: 17
+  LastDay: 22
   conditionEvent: {fileID: 0}
   conditionOptionIndex: -1

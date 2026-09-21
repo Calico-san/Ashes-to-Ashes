@@ -10,45 +10,48 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
-  m_Name: Think of the Children
+  m_Name: Fed up
   m_EditorClassIdentifier: Assembly-CSharp::GameEventData
-  Title: Think of the Children
-  Message: 'A woman came asking if we could spare some cloth. She wishes to use it
-    to make some dolls for the children in her spare time. She understands we cannot
-    waste resources, but thinks this would greatly lift the childrens'' spirits. '
+  Title: Fed up
+  Message: Governor, the workers have been toiling away with barely any breaks for
+    days. They are asking for a richer lunch to sustain their arduous labour.
   PopupSound: {fileID: 0}
   Options:
-  - Label: Give her 30 cloth
-    Explanation: Hope rises.
+  - Label: Fulfil the workers' wishes
+    Explanation: 'Hope rises
+
+      -200 Food Rations'
     ChangesHope: 1
     HopeChange: 10
     Requirements:
     - Type: 2
-      Building: 3
-      Resource: 3
+      Building: 0
+      Resource: 0
       Manpower: 0
-      Amount: 30
+      Amount: 200
     Rewards: []
-    RequirementType: 2
+    RequirementType: 0
     RequiredBuilding: 0
-    RequiredResourceType: 3
-    RequiredResourceAmount: 30
-  - Label: Give her 15 cloth
-    Explanation: Hope rises slightly.
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  - Label: Organise a feast at the Town Hall
+    Explanation: 'Hope rises slightly
+
+      -50 Food Rations'
     ChangesHope: 1
     HopeChange: 5
     Requirements:
     - Type: 2
       Building: 0
-      Resource: 3
+      Resource: 0
       Manpower: 0
-      Amount: 15
+      Amount: 50
     Rewards: []
-    RequirementType: 2
+    RequirementType: 0
     RequiredBuilding: 0
-    RequiredResourceType: 3
-    RequiredResourceAmount: 15
-  - Label: I'm afraid we cannot spare any cloth
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  - Label: We cannot waste food, get back to work
     Explanation: Hope falls
     ChangesHope: 1
     HopeChange: -10
@@ -56,13 +59,13 @@ MonoBehaviour:
     Rewards: []
     RequirementType: 0
     RequiredBuilding: 0
-    RequiredResourceType: 3
-    RequiredResourceAmount: 30
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
   TriggerType: 1
   TriggerDay: 1
-  TriggerHour: 10
+  TriggerHour: 9
   RepeatEveryDay: 0
-  FirstDay: 10
-  LastDay: 14
+  FirstDay: 14
+  LastDay: 17
   conditionEvent: {fileID: 0}
   conditionOptionIndex: -1

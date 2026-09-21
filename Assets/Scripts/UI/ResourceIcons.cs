@@ -35,6 +35,7 @@ public static class ResourceIcons
             case ResourceType.Rope:  return Rope;
             case ResourceType.Ships: return Ships;
             case ResourceType.Food:  return Food;
+            case ResourceType.RawFood: return RawFood;
             default:                 return "";
         }
     }

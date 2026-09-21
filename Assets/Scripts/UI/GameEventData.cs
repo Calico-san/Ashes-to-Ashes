@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public sealed class EventRepeatAttribute : PropertyAttribute { }
+
 public enum EventTriggerType
 {
     ExactDay,
@@ -48,7 +50,9 @@ public class GameEventData : ScriptableObject
 
     [Min(1)] public int TriggerDay = 1;
     [Range(FirstTriggerHour, LastTriggerHour)] public int TriggerHour = 8;
+    [EventRepeat]
     public bool RepeatEveryDay;
+    [HideInInspector, Min(1)] public int RepeatIntervalDays = 1;
 
     [Min(1)] public int FirstDay = 1;
     [Min(1)] public int LastDay = 1;
@@ -119,9 +123,13 @@ public class GameEventData : ScriptableObject
             return false;
         }
 
-        if (RepeatEveryDay)
+        if (RepeatEveryDay && TriggerType == EventTriggerType.ExactDay)
         {
-            return day >= scheduledDay && hour >= scheduledHour && lastTriggeredDay != day;
+            int interval = Mathf.Max(1, RepeatIntervalDays);
+            return day >= scheduledDay
+                && (day - scheduledDay) % interval == 0
+                && hour >= scheduledHour
+                && lastTriggeredDay != day;
         }
 
         if (HasTriggered)
@@ -154,7 +162,7 @@ public class GameEventData : ScriptableObject
 
     public void MarkTriggered(int day)
     {
-        if (RepeatEveryDay)
+        if (RepeatEveryDay && TriggerType == EventTriggerType.ExactDay)
         {
             lastTriggeredDay = day;
         }
@@ -299,6 +307,7 @@ public class GameEventOption
             ResourceType.Cloth => game.Cloth,
             ResourceType.Rope => game.Rope,
             ResourceType.Ships => game.Ships,
+            ResourceType.RawFood => game.RawFood,
             _ => 0
         };
     }

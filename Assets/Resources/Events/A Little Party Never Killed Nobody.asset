@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
+  m_Name: A Little Party Never Killed Nobody
+  m_EditorClassIdentifier: Assembly-CSharp::GameEventData
+  Title: A Little Party Never Killed Nobody
+  Message: "Governor, we have had a daring request from a Steward at one of the Sawmills.
+    He says that the work atmosphere is dire, with the back-breaking work exhausting
+    their strength and the ground trembling reminding them of their possible fate.
+    He's never seen the workers so defeated so he asks to organise a\_f\xEAte with
+    food and games. The Steward acknowledges the importance of the resources he's
+    asking for, but nonetheless insists it's a small price to pay for a\_crucial
+    morale boost."
+  PopupSound: {fileID: 0}
+  Options:
+  - Label: Let them eat cake
+    Explanation: 'Hope rises significantly
+
+      -200 Food Rations, -25 Wood, -25
+      Cloth, -25 Rope'
+    ChangesHope: 1
+    HopeChange: 20
+    Requirements:
+    - Type: 2
+      Building: 0
+      Resource: 0
+      Manpower: 0
+      Amount: 200
+    - Type: 2
+      Building: 0
+      Resource: 1
+      Manpower: 0
+      Amount: 25
+    - Type: 2
+      Building: 0
+      Resource: 3
+      Manpower: 0
+      Amount: 25
+    - Type: 2
+      Building: 0
+      Resource: 4
+      Manpower: 0
+      Amount: 25
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  - Label: Not a chance
+    Explanation: Hope falls
+    ChangesHope: 1
+    HopeChange: -10
+    Requirements: []
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  TriggerType: 1
+  TriggerDay: 1
+  TriggerHour: 9
+  RepeatEveryDay: 0
+  FirstDay: 16
+  LastDay: 22
+  conditionEvent: {fileID: 0}
+  conditionOptionIndex: -1

@@ -434,8 +434,9 @@ public class GameController : MonoBehaviour
     {
         if (_selectedBuilding == null) return false;
 
-        // Can't upgrade Shipyard or Town Hall
-        if (_selectedBuilding.IsShipyard || _selectedBuilding.IsTownHall) return false;
+        // Can't upgrade Shipyard, Town Hall or Scout Station
+        if (_selectedBuilding.IsShipyard || _selectedBuilding.IsTownHall
+            || _selectedBuilding.BuildingTypeEnum == BuildingType.ScoutStation) return false;
 
         // Check resources
         if (!CanAffordUpgrade(_selectedBuilding)) return false;
@@ -444,6 +445,7 @@ public class GameController : MonoBehaviour
         wood -= BalanceConfig.UpgradeWoodCost;
         steel -= BalanceConfig.UpgradeSteelCost;
         cloth -= BalanceConfig.UpgradeClothCost;
+        rope -= BalanceConfig.UpgradeRopeCost;
 
         // Apply upgrade
         _selectedBuilding.UpgradeBuilding();
@@ -457,15 +459,17 @@ public class GameController : MonoBehaviour
     public bool CanAffordUpgrade(BuildingInstance building)
     {
         if (building == null) return false;
-        if (building.IsShipyard || building.IsTownHall) return false;
+        if (building.IsShipyard || building.IsTownHall
+            || building.BuildingTypeEnum == BuildingType.ScoutStation) return false;
 
         // Check if building is already max upgraded (optional: set a max level)
-        if (building.UpgradeLevel >= 3) return false; // Max 3 upgrades
+        if (building.UpgradeLevel >= 3) return false; // Max level 3
 
         return HasResources(
             BalanceConfig.UpgradeWoodCost,
             BalanceConfig.UpgradeSteelCost,
-            BalanceConfig.UpgradeClothCost
+            BalanceConfig.UpgradeClothCost,
+            BalanceConfig.UpgradeRopeCost
         );
     }
 
@@ -648,6 +652,7 @@ public class GameController : MonoBehaviour
             case ResourceType.Cloth: cloth += amount; break;
             case ResourceType.Rope:  rope  += amount; break;
             case ResourceType.Ships: ships += amount; break;
+            case ResourceType.RawFood: rawFood += amount; break;
         }
         RefreshUI();
     }
@@ -701,6 +706,10 @@ public class GameController : MonoBehaviour
             case ResourceType.Ships:
                 if (ships < amount) return false;
                 ships -= amount;
+                break;
+            case ResourceType.RawFood:
+                if (rawFood < amount) return false;
+                rawFood -= amount;
                 break;
             default:
                 return false;

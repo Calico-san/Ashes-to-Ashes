@@ -142,8 +142,9 @@ public static class BalanceConfig
                                      System.MidpointRounding.AwayFromZero);
 
     // ---- Building Upgrade Costs ----
-    public const int UpgradeWoodCost = 7;
-    public const int UpgradeSteelCost = 7;
-    public const int UpgradeClothCost = 7;
+    public const int UpgradeWoodCost  = 50;
+    public const int UpgradeSteelCost = 50;
+    public const int UpgradeClothCost = 50;
+    public const int UpgradeRopeCost  = 50;
     public const float UpgradeProductionBonus = 1.2f;
 }

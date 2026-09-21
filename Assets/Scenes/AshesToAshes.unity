@@ -6167,8 +6167,9 @@ PrefabInstance:
 
 
         The number of Workers
-        employed at a building determines its efficiency. You can upgrade certain
-        buildings to increase their production efficiency.  '
+        employed at a building determines its efficiency. Resource buildings can
+        be upgraded twice, with each upgrade increasing their production by 20%.
+        Every upgrade costs 50 Wood, 50 Steel, 50 Cloth, and 50 Rope.'
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_HorizontalAlignment
@@ -7016,7 +7017,7 @@ MonoBehaviour:
   totalPopulation: 1100
   children: 513
   engineers: 165
-  food: 0
+  food: 1000
   wood: 10000
   steel: 1000
   cloth: 1000

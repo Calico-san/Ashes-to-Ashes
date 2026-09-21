@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
+  m_Name: A Bitter Reunion
+  m_EditorClassIdentifier: Assembly-CSharp::GameEventData
+  Title: A Bitter Reunion
+  Message: 'Governor, the missing child''s father left his post to search for his
+    son. He found the boy today at the foot of a cliff.
+
+
+    The child will live,
+    but will remain a lifelong invalid, I''m afraid.'
+  PopupSound: {fileID: 0}
+  Options:
+  - Label: I'm sad to hear that
+    Explanation: Hope falls
+    ChangesHope: 1
+    HopeChange: -10
+    Requirements: []
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  TriggerType: 1
+  TriggerDay: 1
+  TriggerHour: 8
+  RepeatEveryDay: 0
+  RepeatIntervalDays: 1
+  FirstDay: 23
+  LastDay: 25
+  conditionEvent: {fileID: 11400000, guid: a389a99e51abe464497aadd29eac4945, type: 2}
+  conditionOptionIndex: 1

@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
+  m_Name: An Expedition
+  m_EditorClassIdentifier: Assembly-CSharp::GameEventData
+  Title: An Expedition
+  Message: "Governor, some engineers are keen to take the journey to the volcano
+    in order to investigate its condition. This might help them estimate the time
+    left until the eruption, but they need resources for the trek. The people are
+    desperate for answers so it would be very unwise to deny the engineers' request.\_\n"
+  PopupSound: {fileID: 0}
+  Options:
+  - Label: Let them have what they need
+    Explanation: 'Hope rises
+
+      -10 Rope, -10 Cloth, -30 Food Rations'
+    ChangesHope: 1
+    HopeChange: 10
+    Requirements:
+    - Type: 2
+      Building: 0
+      Resource: 0
+      Manpower: 0
+      Amount: 30
+    - Type: 2
+      Building: 0
+      Resource: 4
+      Manpower: 0
+      Amount: 10
+    - Type: 2
+      Building: 0
+      Resource: 3
+      Manpower: 0
+      Amount: 10
+    - Type: 3
+      Building: 0
+      Resource: 3
+      Manpower: 1
+      Amount: 10
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  - Label: I forbid this foolish journey!
+    Explanation: Hope falls dramatically
+    ChangesHope: 1
+    HopeChange: -50
+    Requirements:
+    - Type: 2
+      Building: 0
+      Resource: 0
+      Manpower: 0
+      Amount: 30
+    - Type: 2
+      Building: 0
+      Resource: 4
+      Manpower: 0
+      Amount: 10
+    - Type: 2
+      Building: 0
+      Resource: 3
+      Manpower: 0
+      Amount: 10
+    - Type: 3
+      Building: 0
+      Resource: 3
+      Manpower: 1
+      Amount: 10
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  TriggerType: 0
+  TriggerDay: 1
+  TriggerHour: 15
+  RepeatEveryDay: 0
+  FirstDay: 1
+  LastDay: 1
+  conditionEvent: {fileID: 0}
+  conditionOptionIndex: -1

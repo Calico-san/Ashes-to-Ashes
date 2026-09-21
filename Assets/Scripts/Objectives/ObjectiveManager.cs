@@ -148,6 +148,7 @@ public class ObjectiveManager : MonoBehaviour
             case ResourceType.Cloth: return gameController.Cloth;
             case ResourceType.Rope: return gameController.Rope;
             case ResourceType.Ships: return gameController.Ships;
+            case ResourceType.RawFood: return gameController.RawFood;
             default: return 0;
         }
     }

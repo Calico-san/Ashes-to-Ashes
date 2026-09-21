@@ -511,7 +511,7 @@ public class BuildingInstance : MonoBehaviour
     private int _upgradeLevel = 1;
     public int UpgradeLevel => _upgradeLevel;
 
-    public float ProductionMultiplier => 1.0f + (_upgradeLevel * (BalanceConfig.UpgradeProductionBonus - 1.0f));
+    public float ProductionMultiplier => 1.0f + ((_upgradeLevel - 1) * (BalanceConfig.UpgradeProductionBonus - 1.0f));
 
     public void UpgradeBuilding()
     {

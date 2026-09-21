@@ -1,6 +1,33 @@
 using UnityEditor;
 using UnityEngine;
 
+[CustomPropertyDrawer(typeof(EventRepeatAttribute))]
+public class EventRepeatDrawer : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        EditorGUI.BeginProperty(position, label, property);
+
+        float lineHeight = EditorGUIUtility.singleLineHeight;
+        Rect line = new(position.x, position.y, position.width, lineHeight);
+        property.boolValue = EditorGUI.Toggle(line, "Repeat", property.boolValue);
+
+        if (property.boolValue)
+        {
+            line.y += lineHeight + EditorGUIUtility.standardVerticalSpacing;
+            SerializedProperty interval = property.serializedObject.FindProperty("RepeatIntervalDays");
+            EditorGUI.PropertyField(line, interval, new GUIContent("Repeat Every (Days)"));
+        }
+
+        EditorGUI.EndProperty();
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        => property.boolValue
+            ? EditorGUIUtility.singleLineHeight * 2f + EditorGUIUtility.standardVerticalSpacing
+            : EditorGUIUtility.singleLineHeight;
+}
+
 [CustomPropertyDrawer(typeof(GameEventOption))]
 public class GameEventOptionDrawer : PropertyDrawer
 {

@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
+  m_Name: A Mother's Plea
+  m_EditorClassIdentifier: Assembly-CSharp::GameEventData
+  Title: A Mother's Plea
+  Message: Governor, a woman has approached us to request additional food for her
+    family. She already has eleven children, and a twelfth is on the way. With ten
+    growing boys to feed, the family's usual rations are no longer enough. We could
+    grant her request, but this will surely seem unjust to other families.
+  PopupSound: {fileID: 0}
+  Options:
+  - Label: Let them have more food
+    Explanation: 'Hope falls slightly
+
+      -20 Food Rations'
+    ChangesHope: 1
+    HopeChange: -5
+    Requirements:
+    - Type: 2
+      Building: 0
+      Resource: 0
+      Manpower: 0
+      Amount: 20
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  - Label: I'm afraid we cannot make any exceptions
+    Explanation: Hope falls
+    ChangesHope: 1
+    HopeChange: -10
+    Requirements: []
+    Rewards: []
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  TriggerType: 1
+  TriggerDay: 1
+  TriggerHour: 8
+  RepeatEveryDay: 0
+  FirstDay: 3
+  LastDay: 6
+  conditionEvent: {fileID: 0}
+  conditionOptionIndex: -1

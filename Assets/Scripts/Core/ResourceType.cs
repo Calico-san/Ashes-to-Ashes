@@ -1,1 +1,1 @@
-public enum ResourceType { Food, Wood, Steel, Cloth, Rope, Ships }
+public enum ResourceType { Food, Wood, Steel, Cloth, Rope, Ships, RawFood }
