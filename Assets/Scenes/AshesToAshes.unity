@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -16232,13 +16232,14 @@ GameObject:
   m_Component:
   - component: {fileID: 2121446819}
   - component: {fileID: 2121446818}
+  - component: {fileID: 2121446820}
   m_Layer: 0
   m_Name: BackgroundMusic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!82 &2121446818
 AudioSource:
   m_ObjectHideFlags: 0
@@ -16251,10 +16252,10 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 0.2
   m_Pitch: 1
-  Loop: 1
+  Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -16336,6 +16337,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &2121446820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2121446817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2f1d6b8a8424a94b1c9e3f5720d8a61, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameplayMusicPlaylist
+  tracks:
+  - {fileID: 8300000, guid: 40c692683b461fc4d97d8d225eca1c1e, type: 3}
+  - {fileID: 8300000, guid: 837d0b7985528534db8792bd335fe12f, type: 3}
+  - {fileID: 8300000, guid: d11484f88441b2b41a6823b83767cac2, type: 3}
+  - {fileID: 8300000, guid: 3148272b49e326b49aeb2192e9f3fae8, type: 3}
 --- !u!4 &2121446819
 Transform:
   m_ObjectHideFlags: 0

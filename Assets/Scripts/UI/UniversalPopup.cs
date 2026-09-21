@@ -64,6 +64,7 @@ public class UniversalPopup : MonoBehaviour
         HideExplanation();
 
         panelObject.SetActive(true);
+        FindFirstObjectByType<GameplayMusicPlaylist>()?.SetDucked(true);
 
         if (pauseTime && !timePaused && gameController != null)
         {
@@ -86,6 +87,7 @@ public class UniversalPopup : MonoBehaviour
         GameEventData closedEvent = currentEvent;
         HideExplanation();
         panelObject.SetActive(false);
+        FindFirstObjectByType<GameplayMusicPlaylist>()?.SetDucked(false);
 
         if (timePaused && gameController != null)
         {

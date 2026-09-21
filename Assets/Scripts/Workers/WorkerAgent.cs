@@ -19,7 +19,6 @@ public class WorkerAgent : MonoBehaviour
     private State   _state = State.Entering;
     private Vector3 _target;
     private List<Vector3> _path;
-    private int           _pathIndex;
 
     public bool IsInside => _state == State.Inside;
     public bool IsDone   => _state == State.Done;
@@ -34,7 +33,6 @@ public class WorkerAgent : MonoBehaviour
                            System.Collections.Generic.List<UnityEngine.Vector3> path = null)
     {
         _path      = path;
-        _pathIndex = 0;
         transform.position = startPos;
         _target = targetPos;
         _state  = State.Entering;

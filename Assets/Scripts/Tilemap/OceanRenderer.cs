@@ -30,7 +30,7 @@ public class OceanRenderer : Tile
     /// Stvara animiranu oceansku pločicu iz registryja. Vraca null ako animacija nije
     /// postavljena — pozivatelj tada koristi staticni TileOcean sprite.
     /// </summary>
-    public static OceanRenderer Create(SpriteRegistry registry)
+    public static OceanRenderer Create(SpriteRegistry registry, float scale)
     {
         if (registry == null || !registry.HasOceanAnimation) return null;
 
@@ -41,6 +41,8 @@ public class OceanRenderer : Tile
         // Staticki prikaz — Scene view i prvi frame prije nego animacija krene
         tile.sprite       = registry.OceanFrames[0];
         tile.colliderType = ColliderType.None;
+        tile.transform    = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        tile.flags        = TileFlags.LockTransform | TileFlags.LockColor;
 
         return tile;
     }

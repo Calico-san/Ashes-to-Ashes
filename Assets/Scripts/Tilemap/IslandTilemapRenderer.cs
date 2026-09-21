@@ -20,6 +20,8 @@ public class IslandTilemapRenderer : MonoBehaviour
 {
     public static IslandTilemapRenderer Instance { get; private set; }
 
+    private const float TileOverscan = 1.01f;
+
     [SerializeField] private TilemapData _map;
 
     // Placeholder colors per tile type — used only if SpriteRegistry has no sprite yet.
@@ -196,7 +198,7 @@ public class IslandTilemapRenderer : MonoBehaviour
         // Jedna animirana pločica dijeli se na sva "cista" oceanska polja. Rubna
         // polja (prijelaz prema obali) ostaju staticna jer ona nisu ocean nego Shore.
         // Vraca null ako OceanFrames nisu postavljeni — tada se koristi TileOcean.
-        TileBase oceanTile = OceanRenderer.Create(registry);
+        TileBase oceanTile = OceanRenderer.Create(registry, TileOverscan);
 
         // Podloga za prozirne sprajtove. Jedan Tile za cijelu kartu — dijeli se
         // kroz _tileCache, pa ne kosta nista dodatno.
@@ -298,7 +300,7 @@ public class IslandTilemapRenderer : MonoBehaviour
         float natural = Mathf.Max(sprite.rect.width, sprite.rect.height) / ppu;
         if (natural <= 0.0001f) return 1f;
 
-        return _map.TileSize / natural;
+        return _map.TileSize / natural * TileOverscan;
     }
 
     private static Color TileColorFor(TileType type)
