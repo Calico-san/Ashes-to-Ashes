@@ -50,6 +50,7 @@ MonoBehaviour:
   TriggerDay: 1
   TriggerHour: 8
   RepeatEveryDay: 0
+  RepeatIntervalDays: 1
   FirstDay: 3
   LastDay: 6
   conditionEvent: {fileID: 0}

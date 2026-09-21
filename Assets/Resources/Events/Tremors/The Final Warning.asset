@@ -19,7 +19,7 @@ MonoBehaviour:
   - Label: We must not falter
     Explanation: Hope falls.
     ChangesHope: 1
-    HopeChange: -20
+    HopeChange: -10
     Requirements: []
     Rewards: []
     RequirementType: 0

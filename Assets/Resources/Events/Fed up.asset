@@ -22,7 +22,7 @@ MonoBehaviour:
 
       -200 Food Rations'
     ChangesHope: 1
-    HopeChange: 10
+    HopeChange: 20
     Requirements:
     - Type: 2
       Building: 0
@@ -39,7 +39,7 @@ MonoBehaviour:
 
       -50 Food Rations'
     ChangesHope: 1
-    HopeChange: 5
+    HopeChange: 10
     Requirements:
     - Type: 2
       Building: 0
@@ -65,6 +65,7 @@ MonoBehaviour:
   TriggerDay: 1
   TriggerHour: 9
   RepeatEveryDay: 0
+  RepeatIntervalDays: 1
   FirstDay: 14
   LastDay: 17
   conditionEvent: {fileID: 0}

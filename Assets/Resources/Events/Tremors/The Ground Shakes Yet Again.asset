@@ -19,7 +19,7 @@ MonoBehaviour:
   - Label: Understood
     Explanation: Hope falls.
     ChangesHope: 1
-    HopeChange: -20
+    HopeChange: -5
     Requirements: []
     Rewards: []
     RequirementType: 0
@@ -30,6 +30,7 @@ MonoBehaviour:
   TriggerDay: 1
   TriggerHour: 9
   RepeatEveryDay: 0
+  RepeatIntervalDays: 1
   FirstDay: 10
   LastDay: 14
   conditionEvent: {fileID: 0}

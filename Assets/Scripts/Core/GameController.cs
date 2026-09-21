@@ -1051,6 +1051,7 @@ public class GameController : MonoBehaviour
         // Bez ovoga PrepareTrigger() ostaje na svjezem stanju iz pokretanja scene,
         // pa se vec odigrani dogadaji otvaraju ponovno.
         EventManager.Instance?.ApplyLoadData(data.Events);
+        FindFirstObjectByType<ObjectiveManager>()?.ResumeAfterLoad();
 
         _selectedBuilding = null;
         _selectedSlot     = null;

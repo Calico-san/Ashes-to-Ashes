@@ -41,6 +41,15 @@ public class ObjectiveManager : MonoBehaviour
             UniversalPopup.EventClosed += HandleEventClosed;
     }
 
+    public void ResumeAfterLoad()
+    {
+        if (campaignStarted || campaign == null || campaign.StartAfterEvent == null
+            || !campaign.StartAfterEvent.HasTriggered) return;
+
+        UniversalPopup.EventClosed -= HandleEventClosed;
+        StartCampaign();
+    }
+
     private void Update()
     {
         if (gameController != null && ActivePhase != null)

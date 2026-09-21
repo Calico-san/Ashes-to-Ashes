@@ -28,7 +28,7 @@ MonoBehaviour:
       -200 Food Rations, -25 Wood, -25
       Cloth, -25 Rope'
     ChangesHope: 1
-    HopeChange: 20
+    HopeChange: 30
     Requirements:
     - Type: 2
       Building: 0
@@ -69,6 +69,7 @@ MonoBehaviour:
   TriggerDay: 1
   TriggerHour: 9
   RepeatEveryDay: 0
+  RepeatIntervalDays: 1
   FirstDay: 16
   LastDay: 22
   conditionEvent: {fileID: 0}
