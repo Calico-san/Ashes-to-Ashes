@@ -143,7 +143,7 @@ public class UIController : MonoBehaviour
         // stvaranju, pa bi ovdje dobili drugu i okinuli se dvaput po kliku.
         _cancelBtn?   .onClick.AddListener(() => _game.CancelSelectedSlot());
         _demolishBtn? .onClick.AddListener(() => _game.DemolishSelectedBuilding());
-        _buildShipBtn?.onClick.AddListener(() => _game.OrderShipOnSelectedBuilding());
+        _buildShipBtn?.onClick.AddListener(() => _game.BuildShipOnSelectedBuilding());
         _manageFleetBtn?.onClick.AddListener(OpenFleet);
 
         WireShipButtons();
@@ -558,7 +558,7 @@ public class UIController : MonoBehaviour
 
             SetTitle("Manage fleet");
             SetOutputLine(ships.Count == 0
-                ? "No ships yet. Order one in the Shipyard."
+                ? "No ships yet. Build one in the Shipyard."
                 : $"Ships in port: {ships.Count}\nReady for evacuation: {ready}");
 
             RefreshShipList(game);
@@ -866,6 +866,7 @@ public class UIController : MonoBehaviour
             var target = ship;
             btn.interactable = true;   // redak je uvijek klikabilan
             btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() => UISoundManager.Instance?.PlayButtonClick());
             btn.onClick.AddListener(() => game.SelectShip(target));
         }
     }
@@ -890,7 +891,8 @@ public class UIController : MonoBehaviour
         EnsureCargoRows();
 
         bool canBoard = ship.FreeSpace > 0 && !ship.IsSailing
-                     && (game.FreeWorkers > 0 || game.AvailableChildren > 0);
+                     && (game.FreeWorkers > 0 || game.FreeEngineers > 0
+                         || game.AvailableChildren > 0);
 
         if (_cargoRows != null) _cargoRows.SetActive(true);
         if (_passengerRowLabel != null)
@@ -955,6 +957,7 @@ public class UIController : MonoBehaviour
 
         MakeCargoRow(_cargoRows.transform, "Food",
             out _foodRowLabel, out _foodMinus, out _foodPlus);
+        SetLabel(_foodMinus, "-");
         _foodMinus.onClick.AddListener(() => _game.UnloadFoodFromSelectedShip());
         _foodPlus .onClick.AddListener(() => _game.LoadFoodToSelectedShip());
 
@@ -964,6 +967,7 @@ public class UIController : MonoBehaviour
         Gap(_cargoRows.transform, 7f, "FillShipGap");
         _fillShipBtn = CloneStyledButton(_cargoRows.transform, "FillShip", "Fill Ship");
         LE(_fillShipBtn.gameObject, prefH: 26f, minH: 26f);
+        _fillShipBtn.onClick.AddListener(() => UISoundManager.Instance?.PlayButtonClick());
         _fillShipBtn.onClick.AddListener(() =>
         {
             _game.AddPassengersToSelectedShip(BalanceConfig.ShipMaxPassengers);
@@ -1006,6 +1010,18 @@ public class UIController : MonoBehaviour
     private Button MakeStepBtn(Transform parent, string name, Sprite icon, string fallback)
     {
         var btn = CloneStyledButton(parent, name, icon != null ? "" : fallback, squareWidth: 24f);
+        btn.onClick.AddListener(() => UISoundManager.Instance?.PlayButtonClick());
+
+        if (icon == null)
+        {
+            var label = btn.GetComponentInChildren<TextMeshProUGUI>();
+            if (label != null)
+            {
+                label.text = fallback;
+                label.fontSize = 14f;
+                label.color = PanelInk;
+            }
+        }
 
         if (icon != null)
         {
@@ -1092,7 +1108,7 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// "Build ship" dok nema narudzbe, pa napredak dok se gradi. Gumb je ugasen
+    /// "Build ship" dok nema gradnje, pa napredak dok se brod gradi. Gumb je ugasen
     /// za sve osim brodogradilista (ResetPanelControls).
     /// </summary>
     private void SetBuildShipBtn(BuildingInstance shipyard)
@@ -1104,18 +1120,16 @@ public class UIController : MonoBehaviour
 
         _buildShipBtn.gameObject.SetActive(true);
 
-        if (!shipyard.ShipOrdered)
+        if (!shipyard.KeelLaid)
         {
-            bool canOrder = shipyard.CanAffordShip;
-            _buildShipBtn.interactable = canOrder;
-            SetLabel(_buildShipBtn, canOrder ? "Build ship" : "Build ship (not enough resources)");
+            bool canBuild = shipyard.CanAffordShip;
+            _buildShipBtn.interactable = canBuild;
+            SetLabel(_buildShipBtn, canBuild ? "Build ship" : "Build ship (not enough resources)");
             return;
         }
 
         _buildShipBtn.interactable = false;
-        SetLabel(_buildShipBtn, shipyard.KeelLaid
-            ? $"Building… {shipyard.ShipProgressPercent:F0}%"
-            : "Ordered — waiting for materials");
+        SetLabel(_buildShipBtn, $"Building… {shipyard.ShipProgressPercent:F0}%");
     }
 
     private void SetUpgradeBtn(bool visible, bool enabled, BuildingInstance building = null)

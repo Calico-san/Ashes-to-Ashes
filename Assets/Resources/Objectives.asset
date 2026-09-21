@@ -23,7 +23,7 @@ MonoBehaviour:
       resourceType: 0
     - title: Stockpile some wood
       type: 1
-      targetValue: 100
+      targetValue: 300
       buildingType: 0
       resourceType: 1
     - title: Raise Hope to 50%

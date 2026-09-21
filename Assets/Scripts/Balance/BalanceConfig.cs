@@ -22,7 +22,7 @@ public static class BalanceConfig
     // davalo 4,29 drva na sat. Zaokruzivanje takve stope nije rjesenje: pri
     // 0,143/radniku/sat (Steelworks) radnici 1-3 daju 0, a 4-10 svi daju 1 — dodavanje
     // radnika nema vidljiv ucinak. Cjelobrojna stopa po radniku to uklanja u korijenu.
-    public const int SawmillWoodPerWorkerPerHour     = 2;  // 15 rad. = 30/h  = 420/dan
+    public const int SawmillWoodPerWorkerPerHour     = 1;  // 15 rad. = 15/h  = 210/dan
     public const int SteelworksSteelPerWorkerPerHour = 1;  // 15 rad. = 15/h  = 210/dan
     public const int FiberworksClothPerWorkerPerHour = 1;  // 15 rad. = 15/h  = 210/dan
     public const int FiberworksRopePerWorkerPerHour  = 1;  // isti radnici, drugi izlaz

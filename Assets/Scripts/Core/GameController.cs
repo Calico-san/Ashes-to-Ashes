@@ -531,14 +531,11 @@ public class GameController : MonoBehaviour
         return TryPlaceBuilding(type, _selectedSlot.Position);
     }
 
-    /// <summary>
-    /// Igrac narucuje brod na odabranom brodogradilistu. Resursi se naplacuju
-    /// tek na prvom satnom ticku, kad se polaze kobilica.
-    /// </summary>
-    public bool OrderShipOnSelectedBuilding()
+    /// <summary>Placa brod i pokrece gradnju na odabranom brodogradilistu.</summary>
+    public bool BuildShipOnSelectedBuilding()
     {
         if (_selectedBuilding == null || !_selectedBuilding.IsShipyard) return false;
-        bool ok = _selectedBuilding.OrderShip();
+        bool ok = _selectedBuilding.BuildShip();
         if (ok) RefreshUI();
         return ok;
     }
@@ -549,12 +546,11 @@ public class GameController : MonoBehaviour
     // -------------------------------------------------------
 
     /// <summary>
-    /// Ukrca do <paramref name="count"/> duša. Prvo idu djeca: ona ne rade, pa ih
-    /// evakuacija ne kosta radne snage. Tek kad djece nestane, krecu odrasli iz
-    /// bazena slobodnih radnika.
+    /// Ukrca do <paramref name="count"/> duša. Prvo idu djeca, zatim slobodni
+    /// radnici i na kraju slobodni inzenjeri.
     ///
-    /// Ukrcani se oduzimaju iz totalPopulation — inace bi i dalje jeli, sto je
-    /// ranije bio slucaj (oduzimao se samo _freeWorkers).
+    /// Ukrcani se zasad micu samo iz slobodnih bazena; i dalje su na otoku i jedu
+    /// sve dok brodovi stvarno ne isplove.
     /// Vraca stvarno ukrcani broj.
     /// </summary>
     public int AddPassengersToSelectedShip(int count)
@@ -566,16 +562,19 @@ public class GameController : MonoBehaviour
 
         int toBoard          = Mathf.Min(count, space);
         int childrenBoarding = Mathf.Min(toBoard, AvailableChildren);
-        int adultsBoarding   = Mathf.Min(toBoard - childrenBoarding, _freeWorkers);
-        int total            = childrenBoarding + adultsBoarding;
+        int workersBoarding  = Mathf.Min(toBoard - childrenBoarding, _freeWorkers);
+        int engineersBoarding = Mathf.Min(toBoard - childrenBoarding - workersBoarding,
+                                          _freeEngineers);
+        int total = childrenBoarding + workersBoarding + engineersBoarding;
         if (total <= 0) return 0;
 
-        _selectedShip.BoardPassengers(childrenBoarding, adultsBoarding);
+        _selectedShip.BoardPassengers(childrenBoarding, workersBoarding, engineersBoarding);
 
         // Ukrcani odrasli prestaju biti raspoloziva radna snaga, ali populacija se
         // ne mijenja — dok je brod u luci ljudi su i dalje na otoku i jedu.
         // Populacija pada tek pri isplovljavanju (ProcessShipDepartures).
-        _freeWorkers -= adultsBoarding;
+        _freeWorkers   -= workersBoarding;
+        _freeEngineers -= engineersBoarding;
 
         RefreshUI();
         return total;
@@ -586,11 +585,12 @@ public class GameController : MonoBehaviour
     {
         if (_selectedShip == null || count <= 0 || _selectedShip.IsSailing) return 0;
 
-        _selectedShip.DisembarkPassengers(count, out int ch, out int ad);
-        int total = ch + ad;
+        _selectedShip.DisembarkPassengers(count, out int ch, out int workers, out int eng);
+        int total = ch + workers + eng;
         if (total <= 0) return 0;
 
-        _freeWorkers += ad;   // djeca nisu ni bila u bazenu
+        _freeWorkers   += workers;
+        _freeEngineers += eng;
 
         RefreshUI();
         return total;
@@ -887,7 +887,6 @@ public class GameController : MonoBehaviour
                 ShipProgress             = b.ShipProgress,
                 ShipCount                = b.ShipCount,
                 KeelLaid                 = b.KeelLaid,
-                ShipOrdered              = b.ShipOrdered,
             });
         }
 
@@ -924,6 +923,7 @@ public class GameController : MonoBehaviour
                 Passengers        = ship.Passengers,
                 PassengerChildren = ship.PassengerChildren,
                 PassengerAdults   = ship.PassengerAdults,
+                PassengerEngineers = ship.PassengerEngineers,
                 FoodLoaded        = ship.FoodLoaded,
                 HasVisual         = ship.HasVisual,
             });
@@ -1002,7 +1002,7 @@ public class GameController : MonoBehaviour
             // Brodogradiliste: vrati napredak i stanje kobilice (O5 — ranije se gubilo,
             // a s fiksnom naplatom to bi bio gubitak cijelog troska broda).
             if (building.IsShipyard)
-                building.RestoreShipyardState(bd.ShipProgress, bd.ShipCount, bd.KeelLaid, bd.ShipOrdered);
+                building.RestoreShipyardState(bd.ShipProgress, bd.ShipCount, bd.KeelLaid);
 
             // Restore workers (spawn silently — no walk animation on load)
             for (int i = 0; i < bd.AssignedWorkers; i++)
@@ -1044,7 +1044,7 @@ public class GameController : MonoBehaviour
             int ad = sd.PassengerAdults;
             if (ch + ad == 0 && sd.Passengers > 0) ad = sd.Passengers;
 
-            ship.RestoreState(ch, ad, sd.FoodLoaded);
+            ship.RestoreState(ch, ad, sd.PassengerEngineers, sd.FoodLoaded);
             RegisterShip(ship);
         }
 
@@ -1114,6 +1114,7 @@ public class GameController : MonoBehaviour
 
             totalPopulation -= ship.Passengers;
             children        -= ship.PassengerChildren;
+            engineers       -= ship.PassengerEngineers;
             _evacuatedSouls += ship.Passengers;
 
             ship.BeginSail(q, ready.Count);

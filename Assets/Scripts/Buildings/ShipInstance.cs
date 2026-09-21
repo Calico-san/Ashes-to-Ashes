@@ -4,8 +4,8 @@ using UnityEngine;
 /// A completed ship. Manages passenger boarding and food loading.
 ///
 /// Mornari su uklonjeni: brod se ne popunjava posadom nego iskljucivo putnicima.
-/// Putnici se vode odvojeno po djeci i odraslima jer se pri iskrcaju moraju vratiti
-/// u ispravan bazen (dijete u `children`, odrasli u `_freeWorkers`).
+/// Putnici se vode odvojeno po djeci, radnicima i inzenjerima jer se pri iskrcaju
+/// moraju vratiti u ispravan bazen.
 ///
 /// Klasa NE dira GameController — naplatu hrane i populacije radi pozivatelj
 /// (GameController.AddPassengersToSelectedShip / LoadFoodToSelectedShip).
@@ -21,6 +21,7 @@ public class ShipInstance : MonoBehaviour
 
     public int  PassengerChildren { get; private set; }
     public int  PassengerAdults   { get; private set; }
+    public int  PassengerEngineers { get; private set; }
     public int  Passengers        => PassengerChildren + PassengerAdults;
     public int  FreeSpace         => Mathf.Max(0, MaxPassengers - Passengers);
     public int  FoodLoaded        { get; private set; }
@@ -155,36 +156,40 @@ public class ShipInstance : MonoBehaviour
     }
 
     /// <summary>Restore passengers and food from save.</summary>
-    public void RestoreState(int children, int adults, int foodLoaded)
+    public void RestoreState(int children, int adults, int engineers, int foodLoaded)
     {
         PassengerChildren = children;
         PassengerAdults   = adults;
+        PassengerEngineers = Mathf.Clamp(engineers, 0, adults);
         FoodLoaded        = foodLoaded;
     }
 
     // ---- Cargo ----
 
     /// <summary>
-    /// Ukrca zadani broj djece i odraslih. Pozivatelj je vec provjerio da ih ima
-    /// u populaciji i sam ih je oduzeo iz bazena.
+    /// Ukrca zadani broj djece, radnika i inzenjera. PassengerAdults obuhvaca
+    /// sve odrasle, dok PassengerEngineers pamti koji se vracaju u bazen inzenjera.
     /// </summary>
-    public void BoardPassengers(int children, int adults)
+    public void BoardPassengers(int children, int workers, int engineers)
     {
         PassengerChildren += children;
-        PassengerAdults   += adults;
+        PassengerAdults   += workers + engineers;
+        PassengerEngineers += engineers;
     }
 
     /// <summary>
-    /// Iskrca do <paramref name="count"/> putnika i vraca koliko je odraslih i
-    /// djece sislo. Prvo silaze odrasli — igracu se tako radna snaga vraca odmah,
-    /// a djeca (koja ne rade) ostaju na brodu.
+    /// Iskrca do <paramref name="count"/> putnika. Prvo silaze radnici, zatim
+    /// inzenjeri, pa djeca, kako bi se radna snaga odmah vratila u ispravan bazen.
     /// </summary>
-    public void DisembarkPassengers(int count, out int children, out int adults)
+    public void DisembarkPassengers(int count, out int children, out int workers, out int engineers)
     {
-        adults   = Mathf.Min(count, PassengerAdults);
-        children = Mathf.Min(count - adults, PassengerChildren);
+        int availableWorkers = PassengerAdults - PassengerEngineers;
+        workers   = Mathf.Min(count, availableWorkers);
+        engineers = Mathf.Min(count - workers, PassengerEngineers);
+        children  = Mathf.Min(count - workers - engineers, PassengerChildren);
 
-        PassengerAdults   -= adults;
+        PassengerAdults   -= workers + engineers;
+        PassengerEngineers -= engineers;
         PassengerChildren -= children;
     }
 

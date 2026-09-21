@@ -1927,10 +1927,11 @@ MonoBehaviour:
       m_Calls: []
   m_text: "You start Day 1 with 1,100 inhabitants:\n\nChildren (513): Cannot perform
     labor, but consume only half a food ration. \n\nWorkers (422): The primary workforce
-    used to gather raw materials, process goods, and construct ships.\n\nEngineers
-    (165): Specialized labor. Engineers cannot replace regular Workers, but assigning
-    one to a building grants a production bonus.\n\nASSIGNING WORKERS:\nClick on
-    any building to open the Right Context Panel.\n\nUse [+] and [-] buttons to assign
+    used to gather raw materials, process goods, and construct ships. The number
+    of Workers employed at a building determines its efficiency. \n\nEngineers (165):
+    Specialized labor. Engineers cannot replace regular Workers, but assigning one
+    to a building grants a production bonus.\n\nASSIGNING WORKERS:\nClick on any
+    building to open the Right Context Panel.\n\nUse [+] and [-] buttons to assign
     and remove Workers and Engineers."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8ce8d379725d4eb498b2fd8f2c8d3792, type: 2}
@@ -6166,9 +6167,8 @@ PrefabInstance:
         island and retrieve resources and useful intel.
 
 
-        The number of Workers
-        employed at a building determines its efficiency. Resource buildings can
-        be upgraded twice, with each upgrade increasing their production by 20%.
+        Resource buildings
+        can be upgraded twice, with each upgrade increasing their production by 20%.
         Every upgrade costs 50 Wood, 50 Steel, 50 Cloth, and 50 Rope.'
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
@@ -7018,10 +7018,10 @@ MonoBehaviour:
   children: 513
   engineers: 165
   food: 1000
-  wood: 10000
-  steel: 1000
-  cloth: 1000
-  rope: 1000
+  wood: 200
+  steel: 50
+  cloth: 30
+  rope: 30
   ships: 0
   rawFood: 0
   hope: 100
