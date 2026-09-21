@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class EventManager
 {
+    private const string FinalWarningEventName = "The Final Warning";
+
     /// <summary>Zadnji inicijalizirani manager — GameController ga treba za save/load.</summary>
     public static EventManager Instance { get; private set; }
 
@@ -58,6 +60,9 @@ public class EventManager
             }
 
             gameEvent.MarkTriggered(day);
+            if (gameEvent.name == FinalWarningEventName)
+                gameController.ScheduleEruption();
+
             UniversalPopup.Instance.OpenEvent(gameEvent);
             return true;
         }
@@ -104,6 +109,19 @@ public class EventManager
                 if (e == null || e.Title != d.Title) continue;
                 e.RestoreTrigger(d.HasTriggered, d.ScheduledDay, d.ScheduledHour,
                     d.LastTriggeredDay, d.SelectedOptionNumber);
+                break;
+            }
+        }
+
+        foreach (GameEventData gameEvent in events)
+        {
+            if (gameEvent != null
+                && gameEvent.name == FinalWarningEventName
+                && gameEvent.HasTriggered)
+            {
+                // Stari saveovi nemaju spremljen EruptionDay. Metoda je
+                // idempotentna, pa novi save zadrzava vec izvuceni datum.
+                gameController.ScheduleEruption();
                 break;
             }
         }

@@ -74,7 +74,10 @@ public class UniversalPopup : MonoBehaviour
 
         if (UISoundManager.Instance != null)
         {
-            UISoundManager.Instance.PlayPanelOpen();
+            if (gameEvent.PopupSound != null)
+                UISoundManager.Instance.PlaySound(gameEvent.PopupSound);
+            else
+                UISoundManager.Instance.PlayPanelOpen();
         }
     }
 

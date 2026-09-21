@@ -14,6 +14,10 @@ public class GameEventDataEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("Message"));
 
         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Audio", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("PopupSound"));
+
+        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
         SerializedProperty options = serializedObject.FindProperty("Options");
         EditorGUILayout.PropertyField(options, GUIContent.none, true);

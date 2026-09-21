@@ -11,18 +11,23 @@ using UnityEngine;
 public class GameStateData
 {
     // ---- Meta ----
+    // 1.4 — spremljeni Hope i nasumicno odabrani dan erupcije.
     // 1.3 — spremljen odabir opcije dogadaja za uvjetno okidanje kasnijih dogadaja.
     // 1.2 — dodano stanje okidaca dogadaja (Events).
     // 1.1 — dodan KeelLaid (fiksni trosak broda) i podjela putnika na djecu/odrasle.
     //       Stari zapisi (1.0) se i dalje ucitavaju: nova polja dobiju default,
     //       a AssignedSailors se ignorira jer mornari vise ne postoje.
-    public string   SaveVersion  = "1.3";
+    public string   SaveVersion  = "1.4";
     public string   SaveDateTime;          // ISO 8601, informational only
 
     // ---- Time ----
     public int      Day;
     public float    SimulatedMinutes;
     public int      SpeedMultiplier;
+
+    // ---- Ending state ----
+    public float    Hope;
+    public int      EruptionDay;
 
     // ---- Resources ----
     public int      Food;

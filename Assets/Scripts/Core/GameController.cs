@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Central game state. Owns resources, time, population, buildings, build slots and ships.
@@ -28,6 +29,10 @@ public class GameController : MonoBehaviour
     [Header("Hope")]
     [SerializeField, Range(0f, 100f)] private float hope = 100f;
 
+    [Header("Low Food Check")]
+    [SerializeField, Min(0)] private int threshold = 200;
+    [SerializeField, Min(0f)] private float penalty = 10f;
+
     [Header("Time")]
     [SerializeField] private float simulationMinutesPerSecond = 3.0f;
 
@@ -49,6 +54,11 @@ public class GameController : MonoBehaviour
     private float _hourAccumulator;
     private int   _day             = 1;
     private int   _speedMultiplier = 1;
+    private int   _eruptionDay     = -1;
+    private string _pendingEndingScene;
+    private bool   _endingStarted;
+    private const int ERUPTION_HOUR = 12;
+    private const int PERFECT_EVACUATION_TARGET = 1100;
     // Granice dana zive u BalanceConfigu jer o njima ovisi HoursPerDay, kojim
     // EconomyCalculator dijeli sve stope. Dvije kopije bi tiho razisle ekonomiju.
     private const float DAY_START_MINUTES = BalanceConfig.DayStartMinutes; // 06:00
@@ -234,6 +244,12 @@ public class GameController : MonoBehaviour
             TickHour();
         }
 
+        if (!EvacuationStarted && IsEruptionDue())
+        {
+            QueueEnding("Eruption");
+            return;
+        }
+
         ProcessShipDepartures();
 
         if (_simulatedMinutes >= DAY_END_MINUTES)
@@ -251,6 +267,15 @@ public class GameController : MonoBehaviour
         }
 
         RefreshUI();
+    }
+
+    private void LateUpdate()
+    {
+        if (string.IsNullOrEmpty(_pendingEndingScene)) return;
+
+        string sceneName = _pendingEndingScene;
+        _pendingEndingScene = null;
+        SceneManager.LoadScene(sceneName);
     }
 
     // ---- Registration ----
@@ -747,9 +772,46 @@ public class GameController : MonoBehaviour
     {
         hope = Mathf.Clamp(value, 0f, 100f);
         RefreshUI();
+
+        if (hope <= 0f)
+            QueueEnding("EndingDeath");
     }
 
     public void ChangeHope(float amount) => SetHope(hope + amount);
+
+    public void ScheduleEruption()
+    {
+        if (_eruptionDay > 0 || _endingStarted) return;
+
+        _eruptionDay = _day + UnityEngine.Random.Range(1, 8);
+        Debug.Log($"[Ending] Eruption scheduled for day {_eruptionDay} at {ERUPTION_HOUR:00}:00.");
+    }
+
+    public void TriggerEvacuationEnding(int evacuatedPassengers)
+    {
+        string sceneName = evacuatedPassengers == PERFECT_EVACUATION_TARGET
+            ? "EndingPerfect"
+            : evacuatedPassengers >= 551 && evacuatedPassengers < PERFECT_EVACUATION_TARGET
+                ? "EndingGood"
+                : "EndingBad";
+
+        QueueEnding(sceneName);
+    }
+
+    private bool IsEruptionDue()
+    {
+        return _eruptionDay > 0
+            && (_day > _eruptionDay || (_day == _eruptionDay && Hour >= ERUPTION_HOUR));
+    }
+
+    private void QueueEnding(string sceneName)
+    {
+        if (_endingStarted) return;
+
+        _endingStarted = true;
+        _speedMultiplier = 0;
+        _pendingEndingScene = sceneName;
+    }
 
     // ---- Time control ----
 
@@ -757,6 +819,9 @@ public class GameController : MonoBehaviour
 
     public void AdvanceToNextDay()
     {
+        if (food < threshold)
+            ChangeHope(-penalty);
+
         _day++;
         _simulatedMinutes = DAY_START_MINUTES;
         _hourAccumulator = _simulatedMinutes % 60f;
@@ -773,6 +838,8 @@ public class GameController : MonoBehaviour
             Day              = _day,
             SimulatedMinutes = _simulatedMinutes,
             SpeedMultiplier  = _speedMultiplier,
+            Hope             = hope,
+            EruptionDay      = _eruptionDay,
             Food             = food,
             Wood             = wood,
             Steel            = steel,
@@ -861,6 +928,15 @@ public class GameController : MonoBehaviour
         _simulatedMinutes = data.SimulatedMinutes;
         _hourAccumulator  = _simulatedMinutes % 60f;
         _speedMultiplier  = data.SpeedMultiplier;
+        if (data.SaveVersion == "1.4")
+        {
+            hope         = Mathf.Clamp(data.Hope, 0f, 100f);
+            _eruptionDay = data.EruptionDay;
+        }
+        else
+        {
+            _eruptionDay = -1;
+        }
         food              = data.Food;
         wood              = data.Wood;
         steel             = data.Steel;

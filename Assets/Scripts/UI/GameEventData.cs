@@ -39,6 +39,9 @@ public class GameEventData : ScriptableObject
     [TextArea(3, 8)]
     public string Message;
 
+    [Tooltip("Optional sound played when this event popup opens. Uses the default panel sound when left empty.")]
+    public AudioClip PopupSound;
+
     public GameEventOption[] Options;
 
     public EventTriggerType TriggerType = EventTriggerType.ExactDay;

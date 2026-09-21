@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -621,18 +620,23 @@ public class UIController : MonoBehaviour
         if (_evacuationInProgress || _game == null) return;
 
         var departingShips = new List<ShipInstance>();
+        int evacuatedPassengers = 0;
         foreach (var ship in _game.GetShips())
             if (ship != null && !ship.IsSailing && ship.IsReadyToSail)
+            {
                 departingShips.Add(ship);
+                evacuatedPassengers += ship.Passengers;
+            }
 
         if (departingShips.Count == 0 || _game.SailAllReadyShips() == 0) return;
 
         _evacuationInProgress = true;
         if (_evacuateBtn != null) _evacuateBtn.interactable = false;
-        StartCoroutine(LoadEndSceneAfterDeparture(departingShips));
+        StartCoroutine(LoadEndSceneAfterDeparture(departingShips, evacuatedPassengers));
     }
 
-    private static IEnumerator LoadEndSceneAfterDeparture(List<ShipInstance> departingShips)
+    private IEnumerator LoadEndSceneAfterDeparture(
+        List<ShipInstance> departingShips, int evacuatedPassengers)
     {
         bool shipsStillVisible;
         do
@@ -648,7 +652,7 @@ public class UIController : MonoBehaviour
         }
         while (shipsStillVisible);
 
-        SceneManager.LoadScene("TheEnd");
+        _game.TriggerEvacuationEnding(evacuatedPassengers);
     }
 
     /// <summary>

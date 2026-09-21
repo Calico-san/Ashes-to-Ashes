@@ -10,14 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 89789320ef1a4a2c98dd86ea3d5912c4, type: 3}
-  m_Name: The Ground Shakes Again
+  m_Name: The Ground Shakes Yet Again
   m_EditorClassIdentifier: Assembly-CSharp::GameEventData
-  Title: The Ground Shakes Again
-  Message: The volcano reminds us yet again that our time is running out. We must
-    do our best to prepare.
+  Title: The Ground Shakes Yet Again
+  Message: The tremors seem to be getting stronger. We have no time to waste.
   PopupSound: {fileID: 8300000, guid: 8f06862ff21559346977fa11c30952ab, type: 3}
   Options:
-  - Label: How horrifying
+  - Label: Understood
     Explanation: Hope falls.
     ChangesHope: 1
     HopeChange: -20
@@ -31,7 +30,7 @@ MonoBehaviour:
   TriggerDay: 1
   TriggerHour: 9
   RepeatEveryDay: 0
-  FirstDay: 4
-  LastDay: 7
+  FirstDay: 10
+  LastDay: 14
   conditionEvent: {fileID: 0}
   conditionOptionIndex: -1
