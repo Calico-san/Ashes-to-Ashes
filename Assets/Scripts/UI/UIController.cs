@@ -334,6 +334,8 @@ public class UIController : MonoBehaviour
     /// </summary>
     private bool             _fleetOpen;
     private BuildingInstance _lastSelBuilding;
+    private UnityEngine.Object _lastPanelTarget;
+    private bool               _lastPanelFleetOpen;
 
     private void OpenFleet()
     {
@@ -394,6 +396,12 @@ public class UIController : MonoBehaviour
         // brodogradiliste.
         if (showShip) _fleetOpen = true;
 
+        UnityEngine.Object panelTarget = selShip != null ? selShip
+            : selSlot != null ? selSlot : sel;
+        bool viewChanged = panelTarget != _lastPanelTarget || _fleetOpen != _lastPanelFleetOpen;
+        _lastPanelTarget = panelTarget;
+        _lastPanelFleetOpen = _fleetOpen;
+
         _rightPanel?.SetActive(anySelected);
         if (!anySelected)
         {
@@ -404,11 +412,16 @@ public class UIController : MonoBehaviour
             return;
         }
 
-        // Reset all sub-containers and optional controls
-        _shipListContainer?  .SetActive(false);
-        _shipDetailContainer?.SetActive(false);
-        if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
-        ResetPanelControls();
+        // Vidljivost se resetira samo pri stvarnoj promjeni prikaza ili odabira.
+        // Tekst i interactable stanje i dalje se osvjezavaju svaki frame, ali se
+        // hover vise ne ponistava stalnim gasenjem i ponovnim paljenjem objekata.
+        if (viewChanged)
+        {
+            _shipListContainer?  .SetActive(false);
+            _shipDetailContainer?.SetActive(false);
+            if (_buildSlotContainer != null) _buildSlotContainer.SetActive(false);
+            ResetPanelControls();
+        }
 
         // Ploca flote ima prednost: otvorena je ili preko gumba Manage fleet,
         // ili klikom na brod u svijetu.
@@ -480,11 +493,16 @@ public class UIController : MonoBehaviour
                     engStr);
             }
 
-            string outLine = $"{outputIcon} {sel.TotalOutputPerHour} /h";
-            if (sel.SecondaryOutputType.HasValue)
-                outLine += $"\n{ResourceIcons.Tag(sel.SecondaryOutputType.Value)} " +
-                           $"{sel.SecondaryTotalPerHour} /h";
-            SetOutputLine(outLine);
+            bool producesResources = sel.BuildingTypeEnum != BuildingType.ScoutStation;
+            if (_outputText != null) _outputText.gameObject.SetActive(producesResources);
+            if (producesResources)
+            {
+                string outLine = $"{outputIcon} {sel.TotalOutputPerHour} /h";
+                if (sel.SecondaryOutputType.HasValue)
+                    outLine += $"\n{ResourceIcons.Tag(sel.SecondaryOutputType.Value)} " +
+                               $"{sel.SecondaryTotalPerHour} /h";
+                SetOutputLine(outLine);
+            }
 
             SetButtons("+ Add worker",    () => game.AssignWorkerToSelectedBuilding(),
                        "- Remove worker", () => game.RemoveWorkerFromSelectedBuilding(),

@@ -19,7 +19,6 @@ public class BuildingInstance : MonoBehaviour
     public int          AssignedWorkers   => _workers.Count;
     public int          AssignedEngineers => _engineers.Count;
     public int          MaxEngineers      => Mathf.Max(1, MaxWorkers / 5); // max 20% engineers
-    public bool         HasEngineer       => EngineersInside > 0;
     public int          WorkersInside
     {
         get
@@ -44,12 +43,13 @@ public class BuildingInstance : MonoBehaviour
     // Production info (read by UI)
     // Stopa i ukupan izlaz su cijeli brojevi — vidi EconomyCalculator.
     public int OutputPerWorkerPerHour =>
-        BuildingTypeEnum == BuildingType.HuntersHut
+        BuildingTypeEnum == BuildingType.ScoutStation
+            ? 0
+            : BuildingTypeEnum == BuildingType.HuntersHut
             ? EconomyCalculator.RawFoodPerWorkerPerHour()   // Hunter's Hut outputs Raw Food, not cooked Food
             : EconomyCalculator.ProductionPerWorkerPerHour(OutputType);
-    public float EngineerBonus => HasEngineer
-        ? (IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus)
-        : 1.0f;
+    public float EngineerBonus => 1.0f + EngineersInside *
+        ((IsShipyard ? BalanceConfig.EngineerShipBonus : BalanceConfig.EngineerProductionBonus) - 1.0f);
     public int TotalOutputPerHour =>
         EconomyCalculator.TotalOutputPerHour(OutputPerWorkerPerHour, WorkersInside,
                                              EngineerBonus * ProductionMultiplier);

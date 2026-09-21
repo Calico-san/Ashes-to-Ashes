@@ -900,13 +900,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_text
-      value: 'Keep a close eye on the colony''s Hope Bar at the bottom of the screen.
-        If Hope drops to zero, governance fails, resulting in an immediate Game Over!
+      value: 'Keep a close eye on the colony''s Hope bar at the bottom of the screen.
+        Do not let Hope reach zero, as this may have disastrous consequences for
+        your rule.
 
 
-        Crisis
-        events and requests will periodically pop up, forcing tough decisions. Your
-        choices can gain or lose Hope, as well as affect resources or population.'
+        Crisis events and requests will periodically arise,
+        forcing you to make tough decisions. Your choices can raise or lower Hope,
+        as well as affect resources or population.
+
+
+        If food supplies are
+        too low at the end of the day, Hope will fall, so make sure to keep the larders
+        well stocked.'
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_HorizontalAlignment
@@ -1000,6 +1006,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9167655936192697918, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1915,30 +1925,13 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'You start Day 1 with 1,100 inhabitants:
-
-
-    Children (440): Cannot perform
-    labor, but consume half a adult ration. They are evacuated first!
-
-
-    Workers
-    (495): The primary workforce used to gather raw materials, process goods, and
-    construct ships.
-
-
-    Engineers (165): Specialized labor. Engineers cannot replace
-    regular Workers, but assigning one to a building grants a production bonus.
-
-
-    ASSIGNING
-    WORKERS:
-
-    Click on any building to open the Right Context Panel.
-
-
-    Use
-    [+] and [-] buttons to assign or reassign free Workers and Engineers.'
+  m_text: "You start Day 1 with 1,100 inhabitants:\n\nChildren (513): Cannot perform
+    labor, but consume only half a food ration. \n\nWorkers (422): The primary workforce
+    used to gather raw materials, process goods, and construct ships.\n\nEngineers
+    (165): Specialized labor. Engineers cannot replace regular Workers, but assigning
+    one to a building grants a production bonus.\n\nASSIGNING WORKERS:\nClick on
+    any building to open the Right Context Panel.\n\nUse [+] and [-] buttons to assign
+    and remove Workers and Engineers."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8ce8d379725d4eb498b2fd8f2c8d3792, type: 2}
   m_sharedMaterial: {fileID: -2851585183756644451, guid: 8ce8d379725d4eb498b2fd8f2c8d3792, type: 2}
@@ -4110,6 +4103,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1954474592}
     m_Modifications:
+    - target: {fileID: 565904940817314786, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 1558973673539213044, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: m_Text
       value: EVACUATION
@@ -4202,6 +4199,18 @@ PrefabInstance:
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 493833085}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_SelectedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_HighlightedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -4302,7 +4311,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 970637238, guid: 58ff835538860b449b3e123025cc6105, type: 3}
+  m_Sprite: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6078,13 +6087,36 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_text
-      value: "Construct buildings via the Build Panel (bottom right corner). Resources
-        are deducted immediately upon placing a site.\n\nSawmill: Requires adjacent
-        Forest; produces Wood.\n\nSteelworks: Requires adjacent Iron Deposit; produces
-        Steel.\n\nFiberworks: Produces Cloth and Rope.\n\nHunter\u2019s Hut: Hunts
-        for Raw Food.\n\nCookhouse: Processes Raw Food into Food for the colony.\n\nPLACEMENT
-        RESTRICTIONS:\nResource buildings must be built near their natural sources
-        (e.g., Sawmill near trees, Shipyard near the shore)."
+      value: 'Construct buildings via the Build Panel (bottom-right corner). Resources
+        are deducted immediately upon placing a building.
+
+
+        Sawmill: Requires
+        adjacent Forest; produces Wood.
+
+
+        Steelworks: Requires adjacent Iron
+        Deposit; produces Steel.
+
+
+        Fiberworks: Produces Cloth and Rope.
+
+
+        Hunters''
+        Hut: Hunts for Raw Food.
+
+
+        Cookhouse: Processes Raw Food into Food
+        for the colony.
+
+
+        Scout Stations: Employ Scouts who may explore the
+        island and retrieve resources and useful intel.
+
+
+        The number of Workers
+        employed at a building determines its efficiency. You can upgrade certain
+        buildings to increase their production efficiency.  '
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_HorizontalAlignment
@@ -6178,6 +6210,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9167655936192697918, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8559,34 +8595,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_text
-      value: 'Construct a Shipyard on a Shore tile.
+      value: 'In order to evacuate, you must build ships at a Shipyard, which must
+        be built near the shore. A single ship will cost you 560 Wood, 280 Steel,
+        280 Cloth, and 280 Rope.
 
 
-        Order a ship. Laying
-        the keel requires a fixed cost of 560 Wood, 280 Steel, 280 Cloth, and 280
-        Rope.
+        Assign Workers to the Shipyard, then click
+        Build ship to begin construction. More workers mean faster construction.
 
 
-        Assign Workers to the Shipyard to build it (more workers
-        = faster construction).
+        Each
+        completed ship carries up to 100 Passengers and requires 700 Food rations
+        for the voyage.
 
 
-        Each completed ship carries up to 100 Passengers
-        and requires 700 Food for the voyage.
+        Use Fill Ship or manually assign passengers and
+        rations via the Ship context panel.
 
 
-        Use Fill Ship or manually
-        assign passengers and rations via the Ship context panel.
-
-
-        Open
-        the Town Hall panel and click EVACUATE to launch all ready ships at once.
+        Open the Town Hall panel and
+        click EVACUATE to launch all ready ships at once. Make sure everyone you
+        plan to save is aboard a ready ship before issuing the evacuation order.
 
 
         Warning:
-        Boarded passengers continue to consume food daily until the ship departs!
-
-'
+        Boarded passengers continue to consume food until the ship departs!'
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_HorizontalAlignment
@@ -8680,6 +8713,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9167655936192697918, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11053,6 +11090,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1954474592}
     m_Modifications:
+    - target: {fileID: 565904940817314786, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 1558973673539213044, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: m_Text
       value: POPULATION
@@ -11146,6 +11187,18 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 493833085}
     - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_SelectedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_HighlightedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 759678844}
@@ -11170,6 +11223,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1954474592}
     m_Modifications:
+    - target: {fileID: 565904940817314786, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 1558973673539213044, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: m_Text
       value: HOPE
@@ -11266,6 +11323,18 @@ PrefabInstance:
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 493833085}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_SelectedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_HighlightedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -14747,6 +14816,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1954474592}
     m_Modifications:
+    - target: {fileID: 565904940817314786, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 1558973673539213044, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: m_Text
       value: BUILDING
@@ -14839,6 +14912,18 @@ PrefabInstance:
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 493833085}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_SelectedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_HighlightedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -16411,8 +16496,8 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: -1766261549, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
-    m_PressedSprite: {fileID: -1766261549, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    m_HighlightedSprite: {fileID: -2113055354, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    m_PressedSprite: {fileID: -2113055354, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     m_SelectedSprite: {fileID: 0}
     m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
@@ -16470,7 +16555,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1856029980, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+  m_Sprite: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -16921,6 +17006,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1954474592}
     m_Modifications:
+    - target: {fileID: 565904940817314786, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     - target: {fileID: 1558973673539213044, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: m_Text
       value: BASICS
@@ -17018,6 +17107,18 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 493833085}
     - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_SelectedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
+      propertyPath: m_SpriteState.m_HighlightedSprite
+      value: 
+      objectReference: {fileID: -2145523666, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
+    - target: {fileID: 7715662214786575863, guid: 5236292af773520429198decc225fcaf, type: 3}
       propertyPath: onValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1603080457}
@@ -17044,16 +17145,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_text
-      value: "You are the Governor of the remote colony New Haven. With the volcano
-        awakening, no supply ships are coming in time. \n\nYour only salvation is
-        to build your own fleet of evacuation ships. ou do not know the exact moment
-        the volcano will erupt. Watch the ground rumblings as an indicator\u2014when
-        the eruption hits, the game ends immediately.\n\nCAMERA CONTROLS:\nMove the
-        camera using WASD or Arrow Keys.\nZoom in and out using the Mouse Scroll
-        Wheel.\n\nTIME FLOW:\nThe work day runs from 06:00 to 20:00 (14 hours). Food
-        consumption, production, and construction occur at every full hour.\n\nUse
-        the bottom bar controls to Pause, run at normal speed (1x), or fast-forward
-        (2x / 3x)."
+      value: "Your only salvation from the imminent volcano eruption is to build
+        your own evacuation ships. You will not know the exact moment the volcano
+        will erupt. Nature is unpredictable.\n\nHint: Track the ground rumblings
+        as a possible indicator. \n\nCAMERA CONTROLS:\nMove the camera using WASD
+        or Arrow Keys.\nZoom in and out using the Mouse Scroll Wheel.\n\nTIME FLOW:\nThe
+        work day starts at 06:00 and ends at 20:00. Food consumption, production,
+        and construction occur at every full hour.\n\nUse the bottom bar speed controls
+        to pause, run at normal speed (1x), or fast-forward (2x / 5x)."
       objectReference: {fileID: 0}
     - target: {fileID: 2809179632670176864, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
       propertyPath: m_fontStyle
@@ -17155,6 +17254,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9167655936192697918, guid: d20553f307b2a6749be11cca8d3a9876, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 213421480, guid: 1a50a2fb5c61bb14a9143c2a40446fc0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

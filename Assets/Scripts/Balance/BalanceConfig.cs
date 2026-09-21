@@ -60,8 +60,8 @@ public static class BalanceConfig
     public const int   DefaultBuildingMaxWorkers = 15;
 
     // Production bonuses
-    public const float EngineerProductionBonus = 1.25f;
-    public const float EngineerShipBonus       = 1.35f;
+    public const float EngineerProductionBonus = 1.10f;
+    public const float EngineerShipBonus       = 1.10f;
 
     // Building construction costs [wood, steel, cloth] + time in hours
     //
