@@ -15,8 +15,8 @@ MonoBehaviour:
   Title: Hope Yet Remains
   Message: Governor, the engineers are back from their trek with good news! They
     offer no guarantees, of course, but nevertheless seem certain we have at least
-    a fortnight until the volcano erupts. This should be enough time to build at
-    least a few ships.
+    a week until the volcano erupts. This should be enough time to build at least
+    a few ships.
   PopupSound: {fileID: 0}
   Options:
   - Label: Praise be to God for this mercy
@@ -37,6 +37,7 @@ MonoBehaviour:
   TriggerDay: 2
   TriggerHour: 15
   RepeatEveryDay: 0
+  RepeatIntervalDays: 1
   FirstDay: 1
   LastDay: 1
   conditionEvent: {fileID: 11400000, guid: 5bcda3316523b1e4d9f300fa9b1972b6, type: 2}

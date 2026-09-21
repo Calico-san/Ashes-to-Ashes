@@ -31,7 +31,7 @@ MonoBehaviour:
   TriggerHour: 9
   RepeatEveryDay: 0
   RepeatIntervalDays: 1
-  FirstDay: 10
-  LastDay: 14
+  FirstDay: 4
+  LastDay: 6
   conditionEvent: {fileID: 0}
   conditionOptionIndex: -1

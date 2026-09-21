@@ -794,7 +794,7 @@ public class GameController : MonoBehaviour
     {
         if (_eruptionDay > 0 || _endingStarted) return;
 
-        _eruptionDay = _day + UnityEngine.Random.Range(1, 8);
+        _eruptionDay = _day + UnityEngine.Random.Range(1, 4);
         Debug.Log($"[Ending] Eruption scheduled for day {_eruptionDay} at {ERUPTION_HOUR:00}:00.");
     }
 

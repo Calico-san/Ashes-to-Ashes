@@ -13,16 +13,40 @@ MonoBehaviour:
   m_Name: A Welcome Discovery
   m_EditorClassIdentifier: Assembly-CSharp::GameEventData
   Title: A Welcome Discovery
-  Message: Governor, while exploring the island the scouts discovered some valuable
-    resources. They will surely be a boon to our efforts.
+  Message: Governor, an explorer spotted some valuable resources on the other side
+    of the island. Can we spare some people to go fetch them? They would be a boon
+    to our efforts.
   PopupSound: {fileID: 0}
   Options:
-  - Label: Excellent work
+  - Label: Send the scouts.
     Explanation: 'Hope rises
 
       +30 Wood, +50 Raw Food'
     ChangesHope: 1
     HopeChange: 10
+    Requirements:
+    - Type: 1
+      Building: 7
+      Resource: 0
+      Manpower: 0
+      Amount: 0
+    Rewards:
+    - Type: 0
+      Resource: 1
+      Manpower: 0
+      Amount: 30
+    - Type: 0
+      Resource: 6
+      Manpower: 0
+      Amount: 50
+    RequirementType: 0
+    RequiredBuilding: 0
+    RequiredResourceType: 0
+    RequiredResourceAmount: 0
+  - Label: I'm afraid everyone is needed here
+    Explanation: Hope falls
+    ChangesHope: 1
+    HopeChange: -10
     Requirements: []
     Rewards:
     - Type: 0
@@ -37,12 +61,12 @@ MonoBehaviour:
     RequiredBuilding: 0
     RequiredResourceType: 0
     RequiredResourceAmount: 0
-  TriggerType: 0
-  TriggerDay: 7
-  TriggerHour: 12
-  RepeatEveryDay: 1
-  RepeatIntervalDays: 7
-  FirstDay: 1
-  LastDay: 1
+  TriggerType: 1
+  TriggerDay: 3
+  TriggerHour: 10
+  RepeatEveryDay: 0
+  RepeatIntervalDays: 4
+  FirstDay: 4
+  LastDay: 8
   conditionEvent: {fileID: 0}
   conditionOptionIndex: -1
