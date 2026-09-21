@@ -1113,6 +1113,7 @@ public class UIController : MonoBehaviour
         {
             Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
             _cancelBtn = CloneStyledButton(parent, "CancelBuild", "Cancel");
+            _cancelBtn.onClick.AddListener(() => UISoundManager.Instance?.PlayBuildingCanceled());
             _cancelBtn.onClick.AddListener(() => _game.CancelSelectedSlot());
         }
 
@@ -1128,6 +1129,7 @@ public class UIController : MonoBehaviour
         {
             Transform parent = _rightPanel != null ? _rightPanel.transform : transform;
             _demolishBtn = CloneStyledButton(parent, "Demolish", "Demolish");
+            _demolishBtn.onClick.AddListener(() => UISoundManager.Instance?.PlayBuildingDemolished());
             _demolishBtn.onClick.AddListener(() => _game.DemolishSelectedBuilding());
         }
 

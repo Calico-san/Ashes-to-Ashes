@@ -513,6 +513,8 @@ public class GameController : MonoBehaviour
         slot.StartConstruction(type);
         RegisterBuildSlot(slot);
 
+        UISoundManager.Instance?.PlayBuildingPlaced();
+
         SelectSlot(null);
         RefreshUI();
         return true;
@@ -1178,6 +1180,8 @@ public class GameController : MonoBehaviour
         // Create the real building (+ label) via the factory
         var building = BuildingFactory.Create(this, type, position, size);
         RegisterBuilding(building);
+
+        UISoundManager.Instance?.PlayBuildingCompleted();
 
         RefreshUI();
     }

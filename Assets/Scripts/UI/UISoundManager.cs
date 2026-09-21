@@ -10,7 +10,10 @@ public class UISoundManager : MonoBehaviour
     public AudioClip panelOpenClip;
     public AudioClip buttonSound;
     public AudioClip buttonHoverSound;
-
+    public AudioClip buildingPlacedClip;
+    public AudioClip buildingCompletedClip;
+    public AudioClip buildingDemolishedclip;
+    public AudioClip buidlingCanceledClip;
     private AudioSource audioSource;
 
     private void Awake()
@@ -50,6 +53,25 @@ public class UISoundManager : MonoBehaviour
         PlaySound(buttonHoverSound);
     }
 
+    public void PlayBuildingPlaced()
+    {
+        PlaySound(buildingPlacedClip);
+    }
+
+    public void PlayBuildingCompleted()
+    {
+        PlaySound(buildingCompletedClip);
+    }
+
+    public void PlayBuildingDemolished()
+    {
+        PlaySound(buildingDemolishedclip);
+    }
+
+    public void PlayBuildingCanceled()
+    {
+        PlaySound(buidlingCanceledClip);
+    }
     // Utility method using PlayOneShot to allow overlapping sounds
     public void PlaySound(AudioClip clip)
     {
